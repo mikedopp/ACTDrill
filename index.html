@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACT Pattern Drill</title>
+<style>
+  :root {
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --raised: #222221;
+    --ink: #ffffff;
+    --ink2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --accent: #3987e5;
+    --accent-dim: #1c5cab;
+    --good: #0ca30c;
+    --bad: #d03b3b;
+    --gold: #fab219;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: 0.2px; }
+  header h1 span { color: var(--accent); }
+  .chips { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 12px; font-size: 13px; color: var(--ink2);
+    font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip .mini { width: 52px; height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+  .chip .mini i { display: block; height: 100%; background: var(--gold); border-radius: 3px; }
+
+  nav { display: flex; gap: 4px; margin: 18px 0 20px; border-bottom: 1px solid var(--grid); }
+  nav button {
+    background: none; border: none; color: var(--muted); font: inherit; font-size: 14px;
+    padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav button:hover { color: var(--ink2); }
+  nav button.active { color: var(--ink); border-bottom-color: var(--accent); }
+  nav button:focus-visible, .choice:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px; margin-bottom: 14px;
+  }
+
+  .pill { display: inline-block; font-size: 12px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 10px; }
+  .pill .combo { color: var(--gold); font-weight: 700; }
+
+  .subjbar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .subjbar button {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font: inherit; font-size: 13px; padding: 4px 14px; cursor: pointer;
+  }
+  .subjbar button:hover { color: var(--ink2); border-color: var(--accent); }
+  .subjbar button.active { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
+
+  .subhead { margin: 22px 0 10px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+
+  /* Formula reference */
+  .frow { display: flex; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--grid); align-items: baseline; flex-wrap: wrap; }
+  .frow:last-child { border-bottom: none; }
+  .frow .fname { flex: 0 0 165px; font-size: 14px; color: var(--ink2); }
+  .frow .fform { flex: 0 0 auto; min-width: 210px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 14.5px; color: var(--ink); }
+  .frow .fex { flex: 1; font-size: 13px; color: var(--muted); min-width: 170px; }
+
+  /* College benchmarks */
+  .bench { width: 100%; border-collapse: collapse; margin: 8px 0 4px; }
+  .bench th, .bench td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); font-size: 14px; }
+  .bench th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+  .bench td:first-child { color: var(--ink2); }
+  .bench td.score { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bench td:last-child { color: var(--muted); font-size: 13.5px; }
+
+  .context { color: var(--ink2); font-style: italic; margin: 0 0 12px; }
+  .passage { font-size: 19px; margin: 0 0 6px; }
+  .passage .u {
+    text-decoration: underline; text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px; text-underline-offset: 4px;
+  }
+  .prompt { color: var(--ink2); font-size: 15px; margin: 10px 0 0; }
+
+  .choices { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: flex; gap: 12px; align-items: flex-start; width: 100%;
+    background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--ink); font: inherit; font-size: 16px; text-align: left;
+    padding: 12px 14px; cursor: pointer; transition: border-color 120ms, background 120ms;
+  }
+  .choice:hover:not(:disabled) { border-color: var(--accent); }
+  .choice:disabled { cursor: default; }
+  .choice .letter {
+    flex: none; width: 26px; height: 26px; border-radius: 7px; margin-top: 1px;
+    background: var(--grid); color: var(--ink2); font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .choice .body { flex: 1; }
+  .choice .why { display: none; font-size: 13.5px; color: var(--muted); margin-top: 5px; }
+  .answered .choice .why { display: block; }
+  .choice.right { border-color: var(--good); background: rgba(12,163,12,0.08); }
+  .choice.right .letter { background: var(--good); color: #fff; }
+  .choice.wrong-picked { border-color: var(--bad); background: rgba(208,59,59,0.08); }
+  .choice.wrong-picked .letter { background: var(--bad); color: #fff; }
+  .choice .mark { flex: none; font-size: 15px; font-weight: 700; margin-top: 2px; visibility: hidden; }
+  .choice.right .mark { visibility: visible; color: var(--good); }
+  .choice.wrong-picked .mark { visibility: visible; color: var(--bad); }
+
+  .verdict { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; font-size: 15px; flex-wrap: wrap; }
+  .verdict .word { font-weight: 700; }
+  .verdict.good .word { color: var(--good); }
+  .verdict.bad .word { color: var(--bad); }
+  .verdict .quip { color: var(--ink2); }
+  .verdict .xp { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .verdict .crit { color: var(--gold); font-style: italic; }
+
+  .patternbox {
+    margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent);
+    background: var(--raised); border-radius: 0 10px 10px 0;
+  }
+  .patternbox .pname { font-weight: 600; font-size: 14px; }
+  .patternbox .pcue { color: var(--ink2); font-size: 13.5px; margin-top: 3px; }
+
+  .cornernote {
+    margin-top: 14px; padding: 14px 16px; border-left: 3px solid var(--gold);
+    background: rgba(250,178,25,0.06); border-radius: 0 10px 10px 0;
+  }
+  .cornernote .clabel { font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .cornernote .ctext { margin-top: 6px; font-size: 15.5px; color: var(--ink); }
+  .cornernote .cfrom { margin-top: 6px; font-size: 13.5px; color: var(--ink2); font-style: italic; }
+
+  .actions { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
+  .btn {
+    background: var(--accent); border: none; color: #fff; font: inherit; font-weight: 600;
+    font-size: 15px; padding: 10px 22px; border-radius: 10px; cursor: pointer;
+  }
+  .btn:hover { background: var(--accent-dim); }
+  .btn.ghost { background: none; border: 1px solid var(--border); color: var(--ink2); font-weight: 400; }
+  .btn.ghost:hover { border-color: var(--bad); color: var(--bad); background: none; }
+  .hint { color: var(--muted); font-size: 13px; }
+
+  .milestone {
+    margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 14.5px;
+    background: rgba(57,135,229,0.10); border: 1px solid var(--accent-dim); color: var(--ink2);
+  }
+  .milestone b { color: var(--ink); }
+
+  /* Level-up overlay */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(13,13,13,0.82); z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .overlay .panel {
+    background: var(--surface); border: 1px solid var(--gold); border-radius: 16px;
+    padding: 34px 38px; max-width: 460px; text-align: center;
+  }
+  .overlay .lvlabel { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .overlay .lvname { font-size: 34px; font-weight: 800; margin: 8px 0 2px; }
+  .overlay .lvnum { color: var(--ink2); font-size: 15px; margin-bottom: 14px; }
+  .overlay .cornernote { text-align: left; }
+  .overlay .btn { margin-top: 18px; }
+
+  /* Rulebook */
+  .rule-card h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .rule-card p { margin: 4px 0; font-size: 14.5px; color: var(--ink2); }
+  .rule-card .lbl { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 10px; }
+  .rule-card .ex { color: var(--muted); font-size: 13.5px; }
+  .mastered-badge { color: var(--gold); font-size: 13px; font-weight: 700; }
+
+  /* Meters */
+  .meter-row { display: flex; align-items: center; gap: 12px; margin: 9px 0; }
+  .meter-row .mlabel { flex: 0 0 210px; font-size: 14px; color: var(--ink2); }
+  .meter { flex: 1; height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+  .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  .meter.gold > i { background: var(--gold); }
+  .meter-row .mval { flex: 0 0 130px; font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .rule-card .meter-row { margin-top: 12px; }
+  .rule-card .meter-row .mlabel { display: none; }
+
+  /* Stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .tile .tv { font-size: 28px; font-weight: 700; }
+  .tile .tv small { font-size: 15px; color: var(--muted); font-weight: 400; }
+  .tile .tl { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tile.gold .tv { color: var(--gold); }
+
+  /* Daily bar chart */
+  .chart { padding-bottom: 14px; }
+  .chart h3, .card h3.sect { margin: 0 0 14px; font-size: 15px; color: var(--ink2); font-weight: 600; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; border-bottom: 1px solid var(--baseline); padding: 0 2px; }
+  .barcol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+  .barcol .bar { width: 100%; max-width: 34px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .barcol.empty .bar { background: var(--grid); height: 2px; border-radius: 0; }
+  .barcol .blab { position: absolute; top: -20px; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+  .daylabels { display: flex; gap: 6px; padding: 6px 2px 0; }
+  .daylabels span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); }
+
+  /* Links */
+  .linklist a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .linklist a:hover { text-decoration: underline; }
+  .linklist li { margin-bottom: 12px; color: var(--ink2); font-size: 14.5px; }
+  .note { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 16px; }
+
+  .intro p { color: var(--ink2); font-size: 15px; }
+  .intro b { color: var(--ink); }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+
+  footer { color: var(--muted); font-size: 12.5px; text-align: center; margin-top: 30px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ACT <span>Pattern Drill</span></h1>
+    <div class="chips">
+      <div class="chip" id="chip-level"></div>
+      <div class="chip" id="chip-streak"></div>
+      <div class="chip" id="chip-today"></div>
+    </div>
+  </header>
+
+  <nav id="tabs">
+    <button data-view="drill" class="active">Drill</button>
+    <button data-view="rulebook">Rulebook</button>
+    <button data-view="formulas">Formulas</button>
+    <button data-view="progress">Progress</button>
+    <button data-view="links">Real practice</button>
+  </nav>
+
+  <main>
+    <section id="view-drill"></section>
+    <section id="view-rulebook" class="hidden"></section>
+    <section id="view-formulas" class="hidden"></section>
+    <section id="view-progress" class="hidden"></section>
+    <section id="view-links" class="hidden"></section>
+  </main>
+
+  <footer>Original practice questions in ACT style · for real retired tests use the Real practice tab</footer>
+</div>
+
+<script src="questions.js"></script>
+<script src="notes.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  // ---------- state ----------
+  const KEY = "actdrill-v1";
+  const DAILY_GOAL = 10;
+
+  const LEVELS = [
+    { xp: 0,    name: "Walk-on" },
+    { xp: 100,  name: "Spotter" },
+    { xp: 250,  name: "Trap Hunter" },
+    { xp: 450,  name: "Grinder" },
+    { xp: 700,  name: "Editor" },
+    { xp: 1000, name: "Sharpshooter" },
+    { xp: 1400, name: "Veteran" },
+    { xp: 1900, name: "Closer" },
+    { xp: 2500, name: "Ace" },
+    { xp: 3200, name: "The Standard" }
+  ];
+  const MASTERY_ACC = 0.8, MASTERY_REPS = 10;
+
+  function blankState() {
+    return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
+             xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All" };
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) return Object.assign(blankState(), JSON.parse(raw));
+    } catch (e) { /* corrupted store — start fresh */ }
+    return blankState();
+  }
+  function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+  let S = load();
+
+  const todayKey = () => new Date().toLocaleDateString("sv");
+  const dayKeyOffset = (n) => {
+    const d = new Date(); d.setDate(d.getDate() - n);
+    return d.toLocaleDateString("sv");
+  };
+  const todayCount = () => (S.daily[todayKey()] || { n: 0 }).n;
+
+  function streak() {
+    let n = 0, start = todayCount() > 0 ? 0 : 1;
+    for (let i = start; ; i++) {
+      const d = S.daily[dayKeyOffset(i)];
+      if (d && d.n > 0) n++; else break;
+    }
+    return n;
+  }
+
+  // ---------- levels & mastery ----------
+  function levelIndex(xp) {
+    let li = 0;
+    LEVELS.forEach((l, i) => { if (xp >= l.xp) li = i; });
+    return li;
+  }
+  function levelProgress(xp) {
+    const li = levelIndex(xp);
+    if (li >= LEVELS.length - 1) return 1;
+    const lo = LEVELS[li].xp, hi = LEVELS[li + 1].xp;
+    return (xp - lo) / (hi - lo);
+  }
+  function isMastered(pid) {
+    const p = S.patt[pid];
+    return !!p && p.seen >= MASTERY_REPS && p.right / p.seen >= MASTERY_ACC;
+  }
+  function masteredCount() {
+    return Object.keys(ACT_PATTERNS).filter(isMastered).length;
+  }
+  function patternMastery(pid) {
+    const p = S.patt[pid];
+    if (!p || p.seen === 0) return null;
+    return p.right / p.seen;
+  }
+
+  // ---------- adaptive picker ----------
+  function pickQuestion() {
+    let pids = Object.keys(ACT_PATTERNS);
+    if (S.subj && S.subj !== "All") pids = pids.filter(pid => ACT_PATTERNS[pid].subject === S.subj);
+    if (!pids.length) pids = Object.keys(ACT_PATTERNS);
+    const weights = pids.map(pid => {
+      const p = S.patt[pid] || { seen: 0, right: 0 };
+      if (p.seen < 4) return 1.0;
+      const miss = 1 - p.right / p.seen;
+      return Math.min(1.15, Math.max(0.15, miss + 0.15));
+    });
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total, pid = pids[0];
+    for (let i = 0; i < pids.length; i++) { r -= weights[i]; if (r <= 0) { pid = pids[i]; break; } }
+
+    const inSubj = q => !S.subj || S.subj === "All" || ACT_PATTERNS[q.pattern].subject === S.subj;
+    let pool = ACT_QUESTIONS.filter(q => q.pattern === pid && !S.recent.includes(q.id));
+    if (pool.length === 0) pool = ACT_QUESTIONS.filter(q => inSubj(q) && !S.recent.includes(q.id));
+    if (pool.length === 0) pool = ACT_QUESTIONS.filter(inSubj);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // ---------- rendering helpers ----------
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const el = (tag, cls, html) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  };
+  function renderPassage(p) {
+    return esc(p).replace(/\|([^|]+)\|/g, '<span class="u">$1</span>');
+  }
+  function orderedChoices(q) {
+    const items = q.choices.map((c, i) => ({ ...c, origIndex: i }));
+    if (q.fixedOrder) return items;
+    const pinFirst = items.filter(c => c.text === "NO CHANGE");
+    const pinLast = items.filter(c => c.text.startsWith("DELETE"));
+    const mid = items.filter(c => !pinFirst.includes(c) && !pinLast.includes(c));
+    for (let i = mid.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mid[i], mid[j]] = [mid[j], mid[i]];
+    }
+    return [...pinFirst, ...mid, ...pinLast];
+  }
+
+  const QUIPS_RIGHT = [
+    "Clean read.",
+    "That's the pattern.",
+    "You saw the trap coming.",
+    "Textbook.",
+    "That one pays points on test day.",
+    "Automatic. That's the goal."
+  ];
+  const QUIPS_WRONG = [
+    "Logged. This pattern will cycle back until it's automatic.",
+    "Good miss — better here than on test day.",
+    "That's the trap doing its job. Now you've seen it.",
+    "Every miss becomes a pattern you own. Read the why below."
+  ];
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  // ---------- the corner (notes) ----------
+  function pickNote() {
+    if (typeof VAULT_NOTES === "undefined" || !VAULT_NOTES.length) return null;
+    if (VAULT_NOTES.length === 1) return VAULT_NOTES[0];
+    let idx;
+    do { idx = Math.floor(Math.random() * VAULT_NOTES.length); } while (idx === S.lastNote);
+    S.lastNote = idx;
+    return VAULT_NOTES[idx];
+  }
+  function noteCard(note) {
+    const c = el("div", "cornernote");
+    c.append(
+      el("div", "clabel", "From your corner"),
+      el("div", "ctext", esc(note.text)),
+      el("div", "cfrom", "— " + esc(note.from))
+    );
+    return c;
+  }
+
+  // ---------- confetti ----------
+  function confetti() {
+    const colors = ["#3987e5", "#fab219", "#0ca30c", "#9085e9", "#e66767"];
+    const cv = el("canvas"); cv.id = "confetti";
+    document.body.append(cv);
+    const ctx = cv.getContext("2d");
+    cv.width = innerWidth; cv.height = innerHeight;
+    const parts = Array.from({ length: 130 }, () => ({
+      x: Math.random() * cv.width,
+      y: -20 - Math.random() * cv.height * 0.4,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 4,
+      s: 4 + Math.random() * 5,
+      r: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.25,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    const t0 = performance.now();
+    (function tick(t) {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      parts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+        ctx.restore();
+      });
+      if (t - t0 < 1800) requestAnimationFrame(tick); else cv.remove();
+    })(t0);
+  }
+
+  // ---------- level-up overlay ----------
+  function showLevelUp(li, note) {
+    const ov = el("div", "overlay");
+    const panel = el("div", "panel");
+    panel.append(
+      el("div", "lvlabel", "Level up"),
+      el("div", "lvname", esc(LEVELS[li].name)),
+      el("div", "lvnum", "Level " + (li + 1) + " of " + LEVELS.length + " · " + S.xp + " XP")
+    );
+    if (note) panel.append(noteCard(note));
+    const b = el("button", "btn", "Back to work");
+    b.onclick = () => ov.remove();
+    panel.append(b);
+    ov.append(panel);
+    document.body.append(ov);
+    confetti();
+    b.focus();
+  }
+
+  // ---------- drill view ----------
+  const viewDrill = document.getElementById("view-drill");
+  let current = null;
+
+  function showIntro() {
+    viewDrill.innerHTML = "";
+    const c = el("div", "card intro");
+    c.append(
+      el("div", "pill", "How this works"),
+      el("p", null, "The ACT isn't a knowledge test. Each scored section — <b>English, Math, Reading</b> — recycles the same small set of patterns forever. Once you can name the pattern in five seconds, the answer is usually free."),
+      el("p", null, "So: <b>one question at a time.</b> Answer it, read <i>why</i> every wrong choice is wrong, move on. The app quietly serves you more of whatever you miss — that's the whole error log, automated."),
+      el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything.")
+    );
+    const a = el("div", "actions");
+    const b = el("button", "btn", "Start");
+    b.onclick = () => { S.introSeen = true; save(); nextQuestion(); };
+    a.append(b);
+    c.append(a);
+    viewDrill.append(c);
+    b.focus();
+  }
+
+  const SUBJECTS = ["All", "English", "Math", "Reading"];
+  function subjectBar() {
+    const bar = el("div", "subjbar");
+    SUBJECTS.forEach(sub => {
+      const b = el("button", sub === (S.subj || "All") ? "active" : "", sub);
+      b.onclick = () => { S.subj = sub; save(); nextQuestion(); };
+      bar.append(b);
+    });
+    return bar;
+  }
+
+  function nextQuestion() {
+    const q = pickQuestion();
+    current = { q, choices: orderedChoices(q), answered: false };
+    viewDrill.innerHTML = "";
+    viewDrill.append(subjectBar());
+
+    const card = el("div", "card");
+    let pillHtml = esc(ACT_PATTERNS[q.pattern].subject) + " · today " + todayCount() + " / " + DAILY_GOAL;
+    if (S.combo >= 2) pillHtml += " · <span class='combo'>combo ×" + S.combo + "</span>";
+    card.append(el("div", "pill", pillHtml));
+    if (q.context) card.append(el("p", "context", esc(q.context)));
+    if (q.passage) card.append(el("p", "passage", renderPassage(q.passage)));
+    const promptText = q.prompt ||
+      (q.passage && q.passage.includes("|") ? "Choose the best version of the underlined portion." : "");
+    if (promptText) card.append(el("p", "prompt", esc(promptText)));
+
+    const list = el("div", "choices");
+    current.choices.forEach((c, idx) => {
+      const btn = el("button", "choice");
+      btn.dataset.idx = idx;
+      btn.append(
+        el("span", "letter", "ABCD"[idx]),
+        el("span", "body", "<span>" + esc(c.text) + "</span><span class='why'>" + esc(c.why) + "</span>"),
+        el("span", "mark", c.correct ? "✓ right" : "✗")
+      );
+      btn.onclick = () => answer(idx);
+      list.append(btn);
+    });
+    card.append(list);
+
+    const foot = el("div", "actions");
+    foot.append(el("span", "hint", "Keys 1–4 to answer"));
+    card.append(foot);
+    viewDrill.append(card);
+  }
+
+  function answer(idx) {
+    if (!current || current.answered) return;
+    current.answered = true;
+    const { q, choices } = current;
+    const chosen = choices[idx];
+    const right = !!chosen.correct;
+
+    // record accuracy
+    const p = S.patt[q.pattern] || (S.patt[q.pattern] = { seen: 0, right: 0 });
+    p.seen++; if (right) p.right++;
+    const qs = S.q[q.id] || (S.q[q.id] = { seen: 0, right: 0 });
+    qs.seen++; if (right) qs.right++;
+    const d = S.daily[todayKey()] || (S.daily[todayKey()] = { n: 0, right: 0 });
+    d.n++; if (right) d.right++;
+    S.recent.push(q.id);
+    while (S.recent.length > 18) S.recent.shift();
+
+    // rewards
+    const prevLevel = levelIndex(S.xp);
+    S.combo = right ? S.combo + 1 : 0;
+    if (S.combo > S.bestCombo) S.bestCombo = S.combo;
+    let gained = 2; // showing up counts
+    let crit = false;
+    if (right) {
+      gained += 8;
+      gained += Math.min(2 * (S.combo - 1), 10);
+      if (Math.random() < 0.07) { crit = true; gained *= 2; }
+    }
+    S.xp += gained;
+    const newLevel = levelIndex(S.xp);
+    S.sinceNote++;
+
+    const goalJustHit = d.n === DAILY_GOAL;
+    const leveledUp = newLevel > prevLevel;
+    let note = null;
+    if ((goalJustHit || leveledUp || (right && Math.random() < 0.08)) && S.sinceNote >= 8) {
+      note = pickNote();
+      if (note) S.sinceNote = 0;
+    }
+    save();
+    renderChips();
+
+    // paint
+    const card = viewDrill.querySelector(".card");
+    card.classList.add("answered");
+    card.querySelectorAll(".choice").forEach((btn, i) => {
+      btn.disabled = true;
+      if (choices[i].correct) btn.classList.add("right");
+      else if (i === idx) btn.classList.add("wrong-picked");
+    });
+
+    const verdict = el("div", "verdict " + (right ? "good" : "bad"));
+    verdict.append(
+      el("span", "word", right ? "✓ Right." : "✗ Not this one."),
+      el("span", "xp", "+" + gained + " XP")
+    );
+    if (crit) verdict.append(el("span", "crit", "×2 sharp-eye bonus!"));
+    if (right && S.combo >= 3) verdict.append(el("span", "xp", "combo ×" + S.combo));
+    verdict.append(el("span", "quip", pick(right ? QUIPS_RIGHT : QUIPS_WRONG)));
+    card.append(verdict);
+
+    const pat = ACT_PATTERNS[q.pattern];
+    const pb = el("div", "patternbox");
+    pb.append(
+      el("div", "pname", "Pattern: " + esc(pat.name)),
+      el("div", "pcue", "Spot it in 5 seconds: " + esc(pat.cue))
+    );
+    card.append(pb);
+
+    if (goalJustHit) {
+      card.append(el("div", "milestone",
+        "<b>That's a full day — " + DAILY_GOAL + " focused reps.</b> That beats three hours of zoning out at a video. Keep going or stop here; both count as a win."));
+      confetti();
+    }
+
+    if (note && !leveledUp) card.append(noteCard(note));
+
+    const a = el("div", "actions");
+    const nextBtn = el("button", "btn", "Next question");
+    nextBtn.onclick = nextQuestion;
+    a.append(nextBtn, el("span", "hint", "Enter for next"));
+    card.append(a);
+
+    if (leveledUp) showLevelUp(newLevel, note);
+    else nextBtn.focus();
+  }
+
+  // keyboard
+  document.addEventListener("keydown", (e) => {
+    if (document.querySelector(".overlay")) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.querySelector(".overlay").remove(); }
+      return;
+    }
+    if (!document.getElementById("view-drill").classList.contains("hidden")) {
+      if (current && !current.answered) {
+        const k = e.key.toLowerCase();
+        const map = { "1": 0, "2": 1, "3": 2, "4": 3, "a": 0, "b": 1, "c": 2, "d": 3 };
+        if (k in map && map[k] < current.choices.length) { answer(map[k]); e.preventDefault(); }
+      } else if (current && current.answered && (e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "n")) {
+        // preventDefault stops the focused Next button from also firing a click (double-advance)
+        e.preventDefault();
+        nextQuestion();
+      }
+    }
+  });
+
+  // ---------- rulebook ----------
+  function renderRulebook() {
+    const v = document.getElementById("view-rulebook");
+    v.innerHTML = "";
+    v.append(el("div", "card intro",
+      "<div class='pill'>The whole rulebook</div><p>This is it — the finite list for all three scored sections (your composite is English + Math + Reading). Every question you'll ever see is one of these wearing a costume. Master a pattern (80%+ over 10+ reps) and it earns a star.</p>"));
+    ["English", "Math", "Reading"].forEach(sub => {
+      v.append(el("div", "subhead", sub));
+      Object.entries(ACT_PATTERNS)
+        .filter(([, pat]) => pat.subject === sub)
+        .forEach(([pid, pat]) => renderRuleCard(v, pid, pat));
+    });
+  }
+  function renderRuleCard(v, pid, pat) {
+      const m = patternMastery(pid);
+      const seen = (S.patt[pid] || { seen: 0 }).seen;
+      const c = el("div", "card rule-card");
+      const h = el("h3", null, esc(pat.name));
+      if (isMastered(pid)) h.append(el("span", "mastered-badge", "★ mastered"));
+      c.append(
+        h,
+        el("p", null, esc(pat.rule)),
+        el("div", "lbl", "How to spot it in 5 seconds"),
+        el("p", null, esc(pat.cue)),
+        el("div", "lbl", "Example"),
+        el("p", "ex", esc(pat.example))
+      );
+      const row = el("div", "meter-row");
+      const meter = el("div", "meter" + (isMastered(pid) ? " gold" : ""));
+      meter.append(el("i", null));
+      meter.firstChild.style.width = (m === null ? 0 : Math.round(m * 100)) + "%";
+      row.append(
+        el("span", "mlabel", ""),
+        meter,
+        el("span", "mval", seen < 3 ? "warming up · " + seen + " reps" : Math.round(m * 100) + "% · " + seen + " reps")
+      );
+      c.append(row);
+      v.append(c);
+  }
+
+  // ---------- progress ----------
+  function renderProgress() {
+    const v = document.getElementById("view-progress");
+    v.innerHTML = "";
+
+    let total = 0, right = 0, bestDay = 0;
+    Object.values(S.daily).forEach(dd => { total += dd.n; right += dd.right; if (dd.n > bestDay) bestDay = dd.n; });
+    const li = levelIndex(S.xp);
+
+    const tiles = el("div", "tiles");
+    const tile = (val, lab, gold) => {
+      const t = el("div", "tile" + (gold ? " gold" : ""));
+      t.append(el("div", "tv", val), el("div", "tl", lab));
+      return t;
+    };
+    tiles.append(
+      tile(String(li + 1) + " <small>" + esc(LEVELS[li].name) + "</small>", S.xp + " XP · level", true),
+      tile(streak(), "day streak"),
+      tile(todayCount() + "<small> / " + DAILY_GOAL + "</small>", "today"),
+      tile(total, "total reps"),
+      tile(total ? Math.round(100 * right / total) + "%" : "—", "accuracy"),
+      tile(S.bestCombo, "best combo"),
+      tile(masteredCount() + "<small> / " + Object.keys(ACT_PATTERNS).length + "</small>", "patterns mastered", masteredCount() > 0)
+    );
+    v.append(tiles);
+
+    // XP progress to next level
+    const xcard = el("div", "card");
+    const nextName = li < LEVELS.length - 1 ? LEVELS[li + 1].name : null;
+    xcard.append(el("h3", "sect", nextName
+      ? "Next level: " + esc(nextName) + " at " + LEVELS[li + 1].xp + " XP"
+      : "Top level reached — " + esc(LEVELS[li].name)));
+    const xrow = el("div", "meter-row");
+    const xmeter = el("div", "meter gold"); xmeter.append(el("i", null));
+    xmeter.firstChild.style.width = Math.round(levelProgress(S.xp) * 100) + "%";
+    xrow.append(el("span", "mlabel", "XP"), xmeter,
+      el("span", "mval", S.xp + (nextName ? " / " + LEVELS[li + 1].xp : "")));
+    xcard.append(xrow);
+    v.append(xcard);
+
+    // 14-day chart (single series — the title names it, no legend needed)
+    const chart = el("div", "card chart");
+    chart.append(el("h3", null, "Questions per day — last 14 days" + (bestDay ? " · personal best " + bestDay : "")));
+    const days = [];
+    for (let i = 13; i >= 0; i--) days.push(dayKeyOffset(i));
+    const counts = days.map(k => (S.daily[k] || { n: 0 }).n);
+    const max = Math.max(DAILY_GOAL, ...counts);
+    const bars = el("div", "bars");
+    days.forEach((k, i) => {
+      const col = el("div", "barcol" + (counts[i] === 0 ? " empty" : ""));
+      const bar = el("div", "bar");
+      bar.style.height = counts[i] === 0 ? "2px" : Math.max(4, Math.round(counts[i] / max * 100)) + "%";
+      const dd = S.daily[k] || { n: 0, right: 0 };
+      col.title = k + " — " + dd.n + " questions" + (dd.n ? ", " + dd.right + " right" : "");
+      if (i === 13 && counts[i] > 0) col.append(el("span", "blab", String(counts[i])));
+      col.append(bar);
+      bars.append(col);
+    });
+    chart.append(bars);
+    const labs = el("div", "daylabels");
+    days.forEach(k => labs.append(el("span", null, "SMTWTFS"[new Date(k + "T12:00:00").getDay()])));
+    chart.append(labs);
+    v.append(chart);
+
+    // mastery meters, weakest first
+    const mcard = el("div", "card");
+    mcard.append(el("h3", "sect", "Pattern mastery — weakest first (these get served more often)"));
+    ["English", "Math", "Reading"].forEach(sub => {
+      mcard.append(el("div", "subhead", sub));
+      const rows = Object.entries(ACT_PATTERNS)
+        .filter(([, pat]) => pat.subject === sub)
+        .map(([pid, pat]) => {
+          const st = S.patt[pid] || { seen: 0, right: 0 };
+          return { pid, name: pat.name, seen: st.seen, m: patternMastery(pid) };
+        }).sort((a, b) => {
+          const av = a.seen < 3 ? 2 : a.m, bv = b.seen < 3 ? 2 : b.m;
+          return av - bv;
+        });
+      rows.forEach(r => {
+        const row = el("div", "meter-row");
+        const meter = el("div", "meter" + (isMastered(r.pid) ? " gold" : "")); meter.append(el("i", null));
+        meter.firstChild.style.width = (r.m === null ? 0 : Math.round(r.m * 100)) + "%";
+        row.append(
+          el("span", "mlabel", esc(r.name) + (isMastered(r.pid) ? " <span class='mastered-badge'>★</span>" : "")),
+          meter,
+          el("span", "mval", r.seen < 3 ? "warming up" : Math.round(r.m * 100) + "% · " + r.seen + " reps")
+        );
+        mcard.append(row);
+      });
+    });
+    v.append(mcard);
+
+    const rcard = el("div", "card");
+    const rb = el("button", "btn ghost", "Reset all progress");
+    rb.onclick = () => {
+      if (confirm("Wipe all drill history, XP, and levels? This can't be undone.")) {
+        S = blankState(); S.introSeen = true; save();
+        renderChips(); renderProgress();
+      }
+    };
+    rcard.append(rb);
+    v.append(rcard);
+  }
+
+  // ---------- formulas ----------
+  const FORMULAS = [
+    { group: "Lines & coordinates", items: [
+      ["Slope", "m = (y₂ − y₁) / (x₂ − x₁)", "(2,5) to (6,13): 8/4 = 2"],
+      ["Line equation", "y = mx + b", "m is the slope; b is where it crosses the y-axis"],
+      ["Midpoint", "( (x₁+x₂)/2 , (y₁+y₂)/2 )", "(2,4) and (6,10) → (4, 7)"],
+      ["Distance", "√( (Δx)² + (Δy)² )", "(0,0) to (3,4): √(9+16) = 5"]
+    ]},
+    { group: "Algebra", items: [
+      ["Multiply powers", "xᵃ · xᵇ = xᵃ⁺ᵇ", "x³ · x² = x⁵ — add exponents"],
+      ["Power of a power", "(xᵃ)ᵇ = xᵃᵇ", "(x³)² = x⁶ — multiply them"],
+      ["Negative exponent", "x⁻ᵃ = 1 / xᵃ", "2⁻³ = 1/8"],
+      ["Square of a sum", "(a+b)² = a² + 2ab + b²", "never just a² + b² — the middle term is the trap"],
+      ["Difference of squares", "(a+b)(a−b) = a² − b²", "21² − 19² = (40)(2) = 80, no calculator needed"],
+      ["Quadratic formula", "x = (−b ± √(b²−4ac)) / 2a", "solves ax² + bx + c = 0 when factoring won't"]
+    ]},
+    { group: "Geometry", items: [
+      ["Rectangle", "A = lw   ·   P = 2(l+w)", "8 × 6 → area 48, perimeter 28"],
+      ["Triangle area", "A = ½bh", "base 10, height 7 → 35"],
+      ["Trapezoid", "A = ½(b₁+b₂)h", "average the parallel sides, times the height"],
+      ["Circle", "A = πr²   ·   C = 2πr = πd", "given a DIAMETER? Halve it first, then use r"],
+      ["Circle equation", "(x−h)² + (y−k)² = r²", "center (h,k), radius r"],
+      ["Volumes", "box: lwh   ·   cylinder: πr²h", "always area of the base × height"],
+      ["Polygon angles", "(n−2) · 180°", "pentagon: 3 × 180 = 540°"]
+    ]},
+    { group: "Triangles & trig", items: [
+      ["Pythagorean", "a² + b² = c²", "know 3-4-5 and 5-12-13 on sight"],
+      ["45-45-90 triangle", "x : x : x√2", "legs equal, hypotenuse is a leg × √2"],
+      ["30-60-90 triangle", "x : x√3 : 2x", "the short leg sits opposite the 30°"],
+      ["SOHCAHTOA", "sin=opp/hyp · cos=adj/hyp · tan=opp/adj", "label the sides from the angle's point of view first"]
+    ]},
+    { group: "Data & chance", items: [
+      ["Average", "avg = total ÷ count", "the useful direction: total = avg × count"],
+      ["Percent change", "change ÷ ORIGINAL × 100", "250 → 300: 50/250 = 20%"],
+      ["Percent of", "part = % × whole", "30% of 60 = 0.30 × 60 = 18"],
+      ["Probability", "favorable ÷ total", "2 red out of 5 marbles → 2/5"],
+      ["Distance-rate-time", "d = r · t", "60 mph for 2.5 hours → 150 miles"],
+      ["Arithmetic sequence", "aₙ = a₁ + (n−1)d", "start 5, add 3 each step: 20th term = 5 + 19·3 = 62"],
+      ["Geometric sequence", "aₙ = a₁ · rⁿ⁻¹", "start 2, triple each step: 5th term = 2 · 3⁴ = 162"]
+    ]}
+  ];
+
+  function renderFormulas() {
+    const v = document.getElementById("view-formulas");
+    v.innerHTML = "";
+    v.append(el("div", "card intro",
+      "<div class='pill'>The whole formula list</div>" +
+      "<p>The ACT gives you <b>no formula sheet</b> — but this is the entire required list, about 28 entries. " +
+      "That's the good news: memorize these and there is no math on the test you haven't been handed. " +
+      "Five a week in <b>Anki</b> (Real practice tab) and the list is done in six weeks.</p>"));
+    FORMULAS.forEach(g => {
+      const c = el("div", "card");
+      c.append(el("h3", "sect", g.group));
+      g.items.forEach(([name, form, ex]) => {
+        const row = el("div", "frow");
+        row.append(el("span", "fname", esc(name)), el("span", "fform", esc(form)), el("span", "fex", esc(ex)));
+        c.append(row);
+      });
+      v.append(c);
+    });
+  }
+
+  // ---------- links ----------
+  function renderLinks() {
+    const v = document.getElementById("view-links");
+    v.innerHTML = `
+      <div class="card linklist">
+        <h3 class="sect">The real thing — official & free</h3>
+        <ul>
+          <li><a href="https://www.act.org/content/act/en/products-and-services/the-act/test-preparation/free-act-test-prep.html" target="_blank" rel="noopener">ACT.org free test prep</a> — two full Enhanced-ACT practice tests (PDF, with answer keys and score tables), two interactive online tests, the QuizMe subject quizzes, and a daily Question of the Day via a free MyACT account. This is the source of truth.</li>
+          <li><a href="https://blog.prepscholar.com/complete-official-act-practice-tests-free-links" target="_blank" rel="noopener">PrepScholar's roundup of every free official test</a> — includes the older-format tests, which are still great drill material.</li>
+          <li><a href="https://schoolhouse.world/live-help" target="_blank" rel="noopener">Schoolhouse.world free live help</a> — free small-group tutoring from Sal Khan's nonprofit. Live humans, not videos. The math help covers exactly what ACT math tests.</li>
+          <li><a href="https://apps.ankiweb.net/" target="_blank" rel="noopener">Anki</a> — free, open-source flashcards with spaced repetition. Perfect for the rulebook in this app plus the ~30 math formulas the ACT recycles.</li>
+        </ul>
+        <h3 class="sect" style="margin-top:20px">Extended time — do this first</h3>
+        <ul>
+          <li><a href="https://blog.prepscholar.com/the-complete-guide-to-act-accommodations" target="_blank" rel="noopener">Complete guide to ACT accommodations</a> — ADHD plus a documented learning disability typically qualifies for 50% extended time.</li>
+          <li><a href="https://www.act.org/content/act/en/products-and-services/the-act/registration/accommodations/policy-for-accommodations-documentation/criteria-for-diagnostic-documentation.html" target="_blank" rel="noopener">ACT's official documentation criteria</a> — what paperwork is needed.</li>
+        </ul>
+        <p class="note">Heads-up on timing: accommodations decisions can take up to <b>7 weeks</b>, and the request goes through the school counselor after you check "accommodations" during registration. Start that clock before picking a test date. Also: since 2025 the ACT itself is shorter, gives 12–27% more time per question, and the science section is optional — the composite is just English + Math + Reading.</p>
+      </div>
+      <div class="card">
+        <h3 class="sect">What college actually expects</h3>
+        <p style="color:var(--ink2);font-size:14.5px;margin:0 0 4px">
+          ACT publishes official <b style="color:var(--ink)">college readiness benchmarks</b> — the section score where
+          students have about a <b style="color:var(--ink)">75% chance of a C or better</b> (and ~50% chance of a B or better)
+          in the matching first-year college course:</p>
+        <table class="bench">
+          <tr><th>ACT section</th><th>Benchmark</th><th>What it maps to in freshman year</th></tr>
+          <tr><td>English</td><td class="score">18</td><td>English Composition I — essays, grammar, editing</td></tr>
+          <tr><td>Reading</td><td class="score">22</td><td>History, psychology &amp; other reading-heavy courses</td></tr>
+          <tr><td>Math</td><td class="score">22</td><td>College Algebra — the same algebra this app drills</td></tr>
+          <tr><td>Science</td><td class="score">23</td><td>Intro Biology — mostly chart &amp; data reading (section now optional)</td></tr>
+        </table>
+        <p class="note">Read the middle column again: <b>college-ready is 18–23, not 30-something.</b> Nobody needs a
+        perfect score — most scholarship cutoffs sit near these numbers. For perspective, about <b>43% of all
+        test-takers meet none of these benchmarks</b>, so clearing even two of them puts you ahead of most of the room.
+        These are targets, and targets this size are hit with exactly what this app does: ten reps a day.</p>
+      </div>`;
+  }
+
+  // ---------- chrome ----------
+  function renderChips() {
+    const s = streak();
+    const li = levelIndex(S.xp);
+    const lvl = document.getElementById("chip-level");
+    lvl.innerHTML = "<b>Lv " + (li + 1) + "</b> " + esc(LEVELS[li].name) +
+      " <span class='mini'><i style='width:" + Math.round(levelProgress(S.xp) * 100) + "%'></i></span>";
+    document.getElementById("chip-streak").innerHTML = "🔥 <b>" + s + "</b> day" + (s === 1 ? "" : "s");
+    document.getElementById("chip-today").innerHTML = "today <b>" + todayCount() + "</b> / " + DAILY_GOAL;
+  }
+
+  document.getElementById("tabs").addEventListener("click", (e) => {
+    const btn = e.target.closest("button"); if (!btn) return;
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
+    ["drill", "rulebook", "formulas", "progress", "links"].forEach(name => {
+      document.getElementById("view-" + name).classList.toggle("hidden", name !== btn.dataset.view);
+    });
+    if (btn.dataset.view === "rulebook") renderRulebook();
+    if (btn.dataset.view === "formulas") renderFormulas();
+    if (btn.dataset.view === "progress") renderProgress();
+    if (btn.dataset.view === "links") renderLinks();
+  });
+
+  // dev/test hook — harmless in normal use
+  window.__drill = {
+    sim(n, acc = 0.8) {
+      for (let i = 0; i < n; i++) {
+        if (!current || current.answered) nextQuestion();
+        const ci = current.choices.findIndex(c => c.correct);
+        const wrongs = current.choices.map((c, j) => j).filter(j => !current.choices[j].correct);
+        answer(Math.random() < acc ? ci : wrongs[Math.floor(Math.random() * wrongs.length)]);
+      }
+    },
+    state: () => JSON.parse(JSON.stringify(S))
+  };
+
+  // ---------- boot ----------
+  renderChips();
+  if (S.introSeen) nextQuestion(); else showIntro();
+})();
+</script>
+</body>
+</html>

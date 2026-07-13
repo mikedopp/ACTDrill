@@ -1,0 +1,6 @@
+# build output
+desktop/bin/
+desktop/obj/
+
+# published exe — too large for a git repo; shipped via GitHub Releases instead
+dist/

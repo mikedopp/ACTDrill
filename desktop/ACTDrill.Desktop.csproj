@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ACTDrill</AssemblyName>
+    <RootNamespace>ACTDrill.Desktop</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyTitle>ACT Pattern Drill</AssemblyTitle>
+    <Product>ACT Pattern Drill</Product>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+  </ItemGroup>
+
+  <!-- Web app is embedded into the exe and extracted at first run -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\index.html" Link="web\index.html" />
+    <EmbeddedResource Include="..\questions.js" Link="web\questions.js" />
+    <EmbeddedResource Include="..\notes.js" Link="web\notes.js" />
+  </ItemGroup>
+
+</Project>
