@@ -17,7 +17,11 @@ static class Program
 
 class MainForm : Form
 {
+    // public repo holding ONLY the question bank (original content — no real ACT items, no personal notes)
+    const string BankUrl = "https://raw.githubusercontent.com/mikedopp/actdrill-bank/main/questions.js";
+
     readonly WebView2 _web = new();
+    string _webDir = "";
 
     public MainForm()
     {
@@ -43,7 +47,7 @@ class MainForm : Form
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ACTDrill");
             Directory.CreateDirectory(dataDir);
 
-            var webDir = ResolveWebDir(dataDir);
+            _webDir = ResolveWebDir(dataDir);
 
             // fixed user-data folder so localStorage (XP, streaks, mastery) persists across runs
             var env = await CoreWebView2Environment.CreateAsync(null, dataDir);
@@ -60,8 +64,10 @@ class MainForm : Form
                 Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true });
             };
 
+            _web.CoreWebView2.WebMessageReceived += OnWebMessage;
+
             _web.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                "actdrill.local", webDir, CoreWebView2HostResourceAccessKind.Allow);
+                "actdrill.local", _webDir, CoreWebView2HostResourceAccessKind.Allow);
             _web.CoreWebView2.Navigate("https://actdrill.local/index.html");
         }
         catch (WebView2RuntimeNotFoundException)
@@ -76,6 +82,31 @@ class MainForm : Form
         {
             MessageBox.Show(ex.Message, "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Error);
             Close();
+        }
+    }
+
+    async void OnWebMessage(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+    {
+        string msg;
+        try { msg = e.TryGetWebMessageAsString(); } catch { return; }
+        if (msg != "updateBank") return;
+
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            var js = await http.GetStringAsync(BankUrl);
+            // sanity check before overwriting anything
+            if (!js.Contains("const ACT_QUESTIONS") || !js.Contains("const ACT_PATTERNS"))
+                throw new InvalidDataException("Downloaded file doesn't look like a question bank.");
+            File.WriteAllText(Path.Combine(_webDir, "questions.js"), js);
+            _web.CoreWebView2.Reload();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                "Couldn't update the question bank:\n" + ex.Message +
+                "\n\nCheck the internet connection and try again — the current bank is untouched.",
+                "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 

@@ -1227,5 +1227,1043 @@ ACT_QUESTIONS.push(
   }
 );
 
+// ============================================================
+// WAVE 2 — second set of 4 questions per pattern (96 total)
+// ============================================================
+
+ACT_QUESTIONS.push(
+  // ---------------- English: run-ons ----------------
+  {
+    id: "runons-5", pattern: "runons",
+    passage: "The ferry was full, |so we| waited for the next one.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "Comma + 'so' (a FANBOYS word) is a legal joint between two complete sentences." },
+      { text: "so, we", why: "The comma belongs BEFORE the conjunction, never right after it." },
+      { text: "; so we", why: "A semicolon replaces the comma-plus-FANBOYS joint — they don't stack." },
+      { text: "we", why: "Removing 'so' leaves a comma splice." }
+    ]
+  },
+  {
+    id: "runons-6", pattern: "runons",
+    passage: "Rain hammered the roof all |night, consequently, the| creek was over its banks by dawn.",
+    choices: [
+      { text: "NO CHANGE", why: "'Consequently' isn't a FANBOYS word — commas alone still make a splice." },
+      { text: "night; consequently, the", correct: true, why: "Semicolon joins the sentences; 'consequently,' rides along legally." },
+      { text: "night, consequently the", why: "Same splice — shuffling the second comma fixes nothing." },
+      { text: "night consequently, the", why: "Now it's fused, with no joint at all." }
+    ]
+  },
+  {
+    id: "runons-7", pattern: "runons",
+    passage: "I texted her twice |she never| answered.",
+    choices: [
+      { text: "NO CHANGE", why: "Two complete sentences, nothing joining them — fused." },
+      { text: "twice, but she never", correct: true, why: "Comma + 'but' joins the clauses and keeps the contrast." },
+      { text: "twice, she never", why: "A comma alone is a splice, not a joint." },
+      { text: "twice, and, she never", why: "'And' works, but the comma after it is illegal." }
+    ]
+  },
+  {
+    id: "runons-8", pattern: "runons",
+    passage: "The generator kicked on within |seconds, the lights| flickered back to life.",
+    choices: [
+      { text: "NO CHANGE", why: "Comma splice — both halves stand alone as sentences." },
+      { text: "seconds, and the lights", correct: true, why: "Comma + 'and': the legal joint." },
+      { text: "seconds the lights", why: "Fused — worse, not better." },
+      { text: "seconds, the lights,", why: "Still a splice, now with a bonus stray comma." }
+    ]
+  },
+
+  // ---------------- English: subject–verb ----------------
+  {
+    id: "svagree-5", pattern: "svagree",
+    passage: "The bouquet of roses and lilies |smell| wonderful.",
+    choices: [
+      { text: "NO CHANGE", why: "'Roses and lilies' live inside the prepositional phrase — the subject is 'bouquet.'" },
+      { text: "smells", correct: true, why: "Cross out 'of roses and lilies': the bouquet … smells." },
+      { text: "have smelled", why: "Plural again — the flowers fooled the verb." },
+      { text: "are smelling", why: "Plural and awkward." }
+    ]
+  },
+  {
+    id: "svagree-6", pattern: "svagree",
+    passage: "Economics |are| his favorite subject.",
+    choices: [
+      { text: "NO CHANGE", why: "Words ending in -ics (economics, physics, mathematics) are singular subjects." },
+      { text: "is", correct: true, why: "Economics IS — one field of study, one singular verb." },
+      { text: "were", why: "Still plural, now also past tense for no reason." },
+      { text: "have been", why: "Plural again." }
+    ]
+  },
+  {
+    id: "svagree-7", pattern: "svagree",
+    passage: "Either of the routes |take| you downtown.",
+    choices: [
+      { text: "NO CHANGE", why: "The subject is 'Either' — always singular. 'Routes' is trapped in the prepositional phrase." },
+      { text: "takes", correct: true, why: "Either … takes. Same trap as 'each,' same fix." },
+      { text: "have taken", why: "Plural verb on a singular subject." },
+      { text: "are taking", why: "Plural again." }
+    ]
+  },
+  {
+    id: "svagree-8", pattern: "svagree",
+    passage: "The number of applicants |have doubled| since May.",
+    choices: [
+      { text: "NO CHANGE", why: "'THE number' is singular (while 'A number of' runs plural — the ACT loves this pair)." },
+      { text: "has doubled", correct: true, why: "The number … has doubled. One number, one singular verb." },
+      { text: "double", why: "Plural and loses the since-May timeline." },
+      { text: "are doubling", why: "Plural again." }
+    ]
+  },
+
+  // ---------------- English: apostrophes ----------------
+  {
+    id: "apostrophe-5", pattern: "apostrophe",
+    passage: "|Whos'| jacket is on the bench?",
+    choices: [
+      { text: "NO CHANGE", why: "'Whos'' isn't a word in any direction." },
+      { text: "Whose", correct: true, why: "Possession (whose jacket) → 'whose,' no apostrophe anywhere." },
+      { text: "Who's", why: "'Who is jacket is on the bench' — expand it and it collapses." },
+      { text: "Whos", why: "Still not a word." }
+    ]
+  },
+  {
+    id: "apostrophe-6", pattern: "apostrophe",
+    passage: "Both |teams| buses arrived late.",
+    choices: [
+      { text: "NO CHANGE", why: "No apostrophe means no possession — but the buses belong to the teams." },
+      { text: "teams'", correct: true, why: "'Both' = plural teams; plural possessive = s + apostrophe." },
+      { text: "team's", why: "Singular possessive — 'both' says there are two teams." },
+      { text: "teams's", why: "'s after an s-plural is never right." }
+    ]
+  },
+  {
+    id: "apostrophe-7", pattern: "apostrophe",
+    passage: "|Its| been a long season for the crew.",
+    choices: [
+      { text: "NO CHANGE", why: "Possessive 'its' can't mean 'it has.'" },
+      { text: "It's", correct: true, why: "'It's been' = it has been. The apostrophe carries the missing letters." },
+      { text: "Its'", why: "Not a word." },
+      { text: "Its's", why: "Definitely not a word." }
+    ]
+  },
+  {
+    id: "apostrophe-8", pattern: "apostrophe",
+    passage: "My |grandparents's| cabin has no cell service.",
+    choices: [
+      { text: "NO CHANGE", why: "'s after an s-plural — never." },
+      { text: "grandparents'", correct: true, why: "Plural owners ending in s → apostrophe after the s." },
+      { text: "grandparent's", why: "One grandparent owns it now — 'grandparents' says both do." },
+      { text: "grandparents", why: "The possession vanished entirely." }
+    ]
+  },
+
+  // ---------------- English: commas ----------------
+  {
+    id: "commas-5", pattern: "commas",
+    passage: "My oldest brother |a diesel mechanic| taught me to weld.",
+    choices: [
+      { text: "NO CHANGE", why: "The rename-phrase ('a diesel mechanic') needs commas on BOTH sides." },
+      { text: ", a diesel mechanic,", correct: true, why: "Fully wrapped: lift it out and the sentence still works." },
+      { text: ", a diesel mechanic", why: "Opened the wrap, never closed it." },
+      { text: "a diesel mechanic,", why: "Closed the wrap, never opened it." }
+    ]
+  },
+  {
+    id: "commas-6", pattern: "commas",
+    passage: "The storm that closed the airport|, was| the worst in a decade.",
+    choices: [
+      { text: "NO CHANGE", why: "A lone comma between the subject and its verb — the forbidden spot." },
+      { text: " was", correct: true, why: "'That closed the airport' is essential info; no comma anywhere." },
+      { text: "; was", why: "A semicolon needs complete sentences on both sides." },
+      { text: ", was,", why: "Two bad commas instead of one." }
+    ]
+  },
+  {
+    id: "commas-7", pattern: "commas",
+    passage: "Before the concert |began the| crowd was restless.",
+    choices: [
+      { text: "NO CHANGE", why: "An introductory clause needs a comma before the main sentence starts." },
+      { text: "began, the", correct: true, why: "'Before the concert began,' — comma closes the intro clause." },
+      { text: "began; the", why: "'Before the concert began' isn't a complete sentence — no semicolon allowed." },
+      { text: "began — the", why: "The standard mark after an intro clause is a comma, not a dash." }
+    ]
+  },
+  {
+    id: "commas-8", pattern: "commas",
+    passage: "We packed sandwiches, apples, |and, water| for the hike.",
+    choices: [
+      { text: "NO CHANGE", why: "A comma directly after 'and' in a list is always wrong." },
+      { text: "and water", correct: true, why: "List closes cleanly: a, b, and c." },
+      { text: "and — water", why: "A dash mid-list breaks the rhythm for no reason." },
+      { text: ", and, water,", why: "Comma confetti." }
+    ]
+  },
+
+  // ---------------- English: pronouns ----------------
+  {
+    id: "pronoun-5", pattern: "pronoun",
+    passage: "Each backpack should have |their| owner's name inside.",
+    choices: [
+      { text: "NO CHANGE", why: "'Each backpack' is singular — and a thing, not people." },
+      { text: "its", correct: true, why: "One backpack, one 'its.'" },
+      { text: "it's", why: "'It is owner's name' — expand the contraction and it fails." },
+      { text: "there", why: "'There' is a place." }
+    ]
+  },
+  {
+    id: "pronoun-6", pattern: "pronoun",
+    passage: "The trophy goes to the team |that| scores the most points.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "'That' introducing essential info about a group — right as is." },
+      { text: "whom", why: "Object case in a subject slot — the team SCORES." },
+      { text: "which", why: "'Which' wants a comma and an extra-info clause; this info is essential." },
+      { text: "who's", why: "'Who is scores the most points' — no." }
+    ]
+  },
+  {
+    id: "pronoun-7", pattern: "pronoun",
+    passage: "Marcus and |him| built the deck in a weekend.",
+    choices: [
+      { text: "NO CHANGE", why: "Drop Marcus: 'him built the deck'? Subjects take 'he.'" },
+      { text: "he", correct: true, why: "'He built the deck' — the drop-the-other-person test again." },
+      { text: "himself", why: "'Himself' needs 'he' doing something to himself." },
+      { text: "his", why: "Possessive — nothing is owned here." }
+    ]
+  },
+  {
+    id: "pronoun-8", pattern: "pronoun",
+    passage: "When the driver argued with the referee, |he| ejected him from the match.",
+    choices: [
+      { text: "NO CHANGE", why: "Which one is 'he'? A pronoun that could point two ways always gets fixed." },
+      { text: "the referee ejected him", correct: true, why: "Names the ejector; the ambiguity dies." },
+      { text: "he ejected himself", why: "Grammatical, but now it means something absurd." },
+      { text: "they ejected him", why: "'They' is even vaguer than 'he.'" }
+    ]
+  },
+
+  // ---------------- English: tense ----------------
+  {
+    id: "tense-5", pattern: "tense",
+    passage: "She |has worked| at the clinic since 2022.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "'Since 2022' + still true now = present perfect. Right as is." },
+      { text: "worked", why: "Simple past says the job ended; 'since' says it continues." },
+      { text: "works", why: "Loses the duration that 'since 2022' sets up." },
+      { text: "had worked", why: "'Had' needs a later past event to anchor to." }
+    ]
+  },
+  {
+    id: "tense-6", pattern: "tense",
+    passage: "By next June, he |will complete| his certification.",
+    choices: [
+      { text: "NO CHANGE", why: "'By next June' is a deadline — the completing finishes BEFORE it." },
+      { text: "will have completed", correct: true, why: "Future perfect: done before the deadline arrives." },
+      { text: "completed", why: "Past tense pointed at next June." },
+      { text: "has completed", why: "Present perfect can't sit in the future." }
+    ]
+  },
+  {
+    id: "tense-7", pattern: "tense",
+    passage: "Yesterday the interns |present| their findings to the board.",
+    choices: [
+      { text: "NO CHANGE", why: "'Yesterday' pins it in the past; the verb didn't get the memo." },
+      { text: "presented", correct: true, why: "Past time word, past verb." },
+      { text: "will present", why: "'Yesterday' and 'will' point opposite directions." },
+      { text: "have presented", why: "Present perfect fights the specific time word." }
+    ]
+  },
+  {
+    id: "tense-8", pattern: "tense",
+    passage: "If she |would have| studied the map, we wouldn't be lost.",
+    choices: [
+      { text: "NO CHANGE", why: "'Would have' never goes in the if-half — the classic conditional trap." },
+      { text: "had", correct: true, why: "'If she HAD studied' — past conditionals take 'had' in the if-clause." },
+      { text: "has", why: "Present perfect breaks the hypothetical." },
+      { text: "will have", why: "Future perfect in a past hypothetical — no." }
+    ]
+  },
+
+  // ---------------- English: concise ----------------
+  {
+    id: "concise-5", pattern: "concise",
+    passage: "|In my opinion, I think| the fee is too high.",
+    choices: [
+      { text: "NO CHANGE", why: "'In my opinion' and 'I think' are the same statement twice." },
+      { text: "I think", correct: true, why: "One opinion marker does the whole job." },
+      { text: "In my personal opinion, I think", why: "Now it's triple — opinions are always personal." },
+      { text: "It is my opinion and belief that", why: "Five words of throat-clearing." }
+    ]
+  },
+  {
+    id: "concise-6", pattern: "concise",
+    passage: "The two roads |merge together| north of town.",
+    choices: [
+      { text: "NO CHANGE", why: "Merging is already 'together' — that's what the word means." },
+      { text: "merge", correct: true, why: "One word, whole meaning." },
+      { text: "merge together as one", why: "Triple redundancy." },
+      { text: "come together and merge", why: "Says it twice in a trench coat." }
+    ]
+  },
+  {
+    id: "concise-7", pattern: "concise",
+    passage: "She woke at |6 a.m. in the morning| to train.",
+    choices: [
+      { text: "NO CHANGE", why: "'a.m.' already means morning." },
+      { text: "6 a.m.", correct: true, why: "Time stated once, cleanly." },
+      { text: "6 o'clock a.m. in the morning", why: "Now morning is said three ways." },
+      { text: "the morning hour of 6 a.m.", why: "Fancier, still redundant." }
+    ]
+  },
+  {
+    id: "concise-8", pattern: "concise",
+    passage: "The committee reached a |consensus of opinion| after an hour.",
+    choices: [
+      { text: "NO CHANGE", why: "A consensus IS shared opinion — 'of opinion' adds nothing." },
+      { text: "consensus", correct: true, why: "The whole meaning in one word." },
+      { text: "general consensus of opinion", why: "Two redundancies stacked — consensus is already general." },
+      { text: "consensus that everyone agreed on", why: "Agreement about the agreement." }
+    ]
+  },
+
+  // ---------------- English: transitions ----------------
+  {
+    id: "transition-5", pattern: "transition",
+    passage: "The recipe looked complicated. |Similarly,| it needed only five ingredients.",
+    choices: [
+      { text: "NO CHANGE", why: "Nothing is being compared — the two sentences pull against each other." },
+      { text: "However,", correct: true, why: "Looked complicated vs. only five ingredients: contrast." },
+      { text: "Therefore,", why: "Looking complicated doesn't cause simplicity." },
+      { text: "For instance,", why: "The second sentence isn't an example of the first." }
+    ]
+  },
+  {
+    id: "transition-6", pattern: "transition",
+    passage: "Cold-brew coffee is less acidic. |As a result,| many people with sensitive stomachs prefer it.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "Less acid → preferred by sensitive stomachs. Clean cause and effect." },
+      { text: "However,", why: "There's no contrast to signal." },
+      { text: "Meanwhile,", why: "Nothing is simultaneous here." },
+      { text: "In contrast,", why: "The second sentence agrees with the first." }
+    ]
+  },
+  {
+    id: "transition-7", pattern: "transition",
+    passage: "The bridge is a century old. |Therefore,| engineers rate it among the safest in the state.",
+    choices: [
+      { text: "NO CHANGE", why: "Being old doesn't cause safety — if anything you'd expect the opposite." },
+      { text: "Nevertheless,", correct: true, why: "Old YET safest — a contrast word earns its keep." },
+      { text: "For example,", why: "Safety ratings aren't an example of age." },
+      { text: "Likewise,", why: "Nothing is being likened." }
+    ]
+  },
+  {
+    id: "transition-8", pattern: "transition",
+    passage: "Some deserts freeze at night. |For instance,| the Gobi regularly drops below −20°F after dark.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "The Gobi is a specific example of the general claim. Exactly right." },
+      { text: "However,", why: "The example supports the claim — no contrast." },
+      { text: "As a result,", why: "The Gobi's cold isn't caused by the first sentence." },
+      { text: "In conclusion,", why: "Nothing is being wrapped up." }
+    ]
+  },
+
+  // ---------------- English: modifiers ----------------
+  {
+    id: "modifier-5", pattern: "modifier",
+    passage: "|Covered in mud, Mom made the dog sleep in the garage.|",
+    choices: [
+      { text: "NO CHANGE", why: "As written, MOM is the muddy one." },
+      { text: "Covered in mud, the dog was sent to the garage by Mom.", correct: true, why: "The muddy one now follows the phrase directly." },
+      { text: "Covered in mud, the garage is where Mom sent the dog.", why: "Now the garage is muddy." },
+      { text: "Mom, covered in mud, sent the dog to the garage.", why: "Grammatical — but it still says Mom was the muddy one. Placement IS meaning." }
+    ]
+  },
+  {
+    id: "modifier-6", pattern: "modifier", fixedOrder: true,
+    prompt: "The best placement for the underlined phrase would be:",
+    passage: "She served cake to the kids |on paper plates|.",
+    choices: [
+      { text: "where it is now", why: "The kids are standing on paper plates." },
+      { text: "after the word She", why: "'She on paper plates served' — no." },
+      { text: "after the word served", why: "'Served on paper plates cake to the kids' — tangled." },
+      { text: "after the word cake", correct: true, why: "'Cake on paper plates' — the phrase touches what it describes." }
+    ]
+  },
+  {
+    id: "modifier-7", pattern: "modifier",
+    passage: "|To qualify for the discount, a receipt must be shown at the counter.|",
+    choices: [
+      { text: "NO CHANGE", why: "Receipts don't qualify for discounts — people do, and no person is in the sentence." },
+      { text: "To qualify for the discount, customers must show a receipt at the counter.", correct: true, why: "The qualifier ('customers') now follows the phrase." },
+      { text: "To qualify for the discount, the counter requires a receipt.", why: "Now the counter is trying to qualify." },
+      { text: "A receipt, to qualify for the discount, must be shown at the counter.", why: "The receipt is still doing the qualifying." }
+    ]
+  },
+  {
+    id: "modifier-8", pattern: "modifier", fixedOrder: true,
+    prompt: "The best placement for the underlined phrase would be:",
+    passage: "The guide spotted a moose |with high-powered binoculars|.",
+    choices: [
+      { text: "where it is now", why: "That's a moose carrying binoculars — quite a moose." },
+      { text: "after the word The", why: "'The with high-powered binoculars guide' — word salad." },
+      { text: "after the word guide", correct: true, why: "'The guide with high-powered binoculars spotted…' — the equipment belongs to the guide." },
+      { text: "after the word a", why: "'A with high-powered binoculars moose' — no." }
+    ]
+  },
+
+  // ---------------- English: who/whom ----------------
+  {
+    id: "whowhom-5", pattern: "whowhom",
+    passage: "The customer |who| I helped yesterday left a five-star review.",
+    choices: [
+      { text: "NO CHANGE", why: "Test it: 'I helped HE'? No — 'I helped him,' so it's whom." },
+      { text: "whom", correct: true, why: "'I helped him' → him → whom. The he/him test never misses." },
+      { text: "which", why: "Customers are people." },
+      { text: "whose", why: "Nothing is possessed." }
+    ]
+  },
+  {
+    id: "whowhom-6", pattern: "whowhom",
+    passage: "She's the engineer |who| designed the ramp system.",
+    choices: [
+      { text: "NO CHANGE", correct: true, why: "'SHE designed it' — subject case, so 'who' is right as is." },
+      { text: "whom", why: "The formal-sounding trap: 'him designed it'? No — she did the designing." },
+      { text: "which", why: "Engineers are people." },
+      { text: "whose", why: "Possessive with nothing possessed." }
+    ]
+  },
+  {
+    id: "whowhom-7", pattern: "whowhom",
+    passage: "|Who's| turn is it to close the shop?",
+    choices: [
+      { text: "NO CHANGE", why: "'Who is turn is it' — expand the contraction and it collapses." },
+      { text: "Whose", correct: true, why: "Possession (whose turn) → 'whose.'" },
+      { text: "Whos", why: "Not a word." },
+      { text: "Whom's", why: "Also not a word." }
+    ]
+  },
+  {
+    id: "whowhom-8", pattern: "whowhom",
+    passage: "The startup, |who| raised two million dollars, hired nobody.",
+    choices: [
+      { text: "NO CHANGE", why: "A company isn't a 'who.'" },
+      { text: "which", correct: true, why: "Thing + comma-wrapped extra info = 'which.'" },
+      { text: "that", why: "'That' never follows a comma." },
+      { text: "whom", why: "Wrong species and wrong case." }
+    ]
+  },
+
+  // ---------------- English: parallel ----------------
+  {
+    id: "parallel-5", pattern: "parallel",
+    passage: "The seminar covers budgeting, investing, and |how to negotiate|.",
+    choices: [
+      { text: "NO CHANGE", why: "Two -ing words, then a 'how to' phrase — the list broke stride." },
+      { text: "negotiating", correct: true, why: "Budgeting, investing, negotiating — matched." },
+      { text: "to negotiate", why: "Still doesn't match the -ing pattern." },
+      { text: "negotiation skills that you learn", why: "A whole clause crashed the list." }
+    ]
+  },
+  {
+    id: "parallel-6", pattern: "parallel",
+    passage: "He'd rather fix the engine himself than |paying| a shop.",
+    choices: [
+      { text: "NO CHANGE", why: "'Rather FIX … than PAYING' — the pair must match forms." },
+      { text: "pay", correct: true, why: "Rather fix … than pay. Mirror shapes." },
+      { text: "to pay", why: "'Than to pay' doesn't mirror bare 'fix.'" },
+      { text: "he pays", why: "A clause where a verb should be." }
+    ]
+  },
+  {
+    id: "parallel-7", pattern: "parallel",
+    passage: "The review praised the food, the service, and |said the prices were fair|.",
+    choices: [
+      { text: "NO CHANGE", why: "Two nouns, then a whole verb phrase — broken list." },
+      { text: "the fair prices", correct: true, why: "The food, the service, the fair prices — three nouns, one clean list." },
+      { text: "the prices being fair", why: "A '-being' phrase still isn't a plain noun." },
+      { text: "that the prices were fair", why: "'Praised … that the prices were fair' — the verb can't take that clause." }
+    ]
+  },
+  {
+    id: "parallel-8", pattern: "parallel",
+    passage: "Training for a marathon requires that you sleep well, that you eat enough, and |running| high mileage.",
+    choices: [
+      { text: "NO CHANGE", why: "Two 'that you ___' clauses, then a stray -ing — the pattern snapped." },
+      { text: "that you run", correct: true, why: "That you sleep, that you eat, that you run — matched clauses." },
+      { text: "to run", why: "An infinitive can't close a that-clause list." },
+      { text: "you should run", why: "Dropped the 'that' the list established." }
+    ]
+  },
+
+  // ---------------- English: rhetoric ----------------
+  {
+    id: "rhetoric-5", pattern: "rhetoric", fixedOrder: true,
+    context: "A paragraph argues the school should add a bike-repair elective, citing strong student demand and low startup costs.",
+    prompt: "The writer is considering adding this sentence: “The school's parking lot was repaved last summer.” Should the writer make this addition?",
+    choices: [
+      { text: "Yes, because it shows the school invests in its facilities.", why: "True-ish, but investment in pavement says nothing about the elective." },
+      { text: "Yes, because parking relates to transportation.", why: "The surface-word trap: 'transportation' appears in both, relevance doesn't." },
+      { text: "No, because it does nothing to support the case for the elective.", correct: true, why: "Demand and costs are the argument; pavement is furniture." },
+      { text: "No, because the repaving was too expensive.", why: "Invents a fact the passage never gives." }
+    ]
+  },
+  {
+    id: "rhetoric-6", pattern: "rhetoric", fixedOrder: true,
+    context: "An essay profiles a guitar maker; this paragraph details how she selects wood by tapping each plank and listening to its ring.",
+    prompt: "The writer is considering deleting this sentence: “Her workshop also has a small refrigerator for glue.” Should it be deleted?",
+    choices: [
+      { text: "No, because glue is essential to building guitars.", why: "True — and irrelevant. The paragraph is about choosing wood." },
+      { text: "Yes, because it interrupts the paragraph's focus on selecting wood.", correct: true, why: "Right verdict, right reason: it's off this paragraph's one job." },
+      { text: "No, because it adds a vivid workshop detail.", why: "Vividness isn't the test; loyalty to the point is." },
+      { text: "Yes, because refrigerators are not musical instruments.", why: "Right verdict, absurd reason — and on the ACT, the reason IS the answer." }
+    ]
+  },
+  {
+    id: "rhetoric-7", pattern: "rhetoric", fixedOrder: true,
+    context: "The writer wants to convey how quiet the library becomes during finals week.",
+    prompt: "Which choice most effectively accomplishes the writer's goal?",
+    choices: [
+      { text: "The library extends its hours during finals week.", why: "Hours say nothing about quiet." },
+      { text: "Many students prefer studying at home.", why: "Points away from the library entirely." },
+      { text: "Finals happen twice each academic year.", why: "A calendar fact, not an atmosphere." },
+      { text: "Even the page-turns seemed to apologize for making noise.", correct: true, why: "One image that makes the silence audible — exactly the goal." }
+    ]
+  },
+  {
+    id: "rhetoric-8", pattern: "rhetoric", fixedOrder: true,
+    context: "A paragraph traces how a family taco stand grew into a fleet of six trucks across the county.",
+    prompt: "Which sentence best concludes the paragraph by returning to its main idea?",
+    choices: [
+      { text: "Tacos have a long history in Mexican cuisine.", why: "Rewinds to background the paragraph never covered." },
+      { text: "What started as one borrowed griddle now feeds half the county.", correct: true, why: "Lands the growth story in one line — start to scale." },
+      { text: "Food trucks must pass regular health inspections.", why: "A regulation aside." },
+      { text: "The family also considered opening a car wash.", why: "New topic in the last sentence." }
+    ]
+  },
+
+  // ---------------- Math: answer the actual question ----------------
+  {
+    id: "m_asked-5", pattern: "m_asked", fixedOrder: true,
+    passage: "If 3(x − 2) = 21, what is x + 4?",
+    choices: [
+      { text: "7", why: "That's x − 2, the intermediate step." },
+      { text: "9", why: "That's x. They asked for x + 4." },
+      { text: "13", correct: true, why: "x − 2 = 7 → x = 9 → x + 4 = 13." },
+      { text: "21", why: "The right-hand side, recycled." }
+    ]
+  },
+  {
+    id: "m_asked-6", pattern: "m_asked", fixedOrder: true,
+    passage: "A rectangle has area 48 and length 8. What is its perimeter?",
+    choices: [
+      { text: "6", why: "That's the width — halfway there." },
+      { text: "14", why: "8 + 6 — one of each side; the perimeter has two of each." },
+      { text: "28", correct: true, why: "Width = 48 ÷ 8 = 6 → perimeter 2(8 + 6) = 28." },
+      { text: "48", why: "The area, recycled." }
+    ]
+  },
+  {
+    id: "m_asked-7", pattern: "m_asked", fixedOrder: true,
+    passage: "If 2y − 3 = 11, what is 2y + 3?",
+    choices: [
+      { text: "7", why: "That's y. Look again at what they asked." },
+      { text: "11", why: "The right-hand side, recycled." },
+      { text: "14", why: "That's 2y — one step short." },
+      { text: "17", correct: true, why: "2y = 14 → 2y + 3 = 17. You never even needed y." }
+    ]
+  },
+  {
+    id: "m_asked-8", pattern: "m_asked", fixedOrder: true,
+    passage: "The sum of three consecutive integers is 42. What is the largest of them?",
+    choices: [
+      { text: "13", why: "That's the smallest." },
+      { text: "14", why: "That's the middle one — 42 ÷ 3 gives the average, not the largest." },
+      { text: "15", correct: true, why: "13 + 14 + 15 = 42; the largest is 15." },
+      { text: "42", why: "The sum, recycled." }
+    ]
+  },
+
+  // ---------------- Math: backsolve ----------------
+  {
+    id: "m_backsolve-5", pattern: "m_backsolve", fixedOrder: true,
+    passage: "For which value of n does 2ⁿ = 64 ?",
+    choices: [
+      { text: "5", why: "2⁵ = 32. One doubling short." },
+      { text: "6", correct: true, why: "2·2·2·2·2·2 = 64. Testing choices beats logarithms here." },
+      { text: "8", why: "2⁸ = 256." },
+      { text: "32", why: "64 ÷ 2 — exponents aren't division." }
+    ]
+  },
+  {
+    id: "m_backsolve-6", pattern: "m_backsolve", fixedOrder: true,
+    passage: "A number decreased by 40% equals 36. What is the number?",
+    choices: [
+      { text: "21.6", why: "That's 36 decreased by 40% — you decreased the RESULT." },
+      { text: "50.4", why: "36 × 1.4 — adding 40% doesn't undo subtracting 40%." },
+      { text: "60", correct: true, why: "Test it: 60 − 40% of 60 = 60 − 24 = 36. ✓" },
+      { text: "90", why: "36 ÷ 0.4 — divided by the discount instead of what's left." }
+    ]
+  },
+  {
+    id: "m_backsolve-7", pattern: "m_backsolve", fixedOrder: true,
+    passage: "Adult tickets cost $9 and kid tickets cost $4. Thirteen people paid $92 in total. How many kid tickets were sold?",
+    choices: [
+      { text: "4", why: "Test: 9 adults + 4 kids = 81 + 16 = $97. Too high." },
+      { text: "5", correct: true, why: "8 adults + 5 kids = 72 + 20 = $92. ✓" },
+      { text: "6", why: "7 adults + 6 kids = 63 + 24 = $87. Too low." },
+      { text: "8", why: "That's the ADULT count from the right answer." }
+    ]
+  },
+  {
+    id: "m_backsolve-8", pattern: "m_backsolve", fixedOrder: true,
+    passage: "If x² + 5 = 41 and x > 0, what is x?",
+    choices: [
+      { text: "4", why: "16 + 5 = 21. Not 41." },
+      { text: "6", correct: true, why: "36 + 5 = 41. ✓" },
+      { text: "18", why: "36 ÷ 2 — square roots aren't halving." },
+      { text: "36", why: "That's x² — stopped one step early." }
+    ]
+  },
+
+  // ---------------- Math: plug in ----------------
+  {
+    id: "m_plugin-5", pattern: "m_plugin",
+    passage: "If p is an odd integer, which of the following must be even?",
+    choices: [
+      { text: "p + 2", why: "Odd + even = odd. Try p = 3 → 5." },
+      { text: "2p", correct: true, why: "Two times ANYTHING is even. p = 3 → 6." },
+      { text: "p²", why: "3² = 9 — odd squared stays odd." },
+      { text: "3p", why: "3 × 3 = 9. Odd." }
+    ]
+  },
+  {
+    id: "m_plugin-6", pattern: "m_plugin", fixedOrder: true,
+    passage: "A price is cut 30%, then the sale price is cut another 10%. The total discount off the original price is:",
+    choices: [
+      { text: "33%", why: "Splitting the difference isn't math." },
+      { text: "37%", correct: true, why: "Try $100: → $70 → $63. You saved $37." },
+      { text: "40%", why: "30 + 10 — percents of different bases never just add." },
+      { text: "63%", why: "That's what you PAY, not what you saved." }
+    ]
+  },
+  {
+    id: "m_plugin-7", pattern: "m_plugin", fixedOrder: true,
+    passage: "If a = b + 3, what is the value of (a − b)² ?",
+    choices: [
+      { text: "3", why: "That's a − b itself, not its square." },
+      { text: "6", why: "Doubled instead of squared." },
+      { text: "9", correct: true, why: "a − b is ALWAYS 3, so the square is always 9. Try b = 1: (4−1)² = 9." },
+      { text: "Cannot be determined", why: "It can — plug in any b and a − b comes out 3 every time. This choice preys on variable-phobia." }
+    ]
+  },
+  {
+    id: "m_plugin-8", pattern: "m_plugin", fixedOrder: true,
+    passage: "A stock's price doubled, then fell 50%. Compared with its starting price, it is now:",
+    choices: [
+      { text: "25% lower", why: "Plug in $100 and just follow it: 100 → 200 → 100." },
+      { text: "exactly the same", correct: true, why: "$100 → $200 → $100. The fall erased the double — percent moves aren't symmetric, but this pair cancels." },
+      { text: "25% higher", why: "Run the $100 test — no gain survives." },
+      { text: "50% higher", why: "The 50% fall applied to the DOUBLED price, not the original." }
+    ]
+  },
+
+  // ---------------- Math: translate ----------------
+  {
+    id: "m_translate-5", pattern: "m_translate",
+    passage: "Which expression represents \"twice the sum of x and 5\"?",
+    choices: [
+      { text: "2x + 5", why: "That doubles x first — but 'the sum' happens before the doubling." },
+      { text: "2(x + 5)", correct: true, why: "Sum first (x + 5), then twice it." },
+      { text: "x + 10", why: "Added twice instead of doubling the sum." },
+      { text: "2x · 5", why: "Multiplication invaded a sum." }
+    ]
+  },
+  {
+    id: "m_translate-6", pattern: "m_translate",
+    passage: "A phone plan costs $30 per month plus $0.10 for each extra gigabyte g. Which expression gives the monthly cost?",
+    choices: [
+      { text: "30 + 0.10g", correct: true, why: "Flat fee once, dime per gig." },
+      { text: "30g + 0.10", why: "That charges $30 per gigabyte." },
+      { text: "30.10g", why: "Glued the two prices into one." },
+      { text: "0.10(30 + g)", why: "Now the flat fee costs a dime on the dollar." }
+    ]
+  },
+  {
+    id: "m_translate-7", pattern: "m_translate",
+    passage: "Which expression represents \"six fewer than half of n\"?",
+    choices: [
+      { text: "6 − n/2", why: "The flip trap — 'fewer than' reverses the order." },
+      { text: "n/2 − 6", correct: true, why: "Half of n, THEN take six away." },
+      { text: "(n − 6)/2", why: "That halves AFTER subtracting — order matters." },
+      { text: "6 − 2n", why: "Flipped and doubled instead of halved." }
+    ]
+  },
+  {
+    id: "m_translate-8", pattern: "m_translate",
+    passage: "A worker earns w dollars per hour plus a flat $50 weekly bonus. She worked 38 hours this week. Her pay is:",
+    choices: [
+      { text: "38w + 50", correct: true, why: "Hours × rate, bonus once." },
+      { text: "50w + 38", why: "Rate and bonus swapped jobs." },
+      { text: "88w", why: "Added hours to the bonus, then multiplied — units collided." },
+      { text: "38(w + 50)", why: "That pays the bonus every single hour." }
+    ]
+  },
+
+  // ---------------- Math: lines ----------------
+  {
+    id: "m_lines-5", pattern: "m_lines", fixedOrder: true,
+    passage: "What is the slope of the line 3x + y = 12 ?",
+    choices: [
+      { text: "−3", correct: true, why: "Solve for y: y = −3x + 12. The sign flips when 3x crosses over." },
+      { text: "3", why: "Forgot the sign flip when moving 3x to the other side." },
+      { text: "4", why: "That's 12 ÷ 3 — the x-intercept, not the slope." },
+      { text: "12", why: "The constant — that's the y-intercept." }
+    ]
+  },
+  {
+    id: "m_lines-6", pattern: "m_lines",
+    passage: "Which line is perpendicular to y = 2x + 1 ?",
+    choices: [
+      { text: "y = −(1/2)x + 7", correct: true, why: "Perpendicular = flip AND negate: 2 → −1/2." },
+      { text: "y = 2x − 1", why: "Same slope — that's parallel." },
+      { text: "y = −2x + 1", why: "Negated but didn't flip — that's a reflection, not perpendicular." },
+      { text: "y = (1/2)x − 3", why: "Flipped but didn't negate." }
+    ]
+  },
+  {
+    id: "m_lines-7", pattern: "m_lines",
+    passage: "A line has slope 5 and crosses the y-axis at (0, −4). Its equation is:",
+    choices: [
+      { text: "y = 5x − 4", correct: true, why: "m = 5, b = −4, straight into y = mx + b." },
+      { text: "y = −4x + 5", why: "Slope and intercept swapped seats." },
+      { text: "y = 5x + 4", why: "The intercept's sign flipped." },
+      { text: "y = −5x − 4", why: "The slope's sign flipped." }
+    ]
+  },
+  {
+    id: "m_lines-8", pattern: "m_lines", fixedOrder: true,
+    passage: "What is the midpoint of the segment from (1, 8) to (7, 2)?",
+    choices: [
+      { text: "(3, 3)", why: "Half the differences — the midpoint AVERAGES, it doesn't subtract." },
+      { text: "(4, 5)", correct: true, why: "Average each coordinate: (1+7)/2 = 4, (8+2)/2 = 5." },
+      { text: "(6, −6)", why: "That's the displacement (7−1, 2−8), not a point between them." },
+      { text: "(8, 10)", why: "Added the coordinates but forgot to divide by 2." }
+    ]
+  },
+
+  // ---------------- Math: geometry ----------------
+  {
+    id: "m_geometry-5", pattern: "m_geometry", fixedOrder: true,
+    passage: "A circle has circumference 10π. What is its radius?",
+    choices: [
+      { text: "5", correct: true, why: "C = 2πr → 10π = 2πr → r = 5." },
+      { text: "10", why: "That's the diameter." },
+      { text: "25", why: "That's r², already headed toward an area question nobody asked." },
+      { text: "100", why: "10² — squared the wrong thing." }
+    ]
+  },
+  {
+    id: "m_geometry-6", pattern: "m_geometry", fixedOrder: true,
+    passage: "A square with side 6 has the same area as a triangle with base 12. What is the triangle's height?",
+    choices: [
+      { text: "3", why: "½ × 12 × 3 = 18 — half the square's 36." },
+      { text: "6", correct: true, why: "Square area 36 = ½ × 12 × h → h = 6." },
+      { text: "9", why: "Check it: ½ × 12 × 9 = 54, not 36." },
+      { text: "12", why: "Matching the base isn't a rule." }
+    ]
+  },
+  {
+    id: "m_geometry-7", pattern: "m_geometry", fixedOrder: true,
+    passage: "A rectangle measures 6 by 8. How long is its diagonal?",
+    choices: [
+      { text: "10", correct: true, why: "6² + 8² = 100 → 10. The 3-4-5 triangle, doubled." },
+      { text: "14", why: "6 + 8 — walking the two sides instead of taking the shortcut." },
+      { text: "28", why: "That's the perimeter." },
+      { text: "48", why: "That's the area." }
+    ]
+  },
+  {
+    id: "m_geometry-8", pattern: "m_geometry", fixedOrder: true,
+    passage: "The angles of a triangle measure x, 2x, and 3x. What is the largest angle?",
+    choices: [
+      { text: "30", why: "That's x — the SMALLEST angle." },
+      { text: "60", why: "That's 2x, the middle one." },
+      { text: "90", correct: true, why: "x + 2x + 3x = 180 → x = 30 → largest = 3(30) = 90." },
+      { text: "180", why: "That's the whole triangle's total." }
+    ]
+  },
+
+  // ---------------- Math: ratios ----------------
+  {
+    id: "m_ratio-5", pattern: "m_ratio", fixedOrder: true,
+    passage: "On a map, 2 inches represents 15 miles. Two towns are 7 inches apart. How many miles apart are they?",
+    choices: [
+      { text: "30", why: "That's 4 inches' worth." },
+      { text: "45", why: "That's 6 inches' worth — the proportion got rounded." },
+      { text: "52.5", correct: true, why: "15 ÷ 2 = 7.5 miles per inch → 7 × 7.5 = 52.5." },
+      { text: "105", why: "7 × 15 — skipped the ÷2." }
+    ]
+  },
+  {
+    id: "m_ratio-6", pattern: "m_ratio", fixedOrder: true,
+    passage: "A punch recipe mixes juice and soda in a 3:5 ratio. How many cups of juice are in 40 cups of punch?",
+    choices: [
+      { text: "8", why: "That's the number of SHARES, not cups of juice." },
+      { text: "15", correct: true, why: "3 + 5 = 8 shares → 40 ÷ 8 = 5 per share → juice = 3 × 5 = 15." },
+      { text: "24", why: "3/5 of 40 — but 5 is the soda's share, not the total. Totals use 8." },
+      { text: "25", why: "That's the SODA." }
+    ]
+  },
+  {
+    id: "m_ratio-7", pattern: "m_ratio", fixedOrder: true,
+    passage: "Sales tax is 8%. A receipt shows $64.80 total after tax. What was the pre-tax price?",
+    choices: [
+      { text: "$5.18", why: "That's just 8% of the total — a piece, not the price." },
+      { text: "$59.62", why: "64.80 minus 8% of 64.80 — undoing tax means dividing by 1.08, not subtracting from the wrong base." },
+      { text: "$60.00", correct: true, why: "64.80 ÷ 1.08 = 60. Check: 60 × 1.08 = 64.80. ✓" },
+      { text: "$69.98", why: "Added the tax again instead of removing it." }
+    ]
+  },
+  {
+    id: "m_ratio-8", pattern: "m_ratio", fixedOrder: true,
+    passage: "In a survey, 3 out of every 8 students bike to school. Of 240 students surveyed, how many do NOT bike?",
+    choices: [
+      { text: "30", why: "That's one share (240 ÷ 8), not five of them." },
+      { text: "90", why: "That's the bikers — reread what they asked." },
+      { text: "120", why: "Half — but the split is 3:5, not 4:4." },
+      { text: "150", correct: true, why: "Non-bikers are 5 of 8 shares: (5/8) × 240 = 150." }
+    ]
+  },
+
+  // ---------------- Math: averages ----------------
+  {
+    id: "m_average-5", pattern: "m_average", fixedOrder: true,
+    passage: "What is the mean of 4, 7, 7, 10, and 12?",
+    choices: [
+      { text: "7", why: "That's the median AND the mode — the mean adds and divides." },
+      { text: "8", correct: true, why: "4+7+7+10+12 = 40 → 40 ÷ 5 = 8." },
+      { text: "9", why: "Off by one on the divide." },
+      { text: "40", why: "That's the total — one ÷5 from done." }
+    ]
+  },
+  {
+    id: "m_average-6", pattern: "m_average", fixedOrder: true,
+    passage: "Through 6 games, Ana averages 12 points. After game 7 her average is 13. How many points did she score in game 7?",
+    choices: [
+      { text: "13", why: "Scoring the new average can't RAISE the average to it." },
+      { text: "14", why: "The +1 must cover all seven games, not just one." },
+      { text: "19", correct: true, why: "New total 7×13 = 91; old total 6×12 = 72; game 7 = 19." },
+      { text: "91", why: "That's the season total." }
+    ]
+  },
+  {
+    id: "m_average-7", pattern: "m_average", fixedOrder: true,
+    passage: "The median of five house prices is $200,000. The most expensive house rises $50,000 in value. What is the new median?",
+    choices: [
+      { text: "$200,000", correct: true, why: "The middle value didn't move — the median ignores what happens at the extremes." },
+      { text: "$210,000", why: "Spreading the raise across all five — that's how the MEAN would move." },
+      { text: "$225,000", why: "Half the raise added — still treating the median like an average." },
+      { text: "$250,000", why: "Added the raise to the median, but only the TOP house changed." }
+    ]
+  },
+  {
+    id: "m_average-8", pattern: "m_average", fixedOrder: true,
+    passage: "A data set of 10 values has a mean of 20. One value, 65, is removed. What is the new mean?",
+    choices: [
+      { text: "13.5", why: "Divided by 10 — but only 9 values remain." },
+      { text: "15", correct: true, why: "Total 10×20 = 200 → 200 − 65 = 135 → 135 ÷ 9 = 15." },
+      { text: "20", why: "Removing a value far above the mean must PULL the mean down." },
+      { text: "45", why: "65 − 20 — subtracting the mean from a value means nothing here." }
+    ]
+  },
+
+  // ---------------- Reading: main idea ----------------
+  {
+    id: "r_mainidea-5", pattern: "r_mainidea",
+    context: "For a century, the lighthouse keepers' logbooks were valued only as maritime records. Then climate scientists opened them: page after page of daily wind, fog, and temperature notes — an unbroken hundred-year weather dataset no instrument station could match.",
+    prompt: "Which choice best states the main idea?",
+    choices: [
+      { text: "Old logbooks proved unexpectedly valuable as climate data.", correct: true, why: "Covers the turn the whole passage exists for." },
+      { text: "Lighthouse keepers recorded the weather every day.", why: "True detail; the point is what that record became." },
+      { text: "Instrument stations produce unreliable data.", why: "The passage says no station matches the logs' SPAN — not that stations are unreliable." },
+      { text: "Historians have lost interest in maritime records.", why: "Never stated." }
+    ]
+  },
+  {
+    id: "r_mainidea-6", pattern: "r_mainidea",
+    context: "The city's new bus lanes drew fury over the parking they removed — until the commute data arrived. Buses that had crawled at eight miles per hour now averaged nineteen, and ridership on the corridor jumped forty percent in six months.",
+    prompt: "The main idea of the passage is that:",
+    choices: [
+      { text: "data showed the controversial bus lanes delivered real improvements.", correct: true, why: "Wraps the conflict and the payoff — the passage's whole arc." },
+      { text: "buses previously averaged eight miles per hour.", why: "A before-number promoted above its pay grade." },
+      { text: "removing parking always increases ridership.", why: "'Always' is an extreme one example can't earn." },
+      { text: "the city should remove additional parking.", why: "A recommendation the passage never makes." }
+    ]
+  },
+  {
+    id: "r_mainidea-7", pattern: "r_mainidea",
+    context: "Sourdough's tang comes not from a recipe but from geography: wild yeasts and bacteria drift in from the local air and settle into the starter. San Francisco's famous loaf, transplanted to Denver, slowly stops tasting like San Francisco.",
+    prompt: "Which choice best states the main idea?",
+    choices: [
+      { text: "A sourdough's character comes from its local environment.", correct: true, why: "Both sentences serve exactly this claim." },
+      { text: "Denver cannot produce good bread.", why: "The bread changes; nobody says it gets worse." },
+      { text: "Recipes matter more than location.", why: "Directly contradicted — 'not from a recipe.'" },
+      { text: "San Francisco bakers refuse to share their starters.", why: "Imported from outside the passage." }
+    ]
+  },
+  {
+    id: "r_mainidea-8", pattern: "r_mainidea",
+    context: "Early flight recorders survived crashes but not investigators' questions: they captured too little. Each generation since has traded steel for memory — today's recorders log thousands of parameters, from flap angles to the pressure in a pilot's headset microphone.",
+    prompt: "The main idea of the passage is that:",
+    choices: [
+      { text: "flight recorders evolved to capture vastly more information.", correct: true, why: "The whole passage is that trajectory: too little → thousands of parameters." },
+      { text: "modern recorders no longer survive crashes.", why: "Nothing says durability was sacrificed." },
+      { text: "early investigators asked too many questions.", why: "Twists the metaphor upside down." },
+      { text: "headset microphones are the most important data source.", why: "One item from a list of thousands." }
+    ]
+  },
+
+  // ---------------- Reading: inference ----------------
+  {
+    id: "r_inference-5", pattern: "r_inference",
+    context: "The chess club met in the cafeteria until the vending machine's hum proved too much for tournament nerves. They now meet in the library, where the only complaint is that winning quietly is harder than it sounds.",
+    prompt: "It can most reasonably be inferred that:",
+    choices: [
+      { text: "the club found the cafeteria environment disruptive.", correct: true, why: "They moved because the hum was 'too much' — one step." },
+      { text: "the library has banned celebrations.", why: "The complaint is wry self-control, not a rule." },
+      { text: "vending machines are prohibited near tournaments.", why: "An invented regulation." },
+      { text: "the club plays worse in the library.", why: "No performance claim anywhere." }
+    ]
+  },
+  {
+    id: "r_inference-6", pattern: "r_inference",
+    context: "Dana's rebuilt carburetor sat gleaming on the bench for three days before she finally bolted it in. \"Measure twice,\" she said, though everyone in the shop knew she'd already measured five times.",
+    prompt: "The passage most strongly supports which conclusion?",
+    choices: [
+      { text: "Dana is exceptionally careful with her work.", correct: true, why: "Three days of waiting, five measurements — the text piles it on." },
+      { text: "Dana doubts her own ability.", why: "One step too far — care is a habit here, not anxiety." },
+      { text: "The carburetor was installed incorrectly.", why: "Nothing suggests a problem." },
+      { text: "Dana's coworkers resent her pace.", why: "'Knew' shows familiarity, not resentment." }
+    ]
+  },
+  {
+    id: "r_inference-7", pattern: "r_inference",
+    context: "The orchard's oldest trees produce small, tart apples nobody will buy whole — and every fall, the cider house buys the entire crop before anyone else can.",
+    prompt: "It can most reasonably be inferred that:",
+    choices: [
+      { text: "the tart apples are valuable for making cider.", correct: true, why: "The cider house races to buy ALL of them — one step from the text." },
+      { text: "the old trees should be replaced.", why: "The passage implies the opposite: their crop is wanted." },
+      { text: "the cider house overpays for its apples.", why: "No price appears anywhere." },
+      { text: "the orchard loses money every fall.", why: "Selling an entire crop suggests otherwise." }
+    ]
+  },
+  {
+    id: "r_inference-8", pattern: "r_inference",
+    context: "The ladder manual's final page, in type smaller than the rest: \"The manufacturer is not responsible for damage caused by use on ice.\" Below it, three more lines cover mud, high wind, and \"the decks of moving boats.\"",
+    prompt: "The passage most strongly suggests that:",
+    choices: [
+      { text: "the warnings reflect ways people have actually used the ladder.", correct: true, why: "Lawyers write warnings for things that happened — 'decks of moving boats' wasn't invented in a meeting." },
+      { text: "the ladder is unsafe under normal conditions.", why: "Warnings about extreme use say nothing about normal use." },
+      { text: "the manufacturer tests ladders on boats.", why: "Disclaiming ≠ testing." },
+      { text: "small type is illegal in manuals.", why: "An invented rule." }
+    ]
+  },
+
+  // ---------------- Reading: vocab ----------------
+  {
+    id: "r_vocab-5", pattern: "r_vocab",
+    context: "The witness's account matched the footage, so the detective let the small contradictions about timing stand.",
+    prompt: "As used in the sentence, \"stand\" most nearly means:",
+    choices: [
+      { text: "remain unchallenged", correct: true, why: "She chose not to dispute them — they were left as they were." },
+      { text: "testify", why: "The courtroom trap — the setting whispers it, the sentence doesn't." },
+      { text: "rise to their feet", why: "Contradictions don't have feet." },
+      { text: "endure hardship", why: "'Can't stand it' is a different idiom entirely." }
+    ]
+  },
+  {
+    id: "r_vocab-6", pattern: "r_vocab",
+    context: "The novel's plot is thin, but its characters are so rich that readers forgive everything else.",
+    prompt: "As used in the sentence, \"rich\" most nearly means:",
+    choices: [
+      { text: "fully developed", correct: true, why: "Rich characters = deep, layered ones — the contrast with a 'thin' plot seals it." },
+      { text: "wealthy", why: "The money meaning — familiar, and wrong here." },
+      { text: "heavy and sweet", why: "The dessert meaning." },
+      { text: "expensive to create", why: "Nothing about cost." }
+    ]
+  },
+  {
+    id: "r_vocab-7", pattern: "r_vocab",
+    context: "He couched his criticism in praise, and half the room missed it entirely.",
+    prompt: "As used in the sentence, \"couched\" most nearly means:",
+    choices: [
+      { text: "phrased", correct: true, why: "He wrapped the criticism in softer words — expressed it a particular way." },
+      { text: "rested on furniture", why: "The living-room trap." },
+      { text: "hid completely", why: "Half the room caught it — so it wasn't fully hidden." },
+      { text: "withdrew", why: "The criticism was delivered, not taken back." }
+    ]
+  },
+  {
+    id: "r_vocab-8", pattern: "r_vocab",
+    context: "The committee's approval was pointed: they praised the plan while noting, twice, exactly who had opposed it earlier.",
+    prompt: "As used in the sentence, \"pointed\" most nearly means:",
+    choices: [
+      { text: "deliberately barbed", correct: true, why: "Praise with a message aimed at someone — approval with an edge." },
+      { text: "sharp-tipped", why: "The physical meaning." },
+      { text: "accidental", why: "'Twice' rules out accident." },
+      { text: "unanimous", why: "Nothing about the vote count." }
+    ]
+  },
+
+  // ---------------- Reading: function ----------------
+  {
+    id: "r_function-5", pattern: "r_function",
+    context: "Marathon plans obsess over the long run. Yet ask coaches what actually breaks runners, and it's rarely Sunday's twenty miles — it's the Tuesday workout done too fast, week after week. The long run gets the glory; the easy days decide the race.",
+    prompt: "The final sentence primarily serves to:",
+    choices: [
+      { text: "distill the passage's contrast into its central point.", correct: true, why: "It compresses glory-vs-substance into the takeaway line." },
+      { text: "argue that long runs should be eliminated.", why: "The passage reassigns credit; it cancels nothing." },
+      { text: "describe a typical training week.", why: "The literal-reading trap." },
+      { text: "celebrate Sunday runners.", why: "Backwards — the glory is the misdirection." }
+    ]
+  },
+  {
+    id: "r_function-6", pattern: "r_function",
+    context: "The seed vault sits in Arctic permafrost, built to outlast wars and centuries. Its first withdrawal came barely a decade in — not for apocalypse, but because a working seed bank in Aleppo needed its backups amid Syria's war.",
+    prompt: "The phrase \"not for apocalypse\" primarily serves to:",
+    choices: [
+      { text: "correct the reader's likely assumption about the vault's use.", correct: true, why: "It anticipates what you expected and redirects to the real story." },
+      { text: "argue that the vault was built prematurely.", why: "The withdrawal proves its worth, not its wastefulness." },
+      { text: "downplay the seriousness of the war.", why: "The war is the reason — nothing is downplayed." },
+      { text: "explain how permafrost preserves seeds.", why: "No science appears in the sentence." }
+    ]
+  },
+  {
+    id: "r_function-7", pattern: "r_function",
+    context: "My grandfather never called it soccer, and never described it as anything but work: two buses to practice, boots resoled by hand, one orange shared at halftime. When today's players complain about grass length, he only smiles.",
+    prompt: "The detail of \"one orange shared at halftime\" functions to:",
+    choices: [
+      { text: "illustrate the scarcity that shaped his experience of the game.", correct: true, why: "One concrete object carries the whole era's leanness." },
+      { text: "show that players were poorly coached.", why: "Nutrition isn't coaching, and neither is the point." },
+      { text: "criticize modern sports diets.", why: "The passage contrasts eras; it doesn't lecture." },
+      { text: "explain why he stopped playing.", why: "Never stated or implied." }
+    ]
+  },
+  {
+    id: "r_function-8", pattern: "r_function",
+    context: "To be clear, the telescope did not \"see\" the planet — none can, at that distance. What it recorded was a star's light dimming on schedule, eighty times, like a porch lamp winked by a moth with a calendar.",
+    prompt: "The moth-and-porch-lamp comparison primarily serves to:",
+    choices: [
+      { text: "make an indirect detection method vivid and concrete.", correct: true, why: "A homely image for an abstract technique — that's the simile's whole job." },
+      { text: "prove that the planet exists.", why: "Similes illustrate; they don't prove." },
+      { text: "describe the telescope's optics.", why: "Nothing optical in the image." },
+      { text: "suggest the discovery was accidental.", why: "'On schedule, eighty times' says exactly the opposite." }
+    ]
+  }
+);
+
+const BANK_VERSION = "v2 · 2026-07-12";
+
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });

@@ -854,6 +854,17 @@
     v.append(mcard);
 
     const rcard = el("div", "card");
+    const actions = el("div", "actions");
+    if (window.chrome && window.chrome.webview) {
+      // running inside the desktop shell — it handles the download and reloads on success
+      const ub = el("button", "btn", "Update question bank");
+      ub.onclick = () => {
+        ub.disabled = true; ub.textContent = "Updating…";
+        window.chrome.webview.postMessage("updateBank");
+        setTimeout(() => { ub.disabled = false; ub.textContent = "Update question bank"; }, 10000);
+      };
+      actions.append(ub);
+    }
     const rb = el("button", "btn ghost", "Reset all progress");
     rb.onclick = () => {
       if (confirm("Wipe all drill history, XP, and levels? This can't be undone.")) {
@@ -861,7 +872,9 @@
         renderChips(); renderProgress();
       }
     };
-    rcard.append(rb);
+    actions.append(rb,
+      el("span", "hint", "Bank " + (typeof BANK_VERSION !== "undefined" ? BANK_VERSION : "v1") + " · " + ACT_QUESTIONS.length + " questions"));
+    rcard.append(actions);
     v.append(rcard);
   }
 

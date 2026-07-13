@@ -33,10 +33,15 @@ overwritten by the app.)
 
 ## What's inside
 
-- **One question at a time** — 96 original ACT-style questions: English (48,
-  12 patterns), Math (32, 8 patterns), Reading (16, 4 patterns) — the three
+- **One question at a time** — 192 original ACT-style questions: English (96,
+  12 patterns), Math (64, 8 patterns), Reading (32, 4 patterns) — the three
   sections that make up the composite score. Subject picker on the Drill tab
   (All / English / Math / Reading). Keys 1–4 answer, Enter advances.
+- **One-click bank updates** — the Progress tab's "Update question bank" button
+  (desktop app only) pulls the latest `questions.js` from the public
+  [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.
+  To publish new questions: edit `questions.js` here, copy it to the bank repo,
+  commit, push. Progress and `notes.js` are never touched by updates.
 - **Science & Writing**: intentionally absent. Since 2025 the science section is
   optional and NOT part of the composite; the essay is optional and rarely
   required. Verify the target scholarship's requirements before spending any
@@ -65,7 +70,7 @@ overwritten by the app.)
 | Path | What it is |
 |---|---|
 | `index.html` | The whole web app (UI + logic, no dependencies; double-clickable in a browser too) |
-| `questions.js` | Question bank (96 questions, 24 patterns across English/Math/Reading) — documented format at the top |
+| `questions.js` | Question bank (192 questions, 24 patterns across English/Math/Reading) — documented format at the top; mirrored to the public actdrill-bank repo for in-app updates |
 | `notes.js` | The Corner — **edit this** |
 | `desktop\` | WinForms + WebView2 shell (net8.0-windows) |
 | `dist\ACTDrill.exe` | The shippable executable |
