@@ -221,6 +221,8 @@
 
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
 
+  .bigclock { font-size: 46px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 12px 0 4px; color: var(--accent); }
+
   footer { color: var(--muted); font-size: 12.5px; text-align: center; margin-top: 30px; }
   .hidden { display: none !important; }
 </style>
@@ -464,6 +466,79 @@
     b.focus();
   }
 
+  // ---------- break guard (hyperfocus protection) ----------
+  const BREAK_Q = 25, BREAK_MIN = 20, SNOOZE_Q = 12, SNOOZE_MIN = 10, IDLE_RESET_MIN = 5;
+  const brk = {
+    qSince: 0, dueQ: BREAK_Q, dueAt: Date.now() + BREAK_MIN * 60e3,
+    snoozes: 0, lastAnswerAt: 0, timer: null
+  };
+
+  function breakDue() { return brk.qSince >= brk.dueQ || Date.now() >= brk.dueAt; }
+  function resetBreak() {
+    brk.qSince = 0; brk.dueQ = BREAK_Q; brk.dueAt = Date.now() + BREAK_MIN * 60e3; brk.snoozes = 0;
+    if (brk.timer) { clearInterval(brk.timer); brk.timer = null; }
+  }
+
+  const BREAK_MSGS = [
+    "Solid block of reps. Here's the part most people skip: the patterns get filed into long-term memory during the break, not during the grind. Water, window, five minutes — that's part of the training, not a pause from it.",
+    "Still going? That's the hyperfocus talking. Past this point accuracy usually slides, and tomorrow-you pays for it. Five real minutes — stand up, walk somewhere, come back sharp.",
+    "Third call. Burnout is how good streaks die — champions rest on schedule. Take the five."
+  ];
+
+  function renderBreakCard() {
+    current = null;
+    viewDrill.innerHTML = "";
+    const card = el("div", "card");
+    card.append(el("div", "pill", "Break time · " + brk.qSince + " reps this block"));
+    card.append(el("p", "prompt", BREAK_MSGS[Math.min(brk.snoozes, BREAK_MSGS.length - 1)]));
+    const a = el("div", "actions");
+    const take = el("button", "btn", "Take 5 (+5 XP)");
+    take.onclick = startBreakCountdown;
+    a.append(take);
+    if (brk.snoozes < 2) {
+      const more = el("button", "btn ghost", "One more set");
+      more.onclick = () => {
+        brk.snoozes++;
+        brk.dueQ = brk.qSince + SNOOZE_Q;
+        brk.dueAt = Date.now() + SNOOZE_MIN * 60e3;
+        nextQuestion();
+      };
+      a.append(more);
+    }
+    a.append(el("span", "hint", "Enter takes the break"));
+    card.append(a);
+    viewDrill.append(card);
+    take.focus();
+  }
+
+  function startBreakCountdown() {
+    S.xp += 5; save(); renderChips(); // recovery bonus — the rest is part of the training
+    viewDrill.innerHTML = "";
+    const card = el("div", "card");
+    card.append(el("div", "pill", "On break — recovery bonus +5 XP banked"));
+    const clock = el("div", "bigclock", "5:00");
+    card.append(clock);
+    card.append(el("p", "prompt", "Stand up. Water. Look at something farther away than a screen. The XP will still be here."));
+    const a = el("div", "actions");
+    const back = el("button", "btn ghost", "Back early");
+    a.append(back);
+    card.append(a);
+    viewDrill.append(card);
+    let left = 5 * 60;
+    const done = () => { resetBreak(); nextQuestion(); };
+    back.onclick = done;
+    brk.timer = setInterval(() => {
+      left--;
+      if (left <= 0) {
+        clearInterval(brk.timer); brk.timer = null;
+        clock.textContent = "0:00";
+        back.className = "btn"; back.textContent = "Back — fresh eyes"; back.focus();
+      } else {
+        clock.textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+      }
+    }, 1000);
+  }
+
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
   let current = null;
@@ -475,7 +550,8 @@
       el("div", "pill", "How this works"),
       el("p", null, "The ACT isn't a knowledge test. Each scored section — <b>English, Math, Reading</b> — recycles the same small set of patterns forever. Once you can name the pattern in five seconds, the answer is usually free."),
       el("p", null, "So: <b>one question at a time.</b> Answer it, read <i>why</i> every wrong choice is wrong, move on. The app quietly serves you more of whatever you miss — that's the whole error log, automated."),
-      el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything.")
+      el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything."),
+      el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die.")
     );
     const a = el("div", "actions");
     const b = el("button", "btn", "Start");
@@ -498,6 +574,10 @@
   }
 
   function nextQuestion() {
+    // stepped away on their own? counters reset quietly — no nagging someone who already rested
+    if (brk.lastAnswerAt && Date.now() - brk.lastAnswerAt > IDLE_RESET_MIN * 60e3) resetBreak();
+    if (breakDue()) { renderBreakCard(); return; }
+
     const q = pickQuestion();
     current = { q, choices: orderedChoices(q), answered: false };
     viewDrill.innerHTML = "";
@@ -549,6 +629,8 @@
     d.n++; if (right) d.right++;
     S.recent.push(q.id);
     while (S.recent.length > 18) S.recent.shift();
+    brk.qSince++;
+    brk.lastAnswerAt = Date.now();
 
     // rewards
     const prevLevel = levelIndex(S.xp);
@@ -912,10 +994,12 @@
     sim(n, acc = 0.8) {
       for (let i = 0; i < n; i++) {
         if (!current || current.answered) nextQuestion();
+        if (!current) return "break card showing after " + i + " answers"; // break guard interrupted the run
         const ci = current.choices.findIndex(c => c.correct);
         const wrongs = current.choices.map((c, j) => j).filter(j => !current.choices[j].correct);
         answer(Math.random() < acc ? ci : wrongs[Math.floor(Math.random() * wrongs.length)]);
       }
+      return "answered " + n;
     },
     state: () => JSON.parse(JSON.stringify(S))
   };

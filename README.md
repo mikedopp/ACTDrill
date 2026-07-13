@@ -48,6 +48,11 @@ overwritten by the app.)
   The Standard, confetti + level-up moments, pattern mastery stars (80%+ over
   10+ reps), streaks and personal bests.
 - **The Corner** — notes from `notes.js`, delivered at wins. The point of the app.
+- **Break guard** — after ~20 minutes or ~25 straight questions the app calls a
+  5-minute break (+5 XP for taking it — rest is part of the training). Two
+  "one more set" snoozes allowed, then it stops offering that button. Stepping
+  away on your own for 5+ minutes resets the counters quietly. Hyperfocus is
+  fuel, but it burns the driver.
 - **Rulebook tab** — the entire finite pattern list with 5-second spot cues.
 - **Formulas tab** — all ~28 formulas the ACT requires (it provides no formula
   sheet), each with a worked micro-example, grouped in five families.
