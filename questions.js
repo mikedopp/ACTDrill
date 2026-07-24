@@ -939,6 +939,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-1", pattern: "m_ratio", fixedOrder: true,
     passage: "A recipe uses 3 cups of flour for every 2 cups of sugar. How much flour goes with 8 cups of sugar?",
+    formula: { key: "Proportion", expr: "set equal fractions, cross-multiply", data: "3/2 = x/8 → x = (3·8)/2", answer: "12 cups" },
+    diagram: { type: "barModel", segments: [{ v: 3, label: "flour 3" }, { v: 2, label: "sugar 2" }], caption: "sugar ×4 (2→8), so flour ×4 (3→12)" },
     choices: [
       { text: "5⅓ cups", why: "Proportion set upside down." },
       { text: "9 cups", why: "Added 6 to both parts — ratios scale by multiplying, never adding." },
@@ -961,6 +963,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-3", pattern: "m_ratio", fixedOrder: true,
     passage: "A town's population grows from 250 to 300. What is the percent increase?",
+    formula: { key: "Percent change", expr: "change ÷ ORIGINAL", data: "50 ÷ 250", answer: "20%" },
+    diagram: { type: "barModel", segments: [{ v: 250, label: "original 250", color: "#3987e5" }, { v: 50, label: "+50", color: "#fab219" }], caption: "the +50 is 20% of the original 250" },
     choices: [
       { text: "16.7%", why: "50/300 — divided by the NEW value. The base is always the original." },
       { text: "20%", correct: true, why: "Change 50 ÷ original 250 = 20%." },
@@ -971,6 +975,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-4", pattern: "m_ratio", fixedOrder: true,
     passage: "In a class of 32 students, the ratio of girls to boys is 5:3. How many girls are there?",
+    formula: { key: "Ratio parts", expr: "add the parts, divide the total, then scale", data: "5+3 = 8 parts → 32 ÷ 8 = 4 per part", answer: "girls = 5 × 4 = 20" },
+    diagram: { type: "barModel", segments: [{ v: 5, label: "girls 5" }, { v: 3, label: "boys 3" }], caption: "8 parts share 32 → 4 each → 20 girls, 12 boys" },
     choices: [
       { text: "5", why: "Ratio numbers aren't head counts until you scale them." },
       { text: "12", why: "That's the boys." },
@@ -983,6 +989,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-1", pattern: "m_average", fixedOrder: true,
     passage: "Sam's first four test scores average 85. What must he score on the fifth test to raise his average to 87?",
+    formula: { key: "Averages via totals", expr: "total = avg × count", data: "need 5×87 = 435; have 4×85 = 340", answer: "435 − 340 = 95" },
     choices: [
       { text: "85", why: "His current average — matching it moves nothing." },
       { text: "87", why: "Scoring the target average won't PULL the average up to it." },
@@ -993,6 +1000,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-2", pattern: "m_average", fixedOrder: true,
     passage: "What is the median of 3, 9, 4, 12, 8?",
+    formula: { key: "Median", expr: "SORT the list first, then take the middle", data: "3, 4, [8], 9, 12", answer: "8" },
+    diagram: { type: "numberLine", min: 2, max: 13, points: [{ x: 3 }, { x: 4 }, { x: 8, label: "median", color: "#fab219" }, { x: 9 }, { x: 12 }], caption: "sorted — the middle value is the median" },
     choices: [
       { text: "4", why: "That's the middle of the list as written — sort first." },
       { text: "7.2", why: "That's the MEAN. Median is the middle after sorting." },
@@ -1003,6 +1012,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-3", pattern: "m_average", fixedOrder: true,
     passage: "The average of x and y is 14. The average of x, y, and z is 12. What is z?",
+    formula: { key: "Work in totals", expr: "total = avg × count", data: "x+y = 2×14 = 28;  x+y+z = 3×12 = 36", answer: "z = 36 − 28 = 8" },
     choices: [
       { text: "2", why: "14 − 12 — averages don't subtract like that. Work in totals." },
       { text: "8", correct: true, why: "x + y = 2 × 14 = 28. x + y + z = 3 × 12 = 36. z = 8." },
@@ -1013,6 +1023,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-4", pattern: "m_average", fixedOrder: true,
     passage: "A store averages $200 in daily sales Monday–Friday and $340 on each weekend day. What is the average daily sales for the whole week?",
+    formula: { key: "Weighted average", expr: "grand total ÷ total count (weekdays happen 5×)", data: "(5×200 + 2×340) ÷ 7 = 1680 ÷ 7", answer: "$240" },
     choices: [
       { text: "$240", correct: true, why: "(5 × 200 + 2 × 340) ÷ 7 = 1680 ÷ 7 = 240." },
       { text: "$270", why: "(200 + 340) ÷ 2 — the flat average ignores that weekdays happen five times." },
@@ -1982,6 +1993,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-5", pattern: "m_geometry", fixedOrder: true,
     passage: "A circle has circumference 10π. What is its radius?",
+    formula: { key: "Circle circumference", expr: "C = 2πr,  so  r = C ÷ (2π)", data: "10π ÷ 2π", answer: "r = 5" },
+    diagram: { type: "circle", rLabel: "r = 5", note: "C = 2πr = 10π" },
     choices: [
       { text: "5", correct: true, why: "C = 2πr → 10π = 2πr → r = 5." },
       { text: "10", why: "That's the diameter." },
@@ -1992,6 +2005,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-6", pattern: "m_geometry", fixedOrder: true,
     passage: "A square with side 6 has the same area as a triangle with base 12. What is the triangle's height?",
+    formula: { key: "Set the areas equal", expr: "square s² = triangle ½·b·h", data: "6² = 36 = ½·12·h → h = 72/12", answer: "h = 6" },
+    diagram: { type: "rightTriangle", a: 12, b: 6, c: "", aLabel: "base 12", bLabel: "h = 6", cLabel: "", note: "½·12·6 = 36 = 6²" },
     choices: [
       { text: "3", why: "½ × 12 × 3 = 18 — half the square's 36." },
       { text: "6", correct: true, why: "Square area 36 = ½ × 12 × h → h = 6." },
@@ -2002,6 +2017,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-7", pattern: "m_geometry", fixedOrder: true,
     passage: "A rectangle measures 6 by 8. How long is its diagonal?",
+    formula: { key: "Pythagorean (the diagonal)", expr: "the diagonal splits it into a right triangle: a² + b² = c²", data: "6² + 8² = 36 + 64 = 100", answer: "diagonal = √100 = 10" },
+    diagram: { type: "rightTriangle", a: 8, b: 6, c: 10, aLabel: "8", bLabel: "6", cLabel: "diagonal = 10", note: "6² + 8² = 10²" },
     choices: [
       { text: "10", correct: true, why: "6² + 8² = 100 → 10. The 3-4-5 triangle, doubled." },
       { text: "14", why: "6 + 8 — walking the two sides instead of taking the shortcut." },
@@ -2012,6 +2029,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-8", pattern: "m_geometry", fixedOrder: true,
     passage: "The angles of a triangle measure x, 2x, and 3x. What is the largest angle?",
+    formula: { key: "Triangle angle sum", expr: "all three angles add to 180°", data: "x + 2x + 3x = 6x = 180 → x = 30", answer: "largest = 3·30 = 90°" },
     choices: [
       { text: "30", why: "That's x — the SMALLEST angle." },
       { text: "60", why: "That's 2x, the middle one." },
@@ -2024,6 +2042,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-5", pattern: "m_ratio", fixedOrder: true,
     passage: "On a map, 2 inches represents 15 miles. Two towns are 7 inches apart. How many miles apart are they?",
+    formula: { key: "Proportion", expr: "2 in / 15 mi = 7 in / x mi", data: "x = 7 × (15 ÷ 2) = 7 × 7.5", answer: "52.5 miles" },
     choices: [
       { text: "30", why: "That's 4 inches' worth." },
       { text: "45", why: "That's 6 inches' worth — the proportion got rounded." },
@@ -2046,6 +2065,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-7", pattern: "m_ratio", fixedOrder: true,
     passage: "Sales tax is 8%. A receipt shows $64.80 total after tax. What was the pre-tax price?",
+    formula: { key: "Undo a percent", expr: "total = price × 1.08,  so  price = total ÷ 1.08", data: "64.80 ÷ 1.08", answer: "$60.00" },
+    diagram: { type: "barModel", segments: [{ v: 100, label: "price $60", color: "#3987e5" }, { v: 8, label: "tax $4.80", color: "#fab219" }], caption: "$60 + 8% of $60 = $64.80" },
     choices: [
       { text: "$5.18", why: "That's just 8% of the total — a piece, not the price." },
       { text: "$59.62", why: "64.80 minus 8% of 64.80 — undoing tax means dividing by 1.08, not subtracting from the wrong base." },
@@ -2056,6 +2077,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-8", pattern: "m_ratio", fixedOrder: true,
     passage: "In a survey, 3 out of every 8 students bike to school. Of 240 students surveyed, how many do NOT bike?",
+    formula: { key: "Fraction of a whole", expr: "not-bikers = 5/8 of the total", data: "(5 ÷ 8) × 240", answer: "150" },
+    diagram: { type: "barModel", segments: [{ v: 3, label: "bike 3" }, { v: 5, label: "don't 5" }], caption: "5 of 8 parts × 240 = 150 not biking" },
     choices: [
       { text: "30", why: "That's one share (240 ÷ 8), not five of them." },
       { text: "90", why: "That's the bikers — reread what they asked." },
@@ -2080,6 +2103,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-6", pattern: "m_average", fixedOrder: true,
     passage: "Through 6 games, Ana averages 12 points. After game 7 her average is 13. How many points did she score in game 7?",
+    formula: { key: "Averages via totals", expr: "game 7 = new total − old total", data: "7×13 = 91;  6×12 = 72", answer: "91 − 72 = 19" },
     choices: [
       { text: "13", why: "Scoring the new average can't RAISE the average to it." },
       { text: "14", why: "The +1 must cover all seven games, not just one." },
@@ -2090,6 +2114,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-7", pattern: "m_average", fixedOrder: true,
     passage: "The median of five house prices is $200,000. The most expensive house rises $50,000 in value. What is the new median?",
+    formula: { key: "Median ignores extremes", expr: "only the MIDDLE value sets the median", data: "the top house isn't the middle one", answer: "still $200,000" },
     choices: [
       { text: "$200,000", correct: true, why: "The middle value didn't move — the median ignores what happens at the extremes." },
       { text: "$210,000", why: "Spreading the raise across all five — that's how the MEAN would move." },
@@ -2100,6 +2125,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-8", pattern: "m_average", fixedOrder: true,
     passage: "A data set of 10 values has a mean of 20. One value, 65, is removed. What is the new mean?",
+    formula: { key: "Averages via totals", expr: "new total ÷ new count", data: "(10×20 − 65) ÷ 9 = 135 ÷ 9", answer: "15" },
     choices: [
       { text: "13.5", why: "Divided by 10 — but only 9 values remain." },
       { text: "15", correct: true, why: "Total 10×20 = 200 → 200 − 65 = 135 → 135 ÷ 9 = 15." },
@@ -2352,6 +2378,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-1", pattern: "m_exponents",
     passage: "x⁵ · x³ = ?",
+    formula: { key: "Multiply like bases", expr: "xᵃ · xᵇ = xᵃ⁺ᵇ  (add the exponents)", data: "x⁵⁺³", answer: "x⁸" },
     choices: [
       { text: "x⁸", correct: true, why: "Same base, multiplying: ADD the exponents. 5 + 3 = 8." },
       { text: "x¹⁵", why: "Multiplied the exponents — that's only for a power raised to a power." },
@@ -2362,6 +2389,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-2", pattern: "m_exponents", fixedOrder: true,
     passage: "3⁻² = ?",
+    formula: { key: "Negative exponent", expr: "x⁻ᵃ = 1 / xᵃ  (flip it)", data: "1 / 3²", answer: "1/9" },
     choices: [
       { text: "−9", why: "A negative exponent doesn't make a negative number — it flips to a fraction." },
       { text: "−6", why: "Negative exponents aren't multiplication by −1; they mean reciprocal." },
@@ -2372,6 +2400,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-3", pattern: "m_exponents",
     passage: "(2x²)³ = ?",
+    formula: { key: "Power of a product", expr: "cube EVERYTHING inside", data: "2³ · (x²)³ = 8 · x⁶", answer: "8x⁶" },
     choices: [
       { text: "8x⁶", correct: true, why: "Cube everything inside: 2³ = 8, and (x²)³ = x⁶." },
       { text: "2x⁶", why: "Forgot to cube the 2 — the exponent hits the whole thing inside." },
@@ -2382,6 +2411,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-4", pattern: "m_exponents",
     passage: "x⁷ / x³ = ?",
+    formula: { key: "Divide like bases", expr: "xᵃ / xᵇ = xᵃ⁻ᵇ  (subtract)", data: "x⁷⁻³", answer: "x⁴" },
     choices: [
       { text: "x⁴", correct: true, why: "Same base, dividing: SUBTRACT the exponents. 7 − 3 = 4." },
       { text: "x¹⁰", why: "Added — that's for multiplying, not dividing." },
@@ -2392,6 +2422,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-5", pattern: "m_exponents", fixedOrder: true,
     passage: "√50 in simplest form is:",
+    formula: { key: "Simplify a radical", expr: "pull out the biggest perfect square", data: "√50 = √(25 · 2) = √25 · √2", answer: "5√2" },
     choices: [
       { text: "5√2", correct: true, why: "50 = 25·2, and √25 = 5, so √50 = 5√2." },
       { text: "2√5", why: "That's √20 (4·5). You need the biggest perfect-square factor of 50, which is 25." },
@@ -2402,6 +2433,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-6", pattern: "m_exponents", fixedOrder: true,
     passage: "8^(2/3) = ?",
+    formula: { key: "Fractional exponent", expr: "bottom = root, top = power", data: "(∛8)² = 2²", answer: "4" },
     choices: [
       { text: "2", why: "That's just the cube root of 8. The '2' on top means square it too." },
       { text: "4", correct: true, why: "Denominator = root, numerator = power: (∛8)² = 2² = 4." },
@@ -2412,6 +2444,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-7", pattern: "m_exponents",
     passage: "(x⁴)³ = ?",
+    formula: { key: "Power of a power", expr: "(xᵃ)ᵇ = xᵃᵇ  (multiply)", data: "x⁴ˣ³", answer: "x¹²" },
     choices: [
       { text: "x¹²", correct: true, why: "Power of a power: MULTIPLY the exponents. 4 · 3 = 12." },
       { text: "x⁷", why: "Added the exponents — that's the rule for multiplying like bases, not nesting." },
@@ -2422,6 +2455,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-8", pattern: "m_exponents", fixedOrder: true,
     passage: "2³ · 2⁴ = ?",
+    formula: { key: "Multiply like bases", expr: "add exponents, keep the base", data: "2³⁺⁴ = 2⁷", answer: "128" },
     choices: [
       { text: "16", why: "That's 2⁴ alone — you have to combine both factors." },
       { text: "128", correct: true, why: "Add exponents: 2³⁺⁴ = 2⁷ = 128." },
@@ -2434,6 +2468,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-1", pattern: "m_quadratic",
     passage: "Factor: x² + 7x + 12",
+    formula: { key: "Factoring", expr: "two numbers that MULTIPLY to 12 and ADD to 7", data: "3 and 4  (3·4 = 12, 3+4 = 7)", answer: "(x + 3)(x + 4)" },
+    diagram: { type: "areaModel", top: ["x", "+4"], left: ["x", "+3"], cells: [["x²", "4x"], ["3x", "12"]], note: "(x+3)(x+4) = x² + 7x + 12" },
     choices: [
       { text: "(x + 3)(x + 4)", correct: true, why: "3 and 4 multiply to 12 and add to 7. That's the whole trick." },
       { text: "(x + 2)(x + 6)", why: "2·6 = 12, but 2+6 = 8, not 7." },
@@ -2444,6 +2480,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-2", pattern: "m_quadratic", fixedOrder: true,
     passage: "Solve: x² − 5x + 6 = 0",
+    formula: { key: "Factor, then zero each part", expr: "(x − 2)(x − 3) = 0", data: "x − 2 = 0  or  x − 3 = 0", answer: "x = 2 or 3" },
     choices: [
       { text: "x = −2 or −3", why: "Sign flip: the factors are (x−2)(x−3), so the roots that make them zero are +2 and +3." },
       { text: "x = 2 or 3", correct: true, why: "Factors (x−2)(x−3): the roots are the values that make each factor zero." },
@@ -2466,6 +2503,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-4", pattern: "m_quadratic",
     passage: "Factor: x² − 9",
+    formula: { key: "Difference of squares", expr: "a² − b² = (a + b)(a − b)", data: "x² − 3² = (x + 3)(x − 3)", answer: "(x + 3)(x − 3)" },
+    diagram: { type: "areaModel", top: ["x", "−3"], left: ["x", "+3"], cells: [["x²", "−3x"], ["3x", "−9"]], note: "middle −3x + 3x cancels → x² − 9" },
     choices: [
       { text: "(x + 3)(x − 3)", correct: true, why: "Difference of squares: a²−b² = (a+b)(a−b), with b = 3." },
       { text: "(x − 3)²", why: "That expands to x² − 6x + 9 — it has a middle term this doesn't." },
@@ -2476,6 +2515,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-5", pattern: "m_quadratic", fixedOrder: true,
     passage: "Solve: x² = 16",
+    formula: { key: "Square-root both sides", expr: "x = ±√16  (keep BOTH signs)", data: "4² = 16 and (−4)² = 16", answer: "x = ±4" },
     choices: [
       { text: "x = 4 only", why: "Missed a solution — a negative squared is also positive." },
       { text: "x = ±4", correct: true, why: "Both 4² and (−4)² equal 16. Squaring hides the sign, so keep both." },
@@ -2486,6 +2526,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-6", pattern: "m_quadratic", fixedOrder: true,
     passage: "Solve: x² + x − 12 = 0",
+    formula: { key: "Factor, then zero each part", expr: "(x + 4)(x − 3) = 0", data: "−4·3 = −12,  −4 + 3 = +1", answer: "x = −4 or 3" },
     choices: [
       { text: "x = −4 or 3", correct: true, why: "Factors (x+4)(x−3): −4·3 = −12 and −4+3 = +1. ✓" },
       { text: "x = 4 or −3", why: "That gives a middle term of −1x, not +1x — signs are flipped." },
@@ -2508,6 +2549,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-8", pattern: "m_quadratic",
     passage: "Factor: 2x² + 7x + 3",
+    formula: { key: "Factoring (lead ≠ 1)", expr: "guess factors, then FOIL to check", data: "(2x + 1)(x + 3) = 2x² + 6x + x + 3", answer: "2x² + 7x + 3" },
+    diagram: { type: "areaModel", top: ["x", "+3"], left: ["2x", "+1"], cells: [["2x²", "6x"], ["x", "3"]], note: "(2x+1)(x+3) = 2x² + 7x + 3" },
     choices: [
       { text: "(2x + 1)(x + 3)", correct: true, why: "Check by FOIL: 2x² + 6x + x + 3 = 2x² + 7x + 3. ✓" },
       { text: "(2x + 3)(x + 1)", why: "FOILs to 2x² + 5x + 3 — the middle term is wrong." },
@@ -2532,6 +2575,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-2", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = x² + 1, what is f(−3)?",
+    formula: { key: "Substitute", expr: "replace every x with −3", data: "(−3)² + 1 = 9 + 1", answer: "10" },
+    diagram: { type: "functionMachine", input: "−3", rule: "x² + 1", output: "10" },
     choices: [
       { text: "−8", why: "Treated (−3)² as −9. A negative squared is POSITIVE 9." },
       { text: "8", why: "Subtracted instead of adding: 9 − 1. The function adds 1." },
@@ -2542,6 +2587,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-3", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = 2x and g(x) = x + 5, what is f(g(2))?",
+    formula: { key: "Composition (inside-out)", expr: "do g first, then feed it into f", data: "g(2) = 7,  then f(7) = 2·7", answer: "14" },
     choices: [
       { text: "9", why: "That's g(f(2)) — you did f first. Inside-out means g first." },
       { text: "12", why: "Used g(2) then added instead of multiplying by 2." },
@@ -2552,6 +2598,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-4", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = x² and g(x) = x − 1, what is g(f(3))?",
+    formula: { key: "Composition (inside-out)", expr: "do f first, then feed it into g", data: "f(3) = 9,  then g(9) = 9 − 1", answer: "8" },
     choices: [
       { text: "4", why: "That's f(g(3)) = (3−1)² — wrong order. Do f first here." },
       { text: "6", why: "Did 3² then... 9−1 is 8, not 6. This mixes up the steps." },
@@ -2562,6 +2609,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-5", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = 5x + 3 and f(a) = 23, what is a?",
+    formula: { key: "Work backward", expr: "set the rule equal to 23 and solve", data: "5a + 3 = 23 → 5a = 20", answer: "a = 4" },
     choices: [
       { text: "4", correct: true, why: "5a + 3 = 23 → 5a = 20 → a = 4." },
       { text: "5", why: "Forgot the +3: 25÷5. Subtract 3 first." },
@@ -2572,6 +2620,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-6", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = x² − 4x, what is f(5)?",
+    formula: { key: "Substitute", expr: "replace every x with 5", data: "5² − 4·5 = 25 − 20", answer: "5" },
+    diagram: { type: "functionMachine", input: "5", rule: "x² − 4x", output: "5" },
     choices: [
       { text: "−5", why: "Reversed the subtraction: it's 25 − 20, not 20 − 25." },
       { text: "5", correct: true, why: "5² − 4(5) = 25 − 20 = 5." },
@@ -2594,6 +2644,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-8", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = x/2 + 6, what is f(8)?",
+    formula: { key: "Substitute", expr: "replace every x with 8 (only x is halved)", data: "8/2 + 6 = 4 + 6", answer: "10" },
+    diagram: { type: "functionMachine", input: "8", rule: "x/2 + 6", output: "10" },
     choices: [
       { text: "4", why: "That's just 8/2 — you still add 6." },
       { text: "7", why: "Divided the whole thing: (8+6)/2. Only the x is halved." },
@@ -2618,6 +2670,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-2", pattern: "m_trig", fixedOrder: true,
     passage: "Same triangle (opposite 3, adjacent 4, hypotenuse 5). What is tan θ?",
+    formula: { key: "SOHCAHTOA", expr: "tan = opposite / adjacent", data: "opposite 3, adjacent 4", answer: "3/4" },
+    diagram: { type: "rightTriangle", a: 4, b: 3, c: 5, aLabel: "adj 4", bLabel: "opp 3", cLabel: "hyp 5", angle: true, note: "tan θ = opp / adj = 3/4" },
     choices: [
       { text: "3/4", correct: true, why: "TOA: tangent = opposite / adjacent = 3/4." },
       { text: "3/5", why: "That's sine (opposite/hypotenuse)." },
@@ -2628,6 +2682,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-3", pattern: "m_trig", fixedOrder: true,
     passage: "Same triangle (opposite 3, adjacent 4, hypotenuse 5). What is cos θ?",
+    formula: { key: "SOHCAHTOA", expr: "cos = adjacent / hypotenuse", data: "adjacent 4, hypotenuse 5", answer: "4/5" },
+    diagram: { type: "rightTriangle", a: 4, b: 3, c: 5, aLabel: "adj 4", bLabel: "opp 3", cLabel: "hyp 5", angle: true, note: "cos θ = adj / hyp = 4/5" },
     choices: [
       { text: "3/5", why: "That's sine — cosine uses the ADJACENT side." },
       { text: "3/4", why: "That's tangent." },
@@ -2638,6 +2694,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-4", pattern: "m_trig", fixedOrder: true,
     passage: "A right triangle has legs 5 and 12 and hypotenuse 13. What is the sine of the angle opposite the side of length 5?",
+    formula: { key: "SOHCAHTOA", expr: "sin = opposite / hypotenuse", data: "opposite 5, hypotenuse 13", answer: "5/13" },
+    diagram: { type: "rightTriangle", a: 12, b: 5, c: 13, aLabel: "adj 12", bLabel: "opp 5", cLabel: "hyp 13", angle: true, note: "sin θ = opp / hyp = 5/13" },
     choices: [
       { text: "5/13", correct: true, why: "Opposite that angle is 5, hypotenuse is 13: sin = 5/13." },
       { text: "12/13", why: "12 is ADJACENT to that angle, so 12/13 is its cosine." },
@@ -2660,6 +2718,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-6", pattern: "m_trig", fixedOrder: true,
     passage: "In a right triangle, one leg (opposite θ) is 6 and the hypotenuse is 10. What is sin θ?",
+    formula: { key: "SOHCAHTOA", expr: "sin = opposite / hypotenuse", data: "opposite 6, hypotenuse 10 → 6/10", answer: "3/5" },
+    diagram: { type: "rightTriangle", a: 8, b: 6, c: 10, aLabel: "adj 8", bLabel: "opp 6", cLabel: "hyp 10", angle: true, note: "sin θ = 6/10 = 3/5" },
     choices: [
       { text: "3/5", correct: true, why: "sin = opposite/hypotenuse = 6/10 = 3/5." },
       { text: "3/4", why: "That's the tangent (the adjacent side is 8, so 6/8 = 3/4)." },
@@ -2670,6 +2730,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-7", pattern: "m_trig", fixedOrder: true,
     passage: "What is sin 30°?",
+    formula: { key: "Special angle", expr: "memorize the big three: sin 30° = 1/2", answer: "1/2  (sin 45° = √2/2, sin 60° = √3/2)" },
     choices: [
       { text: "1/2", correct: true, why: "A memorized special angle: sin 30° = 1/2. Worth knowing cold." },
       { text: "√3/2", why: "That's sin 60° (or cos 30°)." },
@@ -2680,6 +2741,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-8", pattern: "m_trig", fixedOrder: true,
     passage: "In SOHCAHTOA, which ratio equals adjacent ÷ hypotenuse?",
+    formula: { key: "SOHCAHTOA", expr: "CAH: Cosine = Adjacent / Hypotenuse", answer: "cosine" },
     choices: [
       { text: "sine", why: "Sine is OPPOSITE over hypotenuse (the SOH)." },
       { text: "cosine", correct: true, why: "CAH: Cosine = Adjacent / Hypotenuse." },
@@ -2692,6 +2754,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-1", pattern: "m_probability", fixedOrder: true,
     passage: "A bag holds 3 red and 5 blue marbles. What is the probability of drawing a red one?",
+    formula: { key: "Probability", expr: "favorable ÷ TOTAL (not red-to-blue)", data: "3 red ÷ 8 marbles", answer: "3/8" },
+    diagram: { type: "probGrid", count: 8, favIdx: [0, 1, 2], favColor: "#fab219", otherColor: "#3987e5", perRow: 8, caption: "3 red (gold) of 8 total = 3/8" },
     choices: [
       { text: "1/3", why: "That's red-to-blue as a ratio (3:5 ≈ ...), not the probability. Use the TOTAL, 8." },
       { text: "3/8", correct: true, why: "Favorable ÷ total = 3 red out of 8 marbles." },
@@ -2702,6 +2766,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-2", pattern: "m_probability", fixedOrder: true,
     passage: "A fair coin is flipped twice. What is the probability of getting heads both times?",
+    formula: { key: "Independent events", expr: "P(A and B) = P(A) × P(B)", data: "½ × ½  (outcomes: HH, HT, TH, TT)", answer: "1/4" },
+    diagram: { type: "probGrid", count: 4, favIdx: [0], perRow: 4, caption: "HH is 1 of the 4 outcomes = 1/4" },
     choices: [
       { text: "1/4", correct: true, why: "Independent events in a row: multiply. ½ · ½ = ¼." },
       { text: "1/2", why: "That's one flip — two flips in a row multiply." },
@@ -2724,6 +2790,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-4", pattern: "m_probability", fixedOrder: true,
     passage: "A café offers 4 kinds of bread and 3 kinds of filling. How many different sandwiches (one bread, one filling) are possible?",
+    formula: { key: "Counting principle", expr: "multiply the choices at each step", data: "4 breads × 3 fillings", answer: "12" },
+    diagram: { type: "probGrid", count: 12, favIdx: [], perRow: 3, caption: "4 rows × 3 columns = 12 combinations" },
     choices: [
       { text: "7", why: "Added the choices. Counting combinations means MULTIPLY." },
       { text: "12", correct: true, why: "Counting principle: 4 breads × 3 fillings = 12." },
@@ -2734,6 +2802,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-5", pattern: "m_probability", fixedOrder: true,
     passage: "A jar has 5 red, 3 green, and 2 blue marbles. What is the probability of drawing a marble that is NOT blue?",
+    formula: { key: "Probability", expr: "favorable ÷ total (not-blue = red + green)", data: "(5 + 3) ÷ 10", answer: "8/10 = 4/5" },
+    diagram: { type: "probGrid", count: 10, favIdx: [0, 1, 2, 3, 4, 5, 6, 7], favColor: "#fab219", otherColor: "#3987e5", perRow: 10, caption: "8 not-blue (gold) of 10 = 4/5" },
     choices: [
       { text: "1/5", why: "That's the chance it IS blue (2/10) — the question asks for not blue." },
       { text: "3/10", why: "That's green only. 'Not blue' means red AND green together." },
@@ -2744,6 +2814,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-6", pattern: "m_probability", fixedOrder: true,
     passage: "A spinner is divided into 8 equal sections numbered 1–8. What is the probability of landing on a number greater than 5?",
+    formula: { key: "Probability", expr: "favorable ÷ total", data: "greater than 5 = {6, 7, 8} = 3 of 8", answer: "3/8" },
+    diagram: { type: "probGrid", count: 8, favIdx: [5, 6, 7], perRow: 8, caption: "3 sections (6,7,8) of 8 = 3/8" },
     choices: [
       { text: "3/8", correct: true, why: "Greater than 5 means 6, 7, 8 — three sections of eight." },
       { text: "1/2", why: "That would be 4 of 8; 'greater than 5' doesn't include 5 itself." },
@@ -2792,6 +2864,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-2", pattern: "m_systems", fixedOrder: true,
     passage: "2x + y = 11 and y = x + 2. What is x?",
+    formula: { key: "Substitution", expr: "y is already solved — plug it in", data: "2x + (x + 2) = 11 → 3x = 9", answer: "x = 3  (y = 5)" },
+    diagram: { type: "systemLines", lines: [{ m: -2, b: 11 }, { m: 1, b: 2 }], solution: [3, 5], note: "the two lines cross at (3, 5)" },
     choices: [
       { text: "2", why: "Substitute and check: 2(2) + (4) = 8, not 11." },
       { text: "3", correct: true, why: "Substitute y: 2x + (x + 2) = 11 → 3x = 9 → x = 3." },
@@ -2802,6 +2876,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-3", pattern: "m_systems", fixedOrder: true,
     passage: "x + y = 7 and 2x + y = 11. What is y?",
+    formula: { key: "Elimination", expr: "subtract to cancel y", data: "(2x+y) − (x+y) = 11 − 7 → x = 4", answer: "y = 7 − 4 = 3" },
+    diagram: { type: "systemLines", lines: [{ m: -1, b: 7 }, { m: -2, b: 11 }], solution: [4, 3], note: "the two lines cross at (4, 3)" },
     choices: [
       { text: "1", why: "If y were 1, then x = 6, but 2(6) + 1 = 13, not 11." },
       { text: "3", correct: true, why: "Subtract the first from the second: x = 4, so y = 3." },
@@ -2812,6 +2888,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-4", pattern: "m_systems", fixedOrder: true,
     passage: "3x − y = 5 and x + y = 7. What is y?",
+    formula: { key: "Elimination", expr: "add to cancel y", data: "(3x−y) + (x+y) = 5 + 7 → 4x = 12 → x = 3", answer: "y = 7 − 3 = 4" },
+    diagram: { type: "systemLines", lines: [{ m: 3, b: -5 }, { m: -1, b: 7 }], solution: [3, 4], note: "the two lines cross at (3, 4)" },
     choices: [
       { text: "2", why: "That's not consistent: if y=2 then x=5 from the first, but 5+2 ≠ 7." },
       { text: "3", why: "That's x. Add the equations to get x first, then solve for y." },
@@ -2822,6 +2900,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-5", pattern: "m_systems", fixedOrder: true,
     passage: "Two apples and one banana cost $5. One apple and one banana cost $3. How much is one apple?",
+    formula: { key: "Elimination", expr: "subtract the two equations", data: "(2a + b) − (a + b) = 5 − 3", answer: "a = $2" },
     choices: [
       { text: "$1", why: "That's the banana. Subtract the equations to isolate the apple." },
       { text: "$2", correct: true, why: "Subtract: (2a + b) − (a + b) = 5 − 3 → a = 2." },
@@ -2832,6 +2911,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-6", pattern: "m_systems", fixedOrder: true,
     passage: "x = 2y and x + y = 12. What is x?",
+    formula: { key: "Substitution", expr: "x is already solved — plug it in", data: "2y + y = 12 → 3y = 12 → y = 4", answer: "x = 2·4 = 8" },
+    diagram: { type: "systemLines", lines: [{ m: 0.5, b: 0 }, { m: -1, b: 12 }], solution: [8, 4], note: "x = 2y and x + y = 12 cross at (8, 4)" },
     choices: [
       { text: "4", why: "That's y. Once you find y = 4, x = 2y = 8." },
       { text: "6", why: "That's 12÷2, but x and y aren't equal here — x is twice y." },
@@ -2842,6 +2923,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-7", pattern: "m_systems", fixedOrder: true,
     passage: "4x + 3y = 18 and x = 3. What is y?",
+    formula: { key: "Substitution", expr: "x is given — plug it in", data: "4·3 + 3y = 18 → 12 + 3y = 18 → 3y = 6", answer: "y = 2" },
     choices: [
       { text: "2", correct: true, why: "Substitute x = 3: 12 + 3y = 18 → 3y = 6 → y = 2." },
       { text: "3", why: "That's x, which was already given." },
@@ -2863,7 +2945,7 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v5 · 2026-07-12";
+const BANK_VERSION = "v6 · 2026-07-12";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });
