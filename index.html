@@ -103,6 +103,15 @@
   .speakbtn.speaking { color: var(--accent); border-color: var(--accent); }
   .readrow { margin: 2px 0 10px; }
   .readrow .speakbtn { margin-left: 0; }
+
+  /* Formula "key" box + coordinate plot */
+  .fbox { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--gold); background: var(--raised); border-radius: 0 10px 10px 0; }
+  .fbox .fkey { font-size: 12px; letter-spacing: 0.3px; color: var(--gold); font-weight: 700; }
+  .fbox .fexpr { font-family: Consolas, "Cascadia Mono", monospace; font-size: 15px; color: var(--ink); margin-top: 5px; }
+  .fbox .fstep { font-size: 13.5px; color: var(--ink2); margin-top: 4px; }
+  .fbox .fstep b { color: var(--ink); font-weight: 600; }
+  .plotwrap { margin-top: 12px; text-align: center; }
+  .plotwrap svg { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
 
@@ -608,7 +617,9 @@
   function explanationSpeech(q, choices) {
     const correct = choices.find(c => c.correct);
     const pat = ACT_PATTERNS[q.pattern];
-    return "The answer is " + correct.text + ". " + correct.why +
+    const f = questionFormula(q);
+    const lead = f ? "Using the " + f.key + " formula. " : "";
+    return lead + "The answer is " + correct.text + ". " + correct.why +
            " The pattern is " + pat.name + ". " + pat.cue;
   }
   const SPEEDS = [{ r: 0.7, n: "Slow" }, { r: 0.9, n: "Normal" }, { r: 1.1, n: "Fast" }];
@@ -647,6 +658,76 @@
     bar.append(auto);
     return bar;
   }
+
+  // ---------- formula "key" box + coordinate-plane plot ----------
+  // A math question can carry:  formula: { key, expr, data?, answer? }  and/or  plot: {...}
+  function formulaBox(f) {
+    const box = el("div", "fbox");
+    box.append(el("div", "fkey", "🔑 " + esc(f.key) + " — the formula (the key)"));
+    box.append(el("div", "fexpr", esc(f.expr)));
+    if (f.data) box.append(el("div", "fstep", "<b>Your numbers:</b> " + esc(f.data)));
+    if (f.answer) box.append(el("div", "fstep", "<b>Answer:</b> " + esc(f.answer)));
+    return box;
+  }
+
+  function niceStep(min, max) {
+    const raw = (max - min) / 6;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    const n = raw / pow;
+    const nice = n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10;
+    return Math.max(1, nice * pow);
+  }
+  // Draw a small xy-plane: points, an optional segment, an optional line, rise/run, and a gold answer point.
+  function coordPlot(spec) {
+    const P = spec.points || [];
+    const all = P.slice();
+    if (spec.answer) all.push(spec.answer);
+    if (spec.line && spec.line.through) spec.line.through.forEach(p => all.push(p));
+    const xs = all.map(p => p[0]).concat(0), ys = all.map(p => p[1]).concat(0);
+    let minX = Math.min(...xs) - 1, maxX = Math.max(...xs) + 1;
+    let minY = Math.min(...ys) - 1, maxY = Math.max(...ys) + 1;
+    const W = 300, H = 240, M = 24;
+    const sx = x => M + (x - minX) / (maxX - minX) * (W - 2 * M);
+    const sy = y => (H - M) - (y - minY) / (maxY - minY) * (H - 2 * M);
+    const gA = "#2c2c2a", axis = "#52514e", blue = "#3987e5", gold = "#fab219", ink = "#c3c2b7";
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px" xmlns="http://www.w3.org/2000/svg">`;
+    const stepX = niceStep(minX, maxX), stepY = niceStep(minY, maxY);
+    for (let x = Math.ceil(minX / stepX) * stepX; x <= maxX; x += stepX)
+      s += `<line x1="${sx(x)}" y1="${sy(minY)}" x2="${sx(x)}" y2="${sy(maxY)}" stroke="${gA}" stroke-width="1"/>`;
+    for (let y = Math.ceil(minY / stepY) * stepY; y <= maxY; y += stepY)
+      s += `<line x1="${sx(minX)}" y1="${sy(y)}" x2="${sx(maxX)}" y2="${sy(y)}" stroke="${gA}" stroke-width="1"/>`;
+    if (minY <= 0 && maxY >= 0) s += `<line x1="${sx(minX)}" y1="${sy(0)}" x2="${sx(maxX)}" y2="${sy(0)}" stroke="${axis}" stroke-width="1.5"/>`;
+    if (minX <= 0 && maxX >= 0) s += `<line x1="${sx(0)}" y1="${sy(minY)}" x2="${sx(0)}" y2="${sy(maxY)}" stroke="${axis}" stroke-width="1.5"/>`;
+    if (spec.line) {
+      let m, b;
+      if (spec.line.m !== undefined) { m = spec.line.m; b = spec.line.b; }
+      else { const [p, q] = spec.line.through; m = (q[1] - p[1]) / (q[0] - p[0]); b = p[1] - m * p[0]; }
+      s += `<line x1="${sx(minX)}" y1="${sy(m * minX + b)}" x2="${sx(maxX)}" y2="${sy(m * maxX + b)}" stroke="${blue}" stroke-width="2"/>`;
+    }
+    if (spec.segment && P.length >= 2) {
+      const a = P[spec.segment[0]], b = P[spec.segment[1]];
+      s += `<line x1="${sx(a[0])}" y1="${sy(a[1])}" x2="${sx(b[0])}" y2="${sy(b[1])}" stroke="${blue}" stroke-width="2"/>`;
+    }
+    if (spec.slope && P.length >= 2) {
+      const a = P[spec.slope[0]], b = P[spec.slope[1]];
+      s += `<line x1="${sx(a[0])}" y1="${sy(a[1])}" x2="${sx(b[0])}" y2="${sy(a[1])}" stroke="${gold}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+      s += `<line x1="${sx(b[0])}" y1="${sy(a[1])}" x2="${sx(b[0])}" y2="${sy(b[1])}" stroke="${gold}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+      s += `<text x="${(sx(a[0]) + sx(b[0])) / 2}" y="${sy(a[1]) + 13}" fill="${gold}" font-size="10" text-anchor="middle">run ${b[0] - a[0]}</text>`;
+      s += `<text x="${sx(b[0]) + 4}" y="${(sy(a[1]) + sy(b[1])) / 2}" fill="${gold}" font-size="10">rise ${b[1] - a[1]}</text>`;
+    }
+    P.forEach(p => {
+      s += `<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="4" fill="${blue}"/>`;
+      s += `<text x="${sx(p[0]) + 6}" y="${sy(p[1]) - 6}" fill="${ink}" font-size="11">${esc(p[2] || "")} (${p[0]}, ${p[1]})</text>`;
+    });
+    if (spec.answer) {
+      const p = spec.answer;
+      s += `<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="5.5" fill="${gold}" stroke="#0d0d0d" stroke-width="1"/>`;
+      s += `<text x="${sx(p[0]) + 7}" y="${sy(p[1]) + 4}" fill="${gold}" font-size="11" font-weight="bold">${esc(p[2] || "")} (${p[0]}, ${p[1]})</text>`;
+    }
+    s += `</svg>`;
+    const wrap = el("div", "plotwrap"); wrap.innerHTML = s; return wrap;
+  }
+  function questionFormula(q) { return q.formula || (ACT_PATTERNS[q.pattern] && ACT_PATTERNS[q.pattern].formula) || null; }
 
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
@@ -791,6 +872,10 @@
     if (right && S.combo >= 3) verdict.append(el("span", "xp", "combo ×" + S.combo));
     verdict.append(el("span", "quip", pick(right ? QUIPS_RIGHT : QUIPS_WRONG)));
     card.append(verdict);
+
+    const qf = questionFormula(q);
+    if (qf) card.append(formulaBox(qf));
+    if (q.plot) card.append(coordPlot(q.plot));
 
     const pat = ACT_PATTERNS[q.pattern];
     const pb = el("div", "patternbox");

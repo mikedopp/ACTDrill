@@ -33,10 +33,15 @@ overwritten by the app.)
 
 ## What's inside
 
-- **One question at a time** — 192 original ACT-style questions: English (96,
-  12 patterns), Math (64, 8 patterns), Reading (32, 4 patterns) — the three
+- **One question at a time** — 240 original ACT-style questions: English (96,
+  12 patterns), Math (112, 14 patterns), Reading (32, 4 patterns) — the three
   sections that make up the composite score. Subject picker on the Drill tab
   (All / English / Math / Reading). Keys 1–4 answer, Enter advances.
+- **Coordinate visuals + formula keys (math)** — coordinate-geometry questions
+  draw an xy-plane showing the points, the segment/line, and the answer as a gold
+  dot on the grid. Every content-math question also shows a 🔑 formula box:
+  the formula (the key), the numbers plugged in (the data), and the answer.
+  Show, don't just tell.
 - **One-click bank updates** — the Progress tab's "Update question bank" button
   (desktop app only) pulls the latest `questions.js` from the public
   [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.

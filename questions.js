@@ -839,6 +839,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-1", pattern: "m_lines", fixedOrder: true,
     passage: "What is the slope of the line through (2, 5) and (6, 13)?",
+    formula: { key: "Slope", expr: "m = (y₂ − y₁) / (x₂ − x₁)", data: "(13 − 5) / (6 − 2) = 8 / 4", answer: "2" },
+    plot: { points: [[2, 5, "A"], [6, 13, "B"]], segment: [0, 1], slope: [0, 1] },
     choices: [
       { text: "1/2", why: "Run over rise — flipped." },
       { text: "2", correct: true, why: "(13 − 5)/(6 − 2) = 8/4 = 2." },
@@ -849,6 +851,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-2", pattern: "m_lines",
     passage: "Which line is parallel to y = 3x − 7?",
+    formula: { key: "Parallel lines", expr: "parallel lines have the SAME slope m", data: "y = 3x − 7 has slope 3", answer: "any line with slope 3" },
+    plot: { line: { m: 3, b: 2 } },
     choices: [
       { text: "y = 3x + 2", correct: true, why: "Parallel = same slope. Both are slope 3; the intercept doesn't matter." },
       { text: "y = −3x − 7", why: "Opposite slopes cross — matching the −7 doesn't help." },
@@ -859,6 +863,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-3", pattern: "m_lines", fixedOrder: true,
     passage: "What is the y-intercept of the line 2y = 6x + 10?",
+    formula: { key: "Slope-intercept form", expr: "y = mx + b  (b is where the line crosses the y-axis)", data: "2y = 6x + 10  →  y = 3x + 5", answer: "b = 5,  the point (0, 5)" },
+    plot: { line: { m: 3, b: 5 }, answer: [0, 5, "y-int"] },
     choices: [
       { text: "3", why: "That's the slope, after dividing." },
       { text: "5", correct: true, why: "Divide everything by 2: y = 3x + 5. Intercept 5." },
@@ -869,6 +875,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-4", pattern: "m_lines",
     passage: "A line with slope −2 passes through (3, 4). Which point is also on the line?",
+    formula: { key: "Slope as rise over run", expr: "slope −2 = down 2 for every 1 right", data: "from (3, 4): right 1, down 2", answer: "(4, 2)" },
+    plot: { points: [[3, 4, "start"]], line: { m: -2, b: 10 }, answer: [4, 2, "✓"] },
     choices: [
       { text: "(4, 2)", correct: true, why: "From (3, 4): right 1, down 2 — that's slope −2. ✓" },
       { text: "(4, 6)", why: "Right 1, UP 2 — that's slope +2." },
@@ -1914,6 +1922,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-5", pattern: "m_lines", fixedOrder: true,
     passage: "What is the slope of the line 3x + y = 12 ?",
+    formula: { key: "Solve for y, then read m", expr: "get it into y = mx + b, then m is the slope", data: "3x + y = 12  →  y = −3x + 12", answer: "m = −3" },
+    plot: { line: { m: -3, b: 12 } },
     choices: [
       { text: "−3", correct: true, why: "Solve for y: y = −3x + 12. The sign flips when 3x crosses over." },
       { text: "3", why: "Forgot the sign flip when moving 3x to the other side." },
@@ -1924,6 +1934,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-6", pattern: "m_lines",
     passage: "Which line is perpendicular to y = 2x + 1 ?",
+    formula: { key: "Perpendicular slope", expr: "flip it and negate: m → −1/m", data: "slope 2  →  −1/2", answer: "y = −½x + 7" },
+    plot: { line: { m: -0.5, b: 7 } },
     choices: [
       { text: "y = −(1/2)x + 7", correct: true, why: "Perpendicular = flip AND negate: 2 → −1/2." },
       { text: "y = 2x − 1", why: "Same slope — that's parallel." },
@@ -1934,6 +1946,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-7", pattern: "m_lines",
     passage: "A line has slope 5 and crosses the y-axis at (0, −4). Its equation is:",
+    formula: { key: "Build y = mx + b", expr: "drop the slope in for m and the intercept in for b", data: "m = 5,  b = −4", answer: "y = 5x − 4" },
+    plot: { line: { m: 5, b: -4 }, answer: [0, -4, "b"] },
     choices: [
       { text: "y = 5x − 4", correct: true, why: "m = 5, b = −4, straight into y = mx + b." },
       { text: "y = −4x + 5", why: "Slope and intercept swapped seats." },
@@ -1944,6 +1958,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-8", pattern: "m_lines", fixedOrder: true,
     passage: "What is the midpoint of the segment from (1, 8) to (7, 2)?",
+    formula: { key: "Midpoint", expr: "( (x₁ + x₂) / 2 ,  (y₁ + y₂) / 2 )", data: "( (1 + 7) / 2 ,  (8 + 2) / 2 )", answer: "(4, 5)" },
+    plot: { points: [[1, 8, "A"], [7, 2, "B"]], segment: [0, 1], answer: [4, 5, "M"] },
     choices: [
       { text: "(3, 3)", why: "Half the differences — the midpoint AVERAGES, it doesn't subtract." },
       { text: "(4, 5)", correct: true, why: "Average each coordinate: (1+7)/2 = 4, (8+2)/2 = 5." },
@@ -2263,7 +2279,555 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v2 · 2026-07-12";
+// ============================================================
+// WAVE 3 — Math content patterns (the gaps a 17 leaves on the table)
+// ============================================================
+
+Object.assign(ACT_PATTERNS, {
+  m_exponents: {
+    subject: "Math",
+    name: "Exponent & radical rules",
+    rule: "Same base: ADD exponents to multiply, SUBTRACT to divide, MULTIPLY for a power of a power. Negative exponent = flip it (reciprocal). Fractional exponent = a root.",
+    cue: "Same base? Just add or subtract the little numbers — never multiply the bases out. (xᵃ)ᵇ is the only one where you multiply the exponents.",
+    example: "x³·x² = x⁵ (add). (x³)² = x⁶ (multiply). 2⁻³ = 1/8 (flip).",
+    formula: { key: "Exponent rules", expr: "xᵃ·xᵇ = xᵃ⁺ᵇ   ·   xᵃ/xᵇ = xᵃ⁻ᵇ   ·   (xᵃ)ᵇ = xᵃᵇ   ·   x⁻ᵃ = 1/xᵃ" }
+  },
+  m_quadratic: {
+    subject: "Math",
+    name: "Factoring & quadratics",
+    rule: "To factor x²+bx+c, find two numbers that MULTIPLY to c and ADD to b. FOIL to expand. Difference of squares: a²−b² = (a+b)(a−b).",
+    cue: "Factoring? Two numbers, multiply to the last term, add to the middle. To solve, set each factor equal to zero.",
+    example: "x²+5x+6 = (x+2)(x+3), so x = −2 or −3."
+  },
+  m_functions: {
+    subject: "Math",
+    name: "Function notation",
+    rule: "f(x) just means 'substitute the input for every x.' For f(g(x)), work INSIDE-OUT: do g first, then feed its answer into f.",
+    cue: "See f( )? Whatever's in the parentheses replaces every x. Nested? Start with the innermost.",
+    example: "f(x)=2x+1 → f(3)=7. f(g(x)): find g first, then plug into f.",
+    formula: { key: "Function notation", expr: "f(input): swap the input in for every x. f(g(x)): do g first, then f." }
+  },
+  m_trig: {
+    subject: "Math",
+    name: "Right-triangle trig (SOHCAHTOA)",
+    rule: "sin = opposite/hypotenuse, cos = adjacent/hypotenuse, tan = opposite/adjacent. 'Opposite' and 'adjacent' are named from the angle you're looking at; the hypotenuse is always the longest side.",
+    cue: "Label the three sides from the angle's point of view first. Then pick sin/cos/tan by which two sides the question gives or wants.",
+    example: "Opposite 3, hypotenuse 5 → sin = 3/5. (The 3-4-5 triangle shows up constantly.)",
+    formula: { key: "SOHCAHTOA", expr: "sin = opp/hyp   ·   cos = adj/hyp   ·   tan = opp/adj" }
+  },
+  m_probability: {
+    subject: "Math",
+    name: "Probability & counting",
+    rule: "Probability = favorable ÷ total. Two events in a row (independent) → MULTIPLY. 'Or' (can't both happen) → ADD. Counting choices at each step → multiply them.",
+    cue: "'Probability of' means favorable over total. 'And'/'both'/'in a row' → multiply. Count outfits/routes → multiply the options.",
+    example: "2 red of 5 marbles → 2/5. Two coins both heads → ½·½ = ¼.",
+    formula: { key: "Probability", expr: "P = favorable / total   ·   'and' → multiply   ·   count → multiply the choices" }
+  },
+  m_systems: {
+    subject: "Math",
+    name: "Systems of equations",
+    rule: "Two equations, two unknowns. ELIMINATE: line them up and add or subtract to cancel one variable. Or SUBSTITUTE one equation into the other.",
+    cue: "Two equations with x and y? If a variable matches, add/subtract to kill it. If one is already solved (y = …), substitute.",
+    example: "x+y=10 and x−y=2 → add them: 2x=12, x=6, then y=4.",
+    formula: { key: "Elimination / substitution", expr: "add or subtract the equations to cancel a variable — or plug one into the other" }
+  }
+});
+
+ACT_QUESTIONS.push(
+  // ---------------- Exponent & radical rules ----------------
+  {
+    id: "m_exponents-1", pattern: "m_exponents",
+    passage: "x⁵ · x³ = ?",
+    choices: [
+      { text: "x⁸", correct: true, why: "Same base, multiplying: ADD the exponents. 5 + 3 = 8." },
+      { text: "x¹⁵", why: "Multiplied the exponents — that's only for a power raised to a power." },
+      { text: "x²", why: "Subtracted — that's the rule for dividing, not multiplying." },
+      { text: "2x⁸", why: "There's no 2: you don't add the bases, only combine the exponents." }
+    ]
+  },
+  {
+    id: "m_exponents-2", pattern: "m_exponents", fixedOrder: true,
+    passage: "3⁻² = ?",
+    choices: [
+      { text: "−9", why: "A negative exponent doesn't make a negative number — it flips to a fraction." },
+      { text: "−6", why: "Negative exponents aren't multiplication by −1; they mean reciprocal." },
+      { text: "1/9", correct: true, why: "3⁻² = 1/3² = 1/9. The negative flips it into the denominator." },
+      { text: "6", why: "That's 3·2. The exponent means 3², then reciprocal." }
+    ]
+  },
+  {
+    id: "m_exponents-3", pattern: "m_exponents",
+    passage: "(2x²)³ = ?",
+    choices: [
+      { text: "8x⁶", correct: true, why: "Cube everything inside: 2³ = 8, and (x²)³ = x⁶." },
+      { text: "2x⁶", why: "Forgot to cube the 2 — the exponent hits the whole thing inside." },
+      { text: "6x⁶", why: "Multiplied 2·3 instead of raising 2 to the 3rd power." },
+      { text: "8x⁵", why: "Added the exponents (2+3) instead of multiplying them." }
+    ]
+  },
+  {
+    id: "m_exponents-4", pattern: "m_exponents",
+    passage: "x⁷ / x³ = ?",
+    choices: [
+      { text: "x⁴", correct: true, why: "Same base, dividing: SUBTRACT the exponents. 7 − 3 = 4." },
+      { text: "x¹⁰", why: "Added — that's for multiplying, not dividing." },
+      { text: "x²", why: "Divided the exponents (7÷3 ≈ 2); the rule is subtraction." },
+      { text: "x²¹", why: "Multiplied the exponents." }
+    ]
+  },
+  {
+    id: "m_exponents-5", pattern: "m_exponents", fixedOrder: true,
+    passage: "√50 in simplest form is:",
+    choices: [
+      { text: "5√2", correct: true, why: "50 = 25·2, and √25 = 5, so √50 = 5√2." },
+      { text: "2√5", why: "That's √20 (4·5). You need the biggest perfect-square factor of 50, which is 25." },
+      { text: "10√5", why: "10² = 100, not 50 — this is far too big." },
+      { text: "25√2", why: "Pulled out 25 instead of its square root, 5." }
+    ]
+  },
+  {
+    id: "m_exponents-6", pattern: "m_exponents", fixedOrder: true,
+    passage: "8^(2/3) = ?",
+    choices: [
+      { text: "2", why: "That's just the cube root of 8. The '2' on top means square it too." },
+      { text: "4", correct: true, why: "Denominator = root, numerator = power: (∛8)² = 2² = 4." },
+      { text: "16", why: "That's 8²  then... no — the 3 on the bottom is a cube root, which shrinks it." },
+      { text: "24", why: "That's 8·3. Fractional exponents are roots and powers, not multiplication." }
+    ]
+  },
+  {
+    id: "m_exponents-7", pattern: "m_exponents",
+    passage: "(x⁴)³ = ?",
+    choices: [
+      { text: "x¹²", correct: true, why: "Power of a power: MULTIPLY the exponents. 4 · 3 = 12." },
+      { text: "x⁷", why: "Added the exponents — that's the rule for multiplying like bases, not nesting." },
+      { text: "x⁶⁴", why: "That's 4³ as an exponent; you multiply 4·3, not raise 4 to the 3rd." },
+      { text: "x", why: "Subtracted (4−3) — that's the dividing rule." }
+    ]
+  },
+  {
+    id: "m_exponents-8", pattern: "m_exponents", fixedOrder: true,
+    passage: "2³ · 2⁴ = ?",
+    choices: [
+      { text: "16", why: "That's 2⁴ alone — you have to combine both factors." },
+      { text: "128", correct: true, why: "Add exponents: 2³⁺⁴ = 2⁷ = 128." },
+      { text: "512", why: "That's 2⁹ (added an extra) — 3+4 is 7, not 9." },
+      { text: "4096", why: "That's 2¹² — multiplied the exponents instead of adding." }
+    ]
+  },
+
+  // ---------------- Factoring & quadratics ----------------
+  {
+    id: "m_quadratic-1", pattern: "m_quadratic",
+    passage: "Factor: x² + 7x + 12",
+    choices: [
+      { text: "(x + 3)(x + 4)", correct: true, why: "3 and 4 multiply to 12 and add to 7. That's the whole trick." },
+      { text: "(x + 2)(x + 6)", why: "2·6 = 12, but 2+6 = 8, not 7." },
+      { text: "(x + 1)(x + 12)", why: "1·12 = 12, but they add to 13." },
+      { text: "(x + 5)(x + 2)", why: "5+2 = 7, but 5·2 = 10, not 12 — both conditions have to hold." }
+    ]
+  },
+  {
+    id: "m_quadratic-2", pattern: "m_quadratic", fixedOrder: true,
+    passage: "Solve: x² − 5x + 6 = 0",
+    choices: [
+      { text: "x = −2 or −3", why: "Sign flip: the factors are (x−2)(x−3), so the roots that make them zero are +2 and +3." },
+      { text: "x = 2 or 3", correct: true, why: "Factors (x−2)(x−3): the roots are the values that make each factor zero." },
+      { text: "x = 2 or −3", why: "Mixed signs give −6 for the product, not +6." },
+      { text: "x = 1 or 6", why: "1·6 = 6 but they add to 7, not 5." }
+    ]
+  },
+  {
+    id: "m_quadratic-3", pattern: "m_quadratic",
+    passage: "Expand: (x + 4)(x − 2)",
+    choices: [
+      { text: "x² + 2x − 8", correct: true, why: "FOIL: x² −2x +4x −8 = x² + 2x − 8." },
+      { text: "x² − 2x − 8", why: "Sign slip on the middle: +4x and −2x give +2x, not −2x." },
+      { text: "x² + 2x + 8", why: "The last term is 4·(−2) = −8, negative." },
+      { text: "x² − 8", why: "Dropped the middle term — the outer and inner products don't cancel here." }
+    ]
+  },
+  {
+    id: "m_quadratic-4", pattern: "m_quadratic",
+    passage: "Factor: x² − 9",
+    choices: [
+      { text: "(x + 3)(x − 3)", correct: true, why: "Difference of squares: a²−b² = (a+b)(a−b), with b = 3." },
+      { text: "(x − 3)²", why: "That expands to x² − 6x + 9 — it has a middle term this doesn't." },
+      { text: "(x + 3)²", why: "That's x² + 6x + 9, also with a middle term." },
+      { text: "(x − 9)(x + 1)", why: "Multiplies to −9 but adds to −8x — there's no middle term to match." }
+    ]
+  },
+  {
+    id: "m_quadratic-5", pattern: "m_quadratic", fixedOrder: true,
+    passage: "Solve: x² = 16",
+    choices: [
+      { text: "x = 4 only", why: "Missed a solution — a negative squared is also positive." },
+      { text: "x = ±4", correct: true, why: "Both 4² and (−4)² equal 16. Squaring hides the sign, so keep both." },
+      { text: "x = 8", why: "That's 16÷2. Undoing a square is a square root, not halving." },
+      { text: "x = ±8", why: "8² = 64, not 16." }
+    ]
+  },
+  {
+    id: "m_quadratic-6", pattern: "m_quadratic", fixedOrder: true,
+    passage: "Solve: x² + x − 12 = 0",
+    choices: [
+      { text: "x = −4 or 3", correct: true, why: "Factors (x+4)(x−3): −4·3 = −12 and −4+3 = +1. ✓" },
+      { text: "x = 4 or −3", why: "That gives a middle term of −1x, not +1x — signs are flipped." },
+      { text: "x = 3 or 4", why: "3·4 = 12 (positive), but we need −12." },
+      { text: "x = −3 or −4", why: "That multiplies to +12, wrong sign." }
+    ]
+  },
+  {
+    id: "m_quadratic-7", pattern: "m_quadratic",
+    passage: "Expand: (x − 5)²",
+    choices: [
+      { text: "x² − 10x + 25", correct: true, why: "(a−b)² = a² − 2ab + b²: x² − 2(5)x + 25." },
+      { text: "x² − 25", why: "That's (x−5)(x+5). A square keeps the middle term." },
+      { text: "x² + 25", why: "Missing the −10x middle term entirely." },
+      { text: "x² − 10x − 25", why: "The last term is (−5)² = +25, positive." }
+    ]
+  },
+  {
+    id: "m_quadratic-8", pattern: "m_quadratic",
+    passage: "Factor: 2x² + 7x + 3",
+    choices: [
+      { text: "(2x + 1)(x + 3)", correct: true, why: "Check by FOIL: 2x² + 6x + x + 3 = 2x² + 7x + 3. ✓" },
+      { text: "(2x + 3)(x + 1)", why: "FOILs to 2x² + 5x + 3 — the middle term is wrong." },
+      { text: "(2x − 1)(x − 3)", why: "Gives 2x² − 7x + 3 — right numbers, wrong signs." },
+      { text: "(x + 1)(x + 3)", why: "That's only x² + 4x + 3 — it forgets the leading 2." }
+    ]
+  },
+
+  // ---------------- Function notation ----------------
+  {
+    id: "m_functions-1", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = 3x − 2, what is f(4)?",
+    choices: [
+      { text: "2", why: "That's 3 − ... no: substitute 4 for x, don't subtract from 3." },
+      { text: "10", correct: true, why: "f(4) = 3(4) − 2 = 12 − 2 = 10." },
+      { text: "12", why: "That's just 3·4 — you still subtract the 2." },
+      { text: "14", why: "Added 2 instead of subtracting it." }
+    ]
+  },
+  {
+    id: "m_functions-2", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = x² + 1, what is f(−3)?",
+    choices: [
+      { text: "−8", why: "Treated (−3)² as −9. A negative squared is POSITIVE 9." },
+      { text: "8", why: "Subtracted instead of adding: 9 − 1. The function adds 1." },
+      { text: "10", correct: true, why: "(−3)² + 1 = 9 + 1 = 10." },
+      { text: "−10", why: "Kept the whole thing negative — squaring removes the sign." }
+    ]
+  },
+  {
+    id: "m_functions-3", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = 2x and g(x) = x + 5, what is f(g(2))?",
+    choices: [
+      { text: "9", why: "That's g(f(2)) — you did f first. Inside-out means g first." },
+      { text: "12", why: "Used g(2) then added instead of multiplying by 2." },
+      { text: "14", correct: true, why: "Inner first: g(2) = 7. Then f(7) = 2·7 = 14." },
+      { text: "24", why: "That's f(g(2)) with g(2) mistaken as 12." }
+    ]
+  },
+  {
+    id: "m_functions-4", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = x² and g(x) = x − 1, what is g(f(3))?",
+    choices: [
+      { text: "4", why: "That's f(g(3)) = (3−1)² — wrong order. Do f first here." },
+      { text: "6", why: "Did 3² then... 9−1 is 8, not 6. This mixes up the steps." },
+      { text: "8", correct: true, why: "Inner first: f(3) = 9. Then g(9) = 9 − 1 = 8." },
+      { text: "9", why: "That's just f(3) — you still have to apply g." }
+    ]
+  },
+  {
+    id: "m_functions-5", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = 5x + 3 and f(a) = 23, what is a?",
+    choices: [
+      { text: "4", correct: true, why: "5a + 3 = 23 → 5a = 20 → a = 4." },
+      { text: "5", why: "Forgot the +3: 25÷5. Subtract 3 first." },
+      { text: "20", why: "That's 5a, one step early — divide by 5." },
+      { text: "26", why: "Added 3 instead of subtracting it before dividing." }
+    ]
+  },
+  {
+    id: "m_functions-6", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = x² − 4x, what is f(5)?",
+    choices: [
+      { text: "−5", why: "Reversed the subtraction: it's 25 − 20, not 20 − 25." },
+      { text: "5", correct: true, why: "5² − 4(5) = 25 − 20 = 5." },
+      { text: "21", why: "Subtracted 4 instead of 4x: 25 − 4. The 4 is multiplied by x." },
+      { text: "45", why: "Added instead of subtracted: 25 + 20." }
+    ]
+  },
+  {
+    id: "m_functions-7", pattern: "m_functions", fixedOrder: true,
+    passage: "If h(x) = |x − 3|, what is h(−2)?",
+    choices: [
+      { text: "−5", why: "Absolute value can't be negative — the bars make it positive." },
+      { text: "−1", why: "That's |−2| − 3 = 2 − 3. The subtraction happens INSIDE the bars." },
+      { text: "1", why: "Computed 3 − 2 instead of |−2 − 3|." },
+      { text: "5", correct: true, why: "|−2 − 3| = |−5| = 5." }
+    ]
+  },
+  {
+    id: "m_functions-8", pattern: "m_functions", fixedOrder: true,
+    passage: "If f(x) = x/2 + 6, what is f(8)?",
+    choices: [
+      { text: "4", why: "That's just 8/2 — you still add 6." },
+      { text: "7", why: "Divided the whole thing: (8+6)/2. Only the x is halved." },
+      { text: "10", correct: true, why: "8/2 + 6 = 4 + 6 = 10." },
+      { text: "14", why: "Added first, forgot to halve: 8 + 6." }
+    ]
+  },
+
+  // ---------------- Right-triangle trig ----------------
+  {
+    id: "m_trig-1", pattern: "m_trig", fixedOrder: true,
+    passage: "In a right triangle, the side opposite angle θ is 3, the adjacent side is 4, and the hypotenuse is 5. What is sin θ?",
+    choices: [
+      { text: "3/5", correct: true, why: "SOH: sine = opposite / hypotenuse = 3/5." },
+      { text: "3/4", why: "That's tangent (opposite/adjacent), not sine." },
+      { text: "4/5", why: "That's cosine (adjacent/hypotenuse)." },
+      { text: "5/3", why: "Flipped — sine is opposite OVER hypotenuse, not the reverse." }
+    ]
+  },
+  {
+    id: "m_trig-2", pattern: "m_trig", fixedOrder: true,
+    passage: "Same triangle (opposite 3, adjacent 4, hypotenuse 5). What is tan θ?",
+    choices: [
+      { text: "3/4", correct: true, why: "TOA: tangent = opposite / adjacent = 3/4." },
+      { text: "3/5", why: "That's sine (opposite/hypotenuse)." },
+      { text: "4/3", why: "Flipped — tangent is opposite over adjacent." },
+      { text: "4/5", why: "That's cosine." }
+    ]
+  },
+  {
+    id: "m_trig-3", pattern: "m_trig", fixedOrder: true,
+    passage: "Same triangle (opposite 3, adjacent 4, hypotenuse 5). What is cos θ?",
+    choices: [
+      { text: "3/5", why: "That's sine — cosine uses the ADJACENT side." },
+      { text: "3/4", why: "That's tangent." },
+      { text: "4/5", correct: true, why: "CAH: cosine = adjacent / hypotenuse = 4/5." },
+      { text: "5/4", why: "Flipped — cosine is adjacent over hypotenuse." }
+    ]
+  },
+  {
+    id: "m_trig-4", pattern: "m_trig", fixedOrder: true,
+    passage: "A right triangle has legs 5 and 12 and hypotenuse 13. What is the sine of the angle opposite the side of length 5?",
+    choices: [
+      { text: "5/13", correct: true, why: "Opposite that angle is 5, hypotenuse is 13: sin = 5/13." },
+      { text: "12/13", why: "12 is ADJACENT to that angle, so 12/13 is its cosine." },
+      { text: "5/12", why: "That's the tangent (opposite/adjacent)." },
+      { text: "13/5", why: "Flipped the sine ratio." }
+    ]
+  },
+  {
+    id: "m_trig-5", pattern: "m_trig", fixedOrder: true,
+    passage: "A ladder leans against a wall, reaching 12 ft up, with its base 5 ft from the wall (hypotenuse 13 ft). What is the tangent of the angle the ladder makes with the ground?",
+    choices: [
+      { text: "5/13", why: "That's the cosine (adjacent/hypotenuse) of the ground angle." },
+      { text: "5/12", why: "Flipped — tangent is opposite (height) over adjacent (base)." },
+      { text: "12/5", correct: true, why: "From the ground angle, opposite = 12 (up the wall), adjacent = 5 (the base). tan = 12/5." },
+      { text: "12/13", why: "That's the sine (opposite/hypotenuse), not the tangent." }
+    ]
+  },
+  {
+    id: "m_trig-6", pattern: "m_trig", fixedOrder: true,
+    passage: "In a right triangle, one leg (opposite θ) is 6 and the hypotenuse is 10. What is sin θ?",
+    choices: [
+      { text: "3/5", correct: true, why: "sin = opposite/hypotenuse = 6/10 = 3/5." },
+      { text: "3/4", why: "That's the tangent (the adjacent side is 8, so 6/8 = 3/4)." },
+      { text: "4/5", why: "That's cosine — the adjacent side (8) over 10." },
+      { text: "5/3", why: "Flipped the sine ratio." }
+    ]
+  },
+  {
+    id: "m_trig-7", pattern: "m_trig", fixedOrder: true,
+    passage: "What is sin 30°?",
+    choices: [
+      { text: "1/2", correct: true, why: "A memorized special angle: sin 30° = 1/2. Worth knowing cold." },
+      { text: "√3/2", why: "That's sin 60° (or cos 30°)." },
+      { text: "√2/2", why: "That's sin 45°." },
+      { text: "1", why: "That's sin 90°." }
+    ]
+  },
+  {
+    id: "m_trig-8", pattern: "m_trig", fixedOrder: true,
+    passage: "In SOHCAHTOA, which ratio equals adjacent ÷ hypotenuse?",
+    choices: [
+      { text: "sine", why: "Sine is OPPOSITE over hypotenuse (the SOH)." },
+      { text: "cosine", correct: true, why: "CAH: Cosine = Adjacent / Hypotenuse." },
+      { text: "tangent", why: "Tangent is opposite over adjacent (the TOA)." },
+      { text: "none of these", why: "It's exactly cosine — that's what CAH stands for." }
+    ]
+  },
+
+  // ---------------- Probability & counting ----------------
+  {
+    id: "m_probability-1", pattern: "m_probability", fixedOrder: true,
+    passage: "A bag holds 3 red and 5 blue marbles. What is the probability of drawing a red one?",
+    choices: [
+      { text: "1/3", why: "That's red-to-blue as a ratio (3:5 ≈ ...), not the probability. Use the TOTAL, 8." },
+      { text: "3/8", correct: true, why: "Favorable ÷ total = 3 red out of 8 marbles." },
+      { text: "3/5", why: "That compares red to blue, not red to the whole bag." },
+      { text: "5/8", why: "That's the probability of BLUE." }
+    ]
+  },
+  {
+    id: "m_probability-2", pattern: "m_probability", fixedOrder: true,
+    passage: "A fair coin is flipped twice. What is the probability of getting heads both times?",
+    choices: [
+      { text: "1/4", correct: true, why: "Independent events in a row: multiply. ½ · ½ = ¼." },
+      { text: "1/2", why: "That's one flip — two flips in a row multiply." },
+      { text: "1/3", why: "There are 4 equally likely outcomes (HH, HT, TH, TT), not 3." },
+      { text: "3/4", why: "That's the chance of NOT getting two heads." }
+    ]
+  },
+  {
+    id: "m_probability-3", pattern: "m_probability", fixedOrder: true,
+    passage: "A standard die is rolled once. What is the probability of an even number?",
+    choices: [
+      { text: "1/6", why: "That's the chance of one specific number, not all three evens." },
+      { text: "1/3", why: "Only counted... there are three evens (2,4,6) out of six." },
+      { text: "1/2", correct: true, why: "Evens are 2, 4, 6 — that's 3 of 6 = 1/2." },
+      { text: "2/3", why: "That would be 4 of 6; there are only three even faces." }
+    ]
+  },
+  {
+    id: "m_probability-4", pattern: "m_probability", fixedOrder: true,
+    passage: "A café offers 4 kinds of bread and 3 kinds of filling. How many different sandwiches (one bread, one filling) are possible?",
+    choices: [
+      { text: "7", why: "Added the choices. Counting combinations means MULTIPLY." },
+      { text: "12", correct: true, why: "Counting principle: 4 breads × 3 fillings = 12." },
+      { text: "1", why: "There are many possible sandwiches, not one." },
+      { text: "43", why: "That just glued the two numbers together." }
+    ]
+  },
+  {
+    id: "m_probability-5", pattern: "m_probability", fixedOrder: true,
+    passage: "A jar has 5 red, 3 green, and 2 blue marbles. What is the probability of drawing a marble that is NOT blue?",
+    choices: [
+      { text: "1/5", why: "That's the chance it IS blue (2/10) — the question asks for not blue." },
+      { text: "3/10", why: "That's green only. 'Not blue' means red AND green together." },
+      { text: "1/2", why: "That's red only (5/10). 'Not blue' also includes the 3 green." },
+      { text: "4/5", correct: true, why: "Not blue = 5 + 3 = 8 marbles of 10 = 4/5." }
+    ]
+  },
+  {
+    id: "m_probability-6", pattern: "m_probability", fixedOrder: true,
+    passage: "A spinner is divided into 8 equal sections numbered 1–8. What is the probability of landing on a number greater than 5?",
+    choices: [
+      { text: "3/8", correct: true, why: "Greater than 5 means 6, 7, 8 — three sections of eight." },
+      { text: "1/2", why: "That would be 4 of 8; 'greater than 5' doesn't include 5 itself." },
+      { text: "5/8", why: "That counts 1 through 5, the opposite set." },
+      { text: "3/5", why: "Used 5 as the total instead of 8." }
+    ]
+  },
+  {
+    id: "m_probability-7", pattern: "m_probability", fixedOrder: true,
+    passage: "Two standard dice are rolled. What is the probability that both show a 6?",
+    choices: [
+      { text: "1/36", correct: true, why: "Independent: (1/6) · (1/6) = 1/36." },
+      { text: "1/6", why: "That's one die — two dice multiply." },
+      { text: "1/12", why: "Added the denominators (6+6) instead of multiplying." },
+      { text: "2/6", why: "You don't add the two 1/6 chances for an 'and' event." }
+    ]
+  },
+  {
+    id: "m_probability-8", pattern: "m_probability", fixedOrder: true,
+    passage: "A class has 12 girls and 8 boys. One student is chosen at random. What is the probability the student is a boy?",
+    choices: [
+      { text: "2/5", correct: true, why: "8 boys out of 20 total = 8/20 = 2/5." },
+      { text: "2/3", why: "That's boys-to-girls as a ratio (8:12), not out of the whole class." },
+      { text: "8/12", why: "Compared boys to girls instead of to the total of 20." },
+      { text: "3/5", why: "That's the probability of a GIRL (12/20)." }
+    ]
+  },
+
+  // ---------------- Systems of equations ----------------
+  {
+    id: "m_systems-1", pattern: "m_systems", fixedOrder: true,
+    passage: "x + y = 10 and x − y = 2. What is x?",
+    choices: [
+      { text: "4", why: "That's y. Adding the equations solves for x first." },
+      { text: "5", why: "That's just 10÷2 — the two equations don't split evenly like that." },
+      { text: "6", correct: true, why: "Add the equations: 2x = 12, so x = 6 (and y = 4)." },
+      { text: "8", why: "That's x + ... check: if x were 8, x−y=2 gives y=6, but 8+6 ≠ 10." }
+    ]
+  },
+  {
+    id: "m_systems-2", pattern: "m_systems", fixedOrder: true,
+    passage: "2x + y = 11 and y = x + 2. What is x?",
+    choices: [
+      { text: "2", why: "Substitute and check: 2(2) + (4) = 8, not 11." },
+      { text: "3", correct: true, why: "Substitute y: 2x + (x + 2) = 11 → 3x = 9 → x = 3." },
+      { text: "4", why: "Gives 2(4) + 6 = 14, too big." },
+      { text: "5", why: "Gives 2(5) + 7 = 17 — way over 11." }
+    ]
+  },
+  {
+    id: "m_systems-3", pattern: "m_systems", fixedOrder: true,
+    passage: "x + y = 7 and 2x + y = 11. What is y?",
+    choices: [
+      { text: "1", why: "If y were 1, then x = 6, but 2(6) + 1 = 13, not 11." },
+      { text: "3", correct: true, why: "Subtract the first from the second: x = 4, so y = 3." },
+      { text: "4", why: "That's x, not y." },
+      { text: "7", why: "That's the first equation's total, not y alone." }
+    ]
+  },
+  {
+    id: "m_systems-4", pattern: "m_systems", fixedOrder: true,
+    passage: "3x − y = 5 and x + y = 7. What is y?",
+    choices: [
+      { text: "2", why: "That's not consistent: if y=2 then x=5 from the first, but 5+2 ≠ 7." },
+      { text: "3", why: "That's x. Add the equations to get x first, then solve for y." },
+      { text: "4", correct: true, why: "Add them: 4x = 12 → x = 3, then y = 7 − 3 = 4." },
+      { text: "7", why: "That's the second equation's total." }
+    ]
+  },
+  {
+    id: "m_systems-5", pattern: "m_systems", fixedOrder: true,
+    passage: "Two apples and one banana cost $5. One apple and one banana cost $3. How much is one apple?",
+    choices: [
+      { text: "$1", why: "That's the banana. Subtract the equations to isolate the apple." },
+      { text: "$2", correct: true, why: "Subtract: (2a + b) − (a + b) = 5 − 3 → a = 2." },
+      { text: "$2.50", why: "That's just 5÷2 — it ignores the banana in the first equation." },
+      { text: "$3", why: "That's the second total, not the apple's price." }
+    ]
+  },
+  {
+    id: "m_systems-6", pattern: "m_systems", fixedOrder: true,
+    passage: "x = 2y and x + y = 12. What is x?",
+    choices: [
+      { text: "4", why: "That's y. Once you find y = 4, x = 2y = 8." },
+      { text: "6", why: "That's 12÷2, but x and y aren't equal here — x is twice y." },
+      { text: "8", correct: true, why: "Substitute: 2y + y = 12 → y = 4 → x = 8." },
+      { text: "12", why: "That's the total x + y, not x by itself." }
+    ]
+  },
+  {
+    id: "m_systems-7", pattern: "m_systems", fixedOrder: true,
+    passage: "4x + 3y = 18 and x = 3. What is y?",
+    choices: [
+      { text: "2", correct: true, why: "Substitute x = 3: 12 + 3y = 18 → 3y = 6 → y = 2." },
+      { text: "3", why: "That's x, which was already given." },
+      { text: "6", why: "That's 3y, one step short — divide by 3." },
+      { text: "10", why: "Forgot to subtract the 12 before dividing." }
+    ]
+  },
+  {
+    id: "m_systems-8", pattern: "m_systems", fixedOrder: true,
+    passage: "Two numbers add to 20 and differ by 6. What is the larger number?",
+    choices: [
+      { text: "7", why: "That's the smaller number." },
+      { text: "10", why: "That's half of 20 — the two numbers aren't equal, they differ by 6." },
+      { text: "13", correct: true, why: "Add the system (x+y=20, x−y=6): 2x = 26 → x = 13." },
+      { text: "14", why: "Close, but 14 + 6... the pair would be 14 and 8, which sum to 22, not 20." }
+    ]
+  }
+);
+
+const BANK_VERSION = "v4 · 2026-07-12";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });
