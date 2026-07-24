@@ -59,11 +59,26 @@ overwritten by the app.)
   away on your own for 5+ minutes resets the counters quietly. Hyperfocus is
   fuel, but it burns the driver.
 - **Rulebook tab** — the entire finite pattern list with 5-second spot cues.
-- **Formulas tab** — all ~28 formulas the ACT requires (it provides no formula
-  sheet), each with a worked micro-example, grouped in five families.
+- **Read-aloud (built-in)** — a Voice bar over every question reads the problem
+  aloud and auto-reads the explanation. Uses Windows' own text-to-speech (Web
+  Speech API in WebView2) — no external voice service, no API key, no internet,
+  no extra cost. On/off, speed (Slow/Normal/Fast), and auto-read toggles persist.
+- **Reference tab** — the complete ACT math formula list (~60 entries, no
+  formula sheet is given on the test) with a worked micro-example each, plus a
+  "where each subject leads in college" bridge for math, science, writing, and
+  reading.
 - **Real practice tab** — official free ACT tests + accommodations links, plus
   ACT's college readiness benchmarks (English 18 / Reading 22 / Math 22 /
   Science 23) mapped to the freshman courses they predict success in.
+
+## On the audio: no Voice AI model needed
+
+Read-aloud uses the **Web Speech API** built into WebView2 (Chromium + Windows
+SAPI voices — David/Zira/etc.). It is free, offline, and adds zero dependencies.
+A cloud Voice AI (ElevenLabs, OpenAI TTS, etc.) would sound more natural but costs
+money, needs an API key and internet, and would send study text to a third party —
+not worth it to read short explanations. If you ever want premium voices, it's a
+drop-in swap of the `speak()` function; the built-in path stays as the default.
 
 ## Files
 

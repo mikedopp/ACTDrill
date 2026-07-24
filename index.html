@@ -79,6 +79,33 @@
   .frow .fform { flex: 0 0 auto; min-width: 210px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 14.5px; color: var(--ink); }
   .frow .fex { flex: 1; font-size: 13px; color: var(--muted); min-width: 170px; }
 
+  /* Reference notes (writing/reading/science prose) */
+  .rnote { padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 14px; color: var(--ink2); }
+  .rnote:last-child { border-bottom: none; }
+  .rnote b { color: var(--ink); font-weight: 600; }
+  .card .blurb { color: var(--ink2); font-size: 14.5px; margin: 0 0 10px; }
+
+  /* Audio / read-aloud */
+  .audiobar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .audiobar button {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font: inherit; font-size: 13px; padding: 4px 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .audiobar button:hover { color: var(--ink2); border-color: var(--accent); }
+  .audiobar button.on { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
+  .speakbtn {
+    background: var(--raised); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--ink2); font: inherit; font-size: 13px; padding: 4px 10px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; vertical-align: middle;
+  }
+  .speakbtn:hover { color: var(--ink); border-color: var(--accent); }
+  .speakbtn.speaking { color: var(--accent); border-color: var(--accent); }
+  .readrow { margin: 2px 0 10px; }
+  .readrow .speakbtn { margin-left: 0; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
+
   /* College benchmarks */
   .bench { width: 100%; border-collapse: collapse; margin: 8px 0 4px; }
   .bench th, .bench td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); font-size: 14px; }
@@ -241,7 +268,7 @@
   <nav id="tabs">
     <button data-view="drill" class="active">Drill</button>
     <button data-view="rulebook">Rulebook</button>
-    <button data-view="formulas">Formulas</button>
+    <button data-view="formulas">Reference</button>
     <button data-view="progress">Progress</button>
     <button data-view="links">Real practice</button>
   </nav>
@@ -283,7 +310,8 @@
 
   function blankState() {
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
-             xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All" };
+             xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
+             audio: { on: true, rate: 0.9, autoRead: true } };
   }
   function load() {
     try {
@@ -539,6 +567,87 @@
     }, 1000);
   }
 
+  // ---------- read-aloud (built-in Windows speech — no external AI, no internet) ----------
+  const speechOK = () => "speechSynthesis" in window;
+  let _voice = null;
+  function pickVoice() {
+    if (!speechOK()) return null;
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    const score = v => {
+      let s = 0;
+      if (/en[-_]US/i.test(v.lang)) s += 4; else if (/^en/i.test(v.lang)) s += 2;
+      if (/natural|online|aria|jenny|guy|zira/i.test(v.name)) s += 3; // prefer newer natural voices
+      return s;
+    };
+    return voices.slice().sort((a, b) => score(b) - score(a))[0] || voices[0];
+  }
+  if (speechOK()) {
+    _voice = pickVoice();
+    speechSynthesis.onvoiceschanged = () => { _voice = pickVoice(); };
+  }
+  function stopSpeech() { if (speechOK()) speechSynthesis.cancel(); }
+  function speak(text, onDone) {
+    if (!speechOK() || !S.audio.on || !text) { if (onDone) onDone(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = S.audio.rate; u.pitch = 1;
+    if (_voice) u.voice = _voice;
+    if (onDone) { u.onend = onDone; u.onerror = onDone; }
+    speechSynthesis.speak(u);
+  }
+  const spokenPassage = p => p.replace(/\|([^|]+)\|/g, ", $1, ");
+  function questionSpeech(q, choices) {
+    const parts = [];
+    if (q.context) parts.push(q.context);
+    if (q.passage) parts.push(spokenPassage(q.passage));
+    parts.push(q.prompt || (q.passage && q.passage.includes("|") ? "Choose the best version of the underlined portion." : "Choose the best answer."));
+    choices.forEach((c, i) => parts.push("Option " + "ABCD"[i] + ". " + c.text + "."));
+    return parts.filter(Boolean).join(". ");
+  }
+  function explanationSpeech(q, choices) {
+    const correct = choices.find(c => c.correct);
+    const pat = ACT_PATTERNS[q.pattern];
+    return "The answer is " + correct.text + ". " + correct.why +
+           " The pattern is " + pat.name + ". " + pat.cue;
+  }
+  const SPEEDS = [{ r: 0.7, n: "Slow" }, { r: 0.9, n: "Normal" }, { r: 1.1, n: "Fast" }];
+  function refreshSpeakButtons() {
+    const show = speechOK() && S.audio.on;
+    document.querySelectorAll("#view-drill .speakbtn").forEach(b => b.classList.toggle("hidden", !show));
+  }
+  function speakerButton(label, getText) {
+    const b = el("button", "speakbtn" + (speechOK() && S.audio.on ? "" : " hidden"));
+    b.innerHTML = "<span class='ic'>🔊</span> " + esc(label);
+    b.onclick = () => {
+      if (b.classList.contains("speaking")) { stopSpeech(); b.classList.remove("speaking"); return; }
+      document.querySelectorAll(".speakbtn.speaking").forEach(x => x.classList.remove("speaking"));
+      b.classList.add("speaking");
+      speak(getText(), () => b.classList.remove("speaking"));
+    };
+    return b;
+  }
+  function audioBar() {
+    const bar = el("div", "audiobar");
+    if (!speechOK()) return bar; // no text-to-speech on this device
+    const toggle = el("button", S.audio.on ? "on" : "");
+    const paint = () => { toggle.className = S.audio.on ? "on" : ""; toggle.innerHTML = (S.audio.on ? "🔊" : "🔇") + " Voice " + (S.audio.on ? "on" : "off"); };
+    paint();
+    toggle.onclick = () => { S.audio.on = !S.audio.on; if (!S.audio.on) stopSpeech(); save(); paint(); refreshSpeakButtons(); };
+    bar.append(toggle);
+
+    let si = Math.max(0, SPEEDS.findIndex(s => s.r === S.audio.rate));
+    if (si < 0) si = 1;
+    const speed = el("button", "", "Speed: " + SPEEDS[si].n);
+    speed.onclick = () => { si = (si + 1) % SPEEDS.length; S.audio.rate = SPEEDS[si].r; save(); speed.textContent = "Speed: " + SPEEDS[si].n; };
+    bar.append(speed);
+
+    const auto = el("button", S.audio.autoRead ? "on" : "", "Auto-read answer: " + (S.audio.autoRead ? "on" : "off"));
+    auto.onclick = () => { S.audio.autoRead = !S.audio.autoRead; save(); auto.className = S.audio.autoRead ? "on" : ""; auto.textContent = "Auto-read answer: " + (S.audio.autoRead ? "on" : "off"); };
+    bar.append(auto);
+    return bar;
+  }
+
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
   let current = null;
@@ -551,7 +660,8 @@
       el("p", null, "The ACT isn't a knowledge test. Each scored section — <b>English, Math, Reading</b> — recycles the same small set of patterns forever. Once you can name the pattern in five seconds, the answer is usually free."),
       el("p", null, "So: <b>one question at a time.</b> Answer it, read <i>why</i> every wrong choice is wrong, move on. The app quietly serves you more of whatever you miss — that's the whole error log, automated."),
       el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything."),
-      el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die.")
+      el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die."),
+      el("p", null, "Prefer to <b>hear</b> it? A <b>🔊 Voice</b> bar sits above each question — read the problem aloud, and have the explanation read to you automatically. Adjust the speed to whatever helps you follow. The <b>Reference</b> tab holds every ACT formula plus a look at where each subject leads in college.")
     );
     const a = el("div", "actions");
     const b = el("button", "btn", "Start");
@@ -574,6 +684,7 @@
   }
 
   function nextQuestion() {
+    stopSpeech();
     // stepped away on their own? counters reset quietly — no nagging someone who already rested
     if (brk.lastAnswerAt && Date.now() - brk.lastAnswerAt > IDLE_RESET_MIN * 60e3) resetBreak();
     if (breakDue()) { renderBreakCard(); return; }
@@ -582,6 +693,7 @@
     current = { q, choices: orderedChoices(q), answered: false };
     viewDrill.innerHTML = "";
     viewDrill.append(subjectBar());
+    viewDrill.append(audioBar());
 
     const card = el("div", "card");
     let pillHtml = esc(ACT_PATTERNS[q.pattern].subject) + " · today " + todayCount() + " / " + DAILY_GOAL;
@@ -592,6 +704,10 @@
     const promptText = q.prompt ||
       (q.passage && q.passage.includes("|") ? "Choose the best version of the underlined portion." : "");
     if (promptText) card.append(el("p", "prompt", esc(promptText)));
+    // read-question button, always available — math problems live in the passage, not a prompt
+    const rqRow = el("div", "readrow");
+    rqRow.append(speakerButton("Read question", () => questionSpeech(q, current.choices)));
+    card.append(rqRow);
 
     const list = el("div", "choices");
     current.choices.forEach((c, idx) => {
@@ -678,11 +794,14 @@
 
     const pat = ACT_PATTERNS[q.pattern];
     const pb = el("div", "patternbox");
+    const pname = el("div", "pname", "Pattern: " + esc(pat.name));
+    pname.append(speakerButton("Hear why", () => explanationSpeech(q, choices)));
     pb.append(
-      el("div", "pname", "Pattern: " + esc(pat.name)),
+      pname,
       el("div", "pcue", "Spot it in 5 seconds: " + esc(pat.cue))
     );
     card.append(pb);
+    if (S.audio.on && S.audio.autoRead) speak(explanationSpeech(q, choices));
 
     if (goalJustHit) {
       card.append(el("div", "milestone",
@@ -880,64 +999,165 @@
 
   // ---------- formulas ----------
   const FORMULAS = [
-    { group: "Lines & coordinates", items: [
+    { group: "Lines & coordinate geometry", items: [
       ["Slope", "m = (y₂ − y₁) / (x₂ − x₁)", "(2,5) to (6,13): 8/4 = 2"],
-      ["Line equation", "y = mx + b", "m is the slope; b is where it crosses the y-axis"],
+      ["Slope-intercept", "y = mx + b", "m is the slope; b is the y-intercept"],
+      ["Point-slope", "y − y₁ = m(x − x₁)", "build a line from one point and a slope"],
+      ["Standard → slope", "from Ax + By = C, slope = −A/B", "3x + y = 12 → slope −3"],
+      ["Parallel / perpendicular", "same slope / negative reciprocal", "slope 2 ⟂ slope −½"],
       ["Midpoint", "( (x₁+x₂)/2 , (y₁+y₂)/2 )", "(2,4) and (6,10) → (4, 7)"],
       ["Distance", "√( (Δx)² + (Δy)² )", "(0,0) to (3,4): √(9+16) = 5"]
     ]},
-    { group: "Algebra", items: [
+    { group: "Exponents & radicals", items: [
       ["Multiply powers", "xᵃ · xᵇ = xᵃ⁺ᵇ", "x³ · x² = x⁵ — add exponents"],
+      ["Divide powers", "xᵃ / xᵇ = xᵃ⁻ᵇ", "x⁵ / x² = x³ — subtract"],
       ["Power of a power", "(xᵃ)ᵇ = xᵃᵇ", "(x³)² = x⁶ — multiply them"],
-      ["Negative exponent", "x⁻ᵃ = 1 / xᵃ", "2⁻³ = 1/8"],
-      ["Square of a sum", "(a+b)² = a² + 2ab + b²", "never just a² + b² — the middle term is the trap"],
-      ["Difference of squares", "(a+b)(a−b) = a² − b²", "21² − 19² = (40)(2) = 80, no calculator needed"],
-      ["Quadratic formula", "x = (−b ± √(b²−4ac)) / 2a", "solves ax² + bx + c = 0 when factoring won't"]
+      ["Zero & negative", "x⁰ = 1   ·   x⁻ᵃ = 1/xᵃ", "2⁻³ = 1/8"],
+      ["Fractional power", "x^(a/b) = ᵇ√(xᵃ)", "8^(2/3) = (∛8)² = 4"],
+      ["Radicals multiply", "√a · √b = √(ab)", "√2 · √8 = √16 = 4"]
     ]},
-    { group: "Geometry", items: [
+    { group: "Algebra & quadratics", items: [
+      ["Square of a sum", "(a+b)² = a² + 2ab + b²", "never just a² + b² — the middle term is the trap"],
+      ["Square of a difference", "(a−b)² = a² − 2ab + b²", "the middle term turns negative"],
+      ["Difference of squares", "(a+b)(a−b) = a² − b²", "21² − 19² = (40)(2) = 80, no calculator"],
+      ["Quadratic formula", "x = (−b ± √(b²−4ac)) / 2a", "solves ax² + bx + c = 0 when factoring won't"],
+      ["Discriminant", "b² − 4ac", ">0 two roots · =0 one · <0 none"],
+      ["Parabola vertex", "x = −b/2a   ·   y = a(x−h)²+k", "(h,k) is the turning point"],
+      ["Absolute value", "|x| = a → x = a or x = −a", "|x| = 3 → x = ±3"]
+    ]},
+    { group: "Functions", items: [
+      ["Evaluate", "plug the number in for x", "f(x)=2x+1 → f(3)=7"],
+      ["Composition", "f(g(x)) — inner one first", "f(x)=x+1, g(x)=2x → f(g(3))=7"],
+      ["Domain", "the inputs allowed", "no dividing by 0, no √ of a negative"]
+    ]},
+    { group: "Plane geometry — area & perimeter", items: [
       ["Rectangle", "A = lw   ·   P = 2(l+w)", "8 × 6 → area 48, perimeter 28"],
-      ["Triangle area", "A = ½bh", "base 10, height 7 → 35"],
+      ["Square", "A = s²   ·   P = 4s", "side 5 → area 25, perimeter 20"],
+      ["Parallelogram", "A = bh", "base × the straight-up height"],
+      ["Triangle", "A = ½bh", "base 10, height 7 → 35"],
       ["Trapezoid", "A = ½(b₁+b₂)h", "average the parallel sides, times the height"],
-      ["Circle", "A = πr²   ·   C = 2πr = πd", "given a DIAMETER? Halve it first, then use r"],
+      ["Circle", "A = πr²   ·   C = 2πr = πd", "given a DIAMETER? Halve it first"],
       ["Circle equation", "(x−h)² + (y−k)² = r²", "center (h,k), radius r"],
-      ["Volumes", "box: lwh   ·   cylinder: πr²h", "always area of the base × height"],
-      ["Polygon angles", "(n−2) · 180°", "pentagon: 3 × 180 = 540°"]
+      ["Arc & sector", "(θ/360) × C   or   (θ/360) × A", "a 90° slice is one quarter"]
+    ]},
+    { group: "Angles & polygons", items: [
+      ["Triangle angles", "add to 180°", "straight line 180° · full turn 360°"],
+      ["Polygon interior sum", "(n−2) · 180°", "pentagon: 3 × 180 = 540°"],
+      ["One regular angle", "(n−2)·180 / n", "regular pentagon: 540 ÷ 5 = 108°"],
+      ["Exterior angles", "always sum to 360°", "true for any polygon"],
+      ["Vertical & parallel", "vertical angles equal; cut parallels → equal angles", "look for the Z and F shapes"]
     ]},
     { group: "Triangles & trig", items: [
       ["Pythagorean", "a² + b² = c²", "know 3-4-5 and 5-12-13 on sight"],
       ["45-45-90 triangle", "x : x : x√2", "legs equal, hypotenuse is a leg × √2"],
       ["30-60-90 triangle", "x : x√3 : 2x", "the short leg sits opposite the 30°"],
-      ["SOHCAHTOA", "sin=opp/hyp · cos=adj/hyp · tan=opp/adj", "label the sides from the angle's point of view first"]
+      ["SOHCAHTOA", "sin=opp/hyp · cos=adj/hyp · tan=opp/adj", "label sides from the angle's point of view"],
+      ["Trig identities", "sin²θ + cos²θ = 1   ·   tanθ = sinθ/cosθ", "the two the ACT actually uses"],
+      ["Similar figures", "sides ×k → area ×k², volume ×k³", "double the sides, quadruple the area"]
     ]},
-    { group: "Data & chance", items: [
-      ["Average", "avg = total ÷ count", "the useful direction: total = avg × count"],
-      ["Percent change", "change ÷ ORIGINAL × 100", "250 → 300: 50/250 = 20%"],
+    { group: "Solid geometry", items: [
+      ["Box (rectangular prism)", "V = lwh   ·   SA = 2(lw+lh+wh)", "volume is base area × height"],
+      ["Cylinder", "V = πr²h   ·   SA = 2πr² + 2πrh", "circle base × height"],
+      ["Sphere", "V = (4/3)πr³   ·   SA = 4πr²", "given when needed, good to know"],
+      ["Cone", "V = (1/3)πr²h", "one third of the matching cylinder"]
+    ]},
+    { group: "Numbers, statistics & probability", items: [
+      ["Mean", "total ÷ count   (total = mean × count)", "the reverse form solves most problems"],
+      ["Median & mode", "middle after sorting · most frequent", "SORT before you read the middle"],
+      ["Weighted average", "Σ(value × weight) ÷ Σ(weights)", "when groups are different sizes"],
       ["Percent of", "part = % × whole", "30% of 60 = 0.30 × 60 = 18"],
-      ["Probability", "favorable ÷ total", "2 red out of 5 marbles → 2/5"],
-      ["Distance-rate-time", "d = r · t", "60 mph for 2.5 hours → 150 miles"],
-      ["Arithmetic sequence", "aₙ = a₁ + (n−1)d", "start 5, add 3 each step: 20th term = 5 + 19·3 = 62"],
-      ["Geometric sequence", "aₙ = a₁ · rⁿ⁻¹", "start 2, triple each step: 5th term = 2 · 3⁴ = 162"]
+      ["Percent change", "change ÷ ORIGINAL", "250 → 300: 50/250 = 20%"],
+      ["Probability", "favorable ÷ total", "2 red of 5 marbles → 2/5"],
+      ["And / or", "P(A and B)=P(A)·P(B) · P(A or B)=P(A)+P(B)−P(both)", "'and' multiplies, 'or' adds"],
+      ["Counting principle", "multiply the choices", "3 shirts × 4 pants = 12 outfits"],
+      ["Combinations / permutations", "ₙCᵣ = n!/(r!(n−r)!) · ₙPᵣ = n!/(n−r)!", "order matters? use P; if not, C"],
+      ["Arithmetic sequence", "aₙ = a₁ + (n−1)d", "start 5, add 3: 20th = 5 + 19·3 = 62"],
+      ["Geometric sequence", "aₙ = a₁ · rⁿ⁻¹", "start 2, triple: 5th = 2 · 3⁴ = 162"],
+      ["Distance-rate-time", "d = r · t", "60 mph for 2.5 h → 150 miles"],
+      ["Scientific notation", "a × 10ⁿ", "move the decimal n places"],
+      ["Imaginary unit", "i² = −1", "√(−9) = 3i"]
     ]}
   ];
 
+  // Where each ACT subject leads — the college bridge (motivational + genuinely useful reference)
+  const REF_SECTIONS = [
+    { group: "College math — where this leads",
+      blurb: "Everything above is the foundation the next floor is built on. You don't need any of this for the ACT — it's here to show the ACT is the on-ramp, not the ceiling.",
+      items: [
+        ["Logarithms", "log_b(x) = y  ⟺  bʸ = x", "the inverse of the exponents you just learned — log₂8 = 3"],
+        ["Log rules", "log(ab) = log a + log b", "turns multiplication into addition"],
+        ["Function transforms", "f(x−h) + k shifts right h, up k", "the same (h,k) idea as a parabola's vertex"],
+        ["Limit (calculus)", "what f(x) approaches near a point", "the very first idea in Calculus I"],
+        ["Derivative (calculus)", "instant rate of change = slope of the curve", "the slope you know, made continuous"],
+        ["Systems & matrices", "solve many equations at once", "linear algebra — engineering, data science, AI"]
+      ]},
+    { group: "Science — the approach (and where it leads)",
+      blurb: "ACT Science is optional now and not in the composite — but the skill it tests, reading data fast, IS the college science skill. It's about 90% graph-and-table reading, not memorizing facts.",
+      notes: [
+        "**Find the variables first** — the independent variable is what the experimenter CHANGED; the dependent is what they MEASURED; the control is what stayed fixed.",
+        "**Trends beat numbers** — most questions only want 'as X goes up, Y goes ___.' Read the direction, not every digit.",
+        "**Live in the axes** — check what each axis measures and its units before you read a single point.",
+        "**Conflicting Viewpoints** — two scientists disagree; name the ONE thing they disagree about, then answer from each one's logic, not your own opinion.",
+        "**Trust the passage** — it gives you everything. Believe the data over what you think you remember."
+      ],
+      items: [
+        ["Density", "D = mass ÷ volume", "floats if it's less dense than the liquid"],
+        ["Speed", "speed = distance ÷ time", "the d = rt you already know"],
+        ["College physics", "F = ma   ·   d = ½at²", "force and motion — Physics I"],
+        ["College chemistry", "PV = nRT", "the ideal gas law"],
+        ["pH scale", "0 acidic — 7 neutral — 14 basic", "each step is ten times stronger"]
+      ]},
+    { group: "Writing — the essay blueprint",
+      blurb: "The ACT essay is optional and many colleges ignore it — check the scholarship. If he takes it, it isn't about being a great writer; it's one repeatable 4-part structure, scored on ideas, support, organization, and language.",
+      notes: [
+        "**Intro** — state your position in a sentence, then show you understand all three given perspectives. Pick a clear side; graders reward a definite stance over a fence-sitter.",
+        "**Body 1** — your strongest reason, then a specific example (real or realistic). One idea per paragraph.",
+        "**Body 2** — engage the other perspectives: where they're partly right, and why yours still wins. This analysis is what separates a 4 from an 8.",
+        "**Conclusion** — restate your position in fresh words and zoom out to why it matters.",
+        "**Language** — vary sentence length, sprinkle transitions (however, therefore, for instance). Clear beats fancy, every time.",
+        "**College writing** is the same skeleton grown up: a thesis, topic sentences, evidence followed by YOUR analysis, and cited sources."
+      ]},
+    { group: "Reading — the attack plan",
+      blurb: "Reading rewards a method, not raw speed. The four question types live in the Rulebook; this is how to run the passage itself.",
+      notes: [
+        "**Map, don't memorize** — read for what each paragraph DOES, not every detail. Details can always be looked back up.",
+        "**Answer in your head first** — predict before you read the choices, so the wrong ones can't tempt you.",
+        "**Proof or it's wrong** — the right answer can be pointed to in the text. Defending a choice with 'it feels right' usually means it's the trap.",
+        "**Line references** — read the sentence before and after the cited line; the answer often hides in the neighbors.",
+        "**Extreme words** (always, never, only, all) are usually wrong; **soft words** (often, some, suggests) are usually safe.",
+        "**College reading** is this scaled up: annotating, finding an author's argument and evidence, comparing sources — exactly what 'map the passage' trains."
+      ]}
+  ];
+
+  const boldMd = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  function renderRefCard(v, sec) {
+    const c = el("div", "card");
+    c.append(el("h3", "sect", sec.group));
+    if (sec.blurb) c.append(el("p", "blurb", esc(sec.blurb)));
+    (sec.items || []).forEach(([name, form, ex]) => {
+      const row = el("div", "frow");
+      row.append(el("span", "fname", esc(name)), el("span", "fform", esc(form)), el("span", "fex", esc(ex)));
+      c.append(row);
+    });
+    (sec.notes || []).forEach(n => c.append(el("div", "rnote", boldMd(n))));
+    v.append(c);
+  }
   function renderFormulas() {
     const v = document.getElementById("view-formulas");
     v.innerHTML = "";
+    const mathCount = FORMULAS.reduce((n, g) => n + g.items.length, 0);
     v.append(el("div", "card intro",
-      "<div class='pill'>The whole formula list</div>" +
-      "<p>The ACT gives you <b>no formula sheet</b> — but this is the entire required list, about 28 entries. " +
-      "That's the good news: memorize these and there is no math on the test you haven't been handed. " +
-      "Five a week in <b>Anki</b> (Real practice tab) and the list is done in six weeks.</p>"));
-    FORMULAS.forEach(g => {
-      const c = el("div", "card");
-      c.append(el("h3", "sect", g.group));
-      g.items.forEach(([name, form, ex]) => {
-        const row = el("div", "frow");
-        row.append(el("span", "fname", esc(name)), el("span", "fform", esc(form)), el("span", "fex", esc(ex)));
-        c.append(row);
-      });
-      v.append(c);
-    });
+      "<div class='pill'>Reference</div>" +
+      "<p>The ACT hands out <b>no formula sheet</b> — so here is the entire list it can test, " + mathCount + " entries, " +
+      "grouped so you can chip away a few at a time. Memorize these and there's no math on the test you haven't already been handed. " +
+      "Five a week in <b>Anki</b> (Real practice tab) clears the list in a couple of months.</p>" +
+      "<p>Below the math is a look at <b>where each subject leads in college</b> — proof that mastering the ACT version isn't the ceiling, it's the on-ramp.</p>"));
+
+    v.append(el("div", "subhead", "ACT Math — the complete list"));
+    FORMULAS.forEach(g => renderRefCard(v, g));
+
+    v.append(el("div", "subhead", "Where each subject leads"));
+    REF_SECTIONS.forEach(s => renderRefCard(v, s));
   }
 
   // ---------- links ----------
@@ -992,6 +1212,7 @@
 
   document.getElementById("tabs").addEventListener("click", (e) => {
     const btn = e.target.closest("button"); if (!btn) return;
+    stopSpeech();
     document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
     ["drill", "rulebook", "formulas", "progress", "links"].forEach(name => {
       document.getElementById("view-" + name).classList.toggle("hidden", name !== btn.dataset.view);
