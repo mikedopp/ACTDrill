@@ -112,6 +112,18 @@
   .fbox .fstep b { color: var(--ink); font-weight: 600; }
   .plotwrap { margin-top: 12px; text-align: center; }
   .plotwrap svg { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+
+  /* "See it work 3 times" worked-example family */
+  .worktoggle { margin-top: 14px; background: none; border: 1px solid var(--border); color: var(--ink2); font: inherit; font-size: 13px; padding: 6px 13px; border-radius: 8px; cursor: pointer; }
+  .worktoggle:hover { border-color: var(--accent); color: var(--ink); }
+  .workwrap { margin-top: 12px; }
+  .workbanner { font-size: 13.5px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+  .worked { border-top: 1px solid var(--grid); padding: 12px 0 2px; }
+  .worked .wctx { font-size: 13px; color: var(--ink2); font-style: italic; margin-bottom: 4px; }
+  .worked .wq { font-size: 15px; color: var(--ink); }
+  .worked .wq .u { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .worked .wans { font-size: 14px; color: var(--good); font-weight: 600; margin-top: 6px; }
+  .worked .wwhy { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
 
@@ -729,6 +741,146 @@
   }
   function questionFormula(q) { return q.formula || (ACT_PATTERNS[q.pattern] && ACT_PATTERNS[q.pattern].formula) || null; }
 
+  // ---------- math diagrams: show WHY the numbers work ----------
+  // A question can carry  diagram: { type, ... }.  One SVG per type, theme colors baked in (dark app).
+  function mathDiagram(spec) {
+    const W = 300, H = 240;
+    const blue = "#3987e5", gold = "#fab219", ink = "#c3c2b7", ink2 = "#898781",
+          grid = "#2c2c2a", axis = "#52514e", good = "#0ca30c", surf = "#1a1a19", aqua = "#1baf7a";
+    const T = (x, y, t, fill, size, anchor, weight) =>
+      `<text x="${x}" y="${y}" fill="${fill || ink}" font-size="${size || 12}" text-anchor="${anchor || 'start'}"${weight ? ` font-weight="${weight}"` : ''}>${t}</text>`;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px" xmlns="http://www.w3.org/2000/svg">`;
+    s += `<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${ink2}"/></marker></defs>`;
+
+    if (spec.type === "rightTriangle") {
+      const a = spec.a, b = spec.b, maxL = Math.max(a, b);
+      const base = a / maxL * 150, hei = b / maxL * 130, blx = 72, bly = 195;
+      const brx = blx + base, tlx = blx, tly = bly - hei;
+      if (spec.note) s += T(150, 24, spec.note, gold, 12.5, "middle", "bold");
+      s += `<polygon points="${blx},${bly} ${brx},${bly} ${tlx},${tly}" fill="rgba(57,135,229,0.12)" stroke="${blue}" stroke-width="2"/>`;
+      s += `<path d="M ${blx + 12},${bly} L ${blx + 12},${bly - 12} L ${blx},${bly - 12}" fill="none" stroke="${axis}" stroke-width="1.3"/>`;
+      s += T((blx + brx) / 2, bly + 18, spec.aLabel || ("" + a), ink, 12, "middle");
+      s += T(blx - 8, (bly + tly) / 2, spec.bLabel || ("" + b), ink, 12, "end");
+      s += T((brx + tlx) / 2 + 6, (bly + tly) / 2 - 6, spec.cLabel || ("" + spec.c), gold, 12, "start", "bold");
+      if (spec.angle) {
+        s += `<path d="M ${brx - 26},${bly} A 26 26 0 0 1 ${brx - 26 * Math.cos(Math.atan2(hei, base))},${bly - 26 * Math.sin(Math.atan2(hei, base))}" fill="none" stroke="${gold}" stroke-width="1.4"/>`;
+        s += T(brx - 34, bly - 9, "θ", gold, 13, "middle", "bold");
+      }
+    }
+
+    else if (spec.type === "rectangle") {
+      const w = spec.w, h = spec.h, mx = Math.max(w, h);
+      const pw = w / mx * 170, ph = h / mx * 130, x0 = 70, y0 = 55;
+      if (spec.note) s += T(150, 24, spec.note, gold, 12.5, "middle", "bold");
+      s += `<rect x="${x0}" y="${y0}" width="${pw}" height="${ph}" fill="rgba(57,135,229,0.12)" stroke="${blue}" stroke-width="2"/>`;
+      s += T(x0 + pw / 2, y0 + ph + 18, spec.wLabel || ("" + w), ink, 12, "middle");
+      s += T(x0 - 8, y0 + ph / 2, spec.hLabel || ("" + h), ink, 12, "end");
+      if (spec.area) s += T(x0 + pw / 2, y0 + ph / 2 + 4, spec.area, gold, 13, "middle", "bold");
+    }
+
+    else if (spec.type === "areaModel") {
+      // 2x2 box method for (top0+top1)(left0+left1)
+      const gx = 90, gy = 55, gw = 170, gh = 130, cw = gw / 2, ch = gh / 2;
+      if (spec.note) s += T(180, 24, spec.note, gold, 12.5, "middle", "bold");
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) {
+        s += `<rect x="${gx + c * cw}" y="${gy + r * ch}" width="${cw}" height="${ch}" fill="rgba(57,135,229,0.08)" stroke="${blue}" stroke-width="1.5"/>`;
+        s += T(gx + c * cw + cw / 2, gy + r * ch + ch / 2 + 5, spec.cells[r][c], gold, 14, "middle", "bold");
+      }
+      s += T(gx + cw / 2, gy - 8, spec.top[0], ink, 12.5, "middle");
+      s += T(gx + cw + cw / 2, gy - 8, spec.top[1], ink, 12.5, "middle");
+      s += T(gx - 8, gy + ch / 2 + 4, spec.left[0], ink, 12.5, "end");
+      s += T(gx - 8, gy + ch + ch / 2 + 4, spec.left[1], ink, 12.5, "end");
+    }
+
+    else if (spec.type === "circle") {
+      const cx = 150, cy = 118, r = 68;
+      if (spec.note) s += T(150, 24, spec.note, gold, 12.5, "middle", "bold");
+      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(57,135,229,0.10)" stroke="${blue}" stroke-width="2"/>`;
+      s += `<circle cx="${cx}" cy="${cy}" r="3" fill="${ink}"/>`;
+      s += `<line x1="${cx}" y1="${cy}" x2="${cx + r}" y2="${cy}" stroke="${gold}" stroke-width="1.8"/>`;
+      s += T(cx + r / 2, cy - 6, spec.rLabel || "r", gold, 12, "middle", "bold");
+      if (spec.dLabel) { s += `<line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}" stroke="${ink2}" stroke-width="1" stroke-dasharray="4 3"/>`; s += T(cx, cy + 16, spec.dLabel, ink2, 11, "middle"); }
+    }
+
+    else if (spec.type === "barModel") {
+      const segs = spec.segments, total = segs.reduce((n, x) => n + x.v, 0);
+      const x0 = 34, x1 = 272, y = 96, h = 40, wpx = x1 - x0, cols = [blue, gold, "#4a3aa7", aqua];
+      let cx = x0;
+      segs.forEach((sg, i) => {
+        const w = sg.v / total * wpx;
+        s += `<rect x="${cx}" y="${y}" width="${w}" height="${h}" fill="${sg.color || cols[i % cols.length]}" opacity="0.85" stroke="${surf}" stroke-width="2"/>`;
+        s += T(cx + w / 2, y + h / 2 + 5, sg.label, "#fff", 12, "middle", "bold");
+        cx += w;
+      });
+      if (spec.caption) s += T(150, y + h + 26, spec.caption, ink, 12.5, "middle");
+    }
+
+    else if (spec.type === "numberLine") {
+      const min = spec.min, max = spec.max, x0 = 34, x1 = 274, y = 128, map = v => x0 + (v - min) / (max - min) * (x1 - x0);
+      s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${axis}" stroke-width="2"/>`;
+      for (let v = Math.ceil(min); v <= max; v++) { s += `<line x1="${map(v)}" y1="${y - 4}" x2="${map(v)}" y2="${y + 4}" stroke="${ink2}" stroke-width="1"/>`; s += T(map(v), y + 18, v, ink2, 10, "middle"); }
+      if (spec.distance) {
+        const a = map(spec.distance.from), b = map(spec.distance.to), by = y - 34;
+        s += `<line x1="${a}" y1="${by}" x2="${b}" y2="${by}" stroke="${gold}" stroke-width="1.6"/>`;
+        s += `<line x1="${a}" y1="${by}" x2="${a}" y2="${y}" stroke="${gold}" stroke-width="1" stroke-dasharray="3 2"/>`;
+        s += `<line x1="${b}" y1="${by}" x2="${b}" y2="${y}" stroke="${gold}" stroke-width="1" stroke-dasharray="3 2"/>`;
+        s += T((a + b) / 2, by - 6, spec.distance.label, gold, 12.5, "middle", "bold");
+      }
+      (spec.points || []).forEach(p => { s += `<circle cx="${map(p.x)}" cy="${y}" r="5" fill="${p.color || blue}"/>`; if (p.label) s += T(map(p.x), y - 12, p.label, p.color || ink, 11, "middle", "bold"); });
+      if (spec.caption) s += T(150, y + 40, spec.caption, ink, 12.5, "middle");
+    }
+
+    else if (spec.type === "functionMachine") {
+      s += T(60, 82, "input", ink2, 11, "middle");
+      s += `<rect x="30" y="92" width="60" height="46" rx="8" fill="rgba(57,135,229,0.15)" stroke="${blue}" stroke-width="1.5"/>`;
+      s += T(60, 121, spec.input, ink, 16, "middle", "bold");
+      s += `<line x1="92" y1="115" x2="118" y2="115" stroke="${ink2}" stroke-width="2" marker-end="url(#arr)"/>`;
+      s += T(165, 80, "the rule (formula)", gold, 11, "middle");
+      s += `<rect x="120" y="88" width="92" height="66" rx="10" fill="rgba(250,178,25,0.12)" stroke="${gold}" stroke-width="1.5"/>`;
+      s += T(166, 128, spec.rule, ink, 15, "middle", "bold");
+      s += `<line x1="214" y1="115" x2="240" y2="115" stroke="${ink2}" stroke-width="2" marker-end="url(#arr)"/>`;
+      s += T(270, 82, "output", ink2, 11, "middle");
+      s += `<rect x="240" y="92" width="60" height="46" rx="8" fill="rgba(12,163,12,0.15)" stroke="${good}" stroke-width="1.5"/>`;
+      s += T(270, 121, spec.output, ink, 16, "middle", "bold");
+    }
+
+    else if (spec.type === "probGrid") {
+      let cells = spec.cells;
+      if (!cells) {
+        const fav = spec.favIdx || [];
+        cells = [];
+        for (let i = 0; i < spec.count; i++)
+          cells.push({ color: fav.includes(i) ? (spec.favColor || grid) : (spec.otherColor || grid), fav: fav.includes(i) });
+      }
+      const per = spec.perRow || Math.min(cells.length, 6);
+      const rows = Math.ceil(cells.length / per), cell = Math.min(34, 190 / per, 150 / rows);
+      const gw = per * cell, ox = (W - gw) / 2, oy = 42;
+      cells.forEach((cc, i) => {
+        const r = Math.floor(i / per), c = i % per;
+        s += `<rect x="${ox + c * cell}" y="${oy + r * cell}" width="${cell - 3}" height="${cell - 3}" rx="4" fill="${cc.color || grid}" opacity="0.9"/>`;
+        if (cc.fav) s += `<rect x="${ox + c * cell - 1}" y="${oy + r * cell - 1}" width="${cell - 1}" height="${cell - 1}" rx="4" fill="none" stroke="${gold}" stroke-width="2.5"/>`;
+      });
+      if (spec.caption) s += T(150, oy + rows * cell + 22, spec.caption, ink, 12.5, "middle", "bold");
+    }
+
+    else if (spec.type === "systemLines") {
+      const L = spec.lines, sol = spec.solution, M = 24;
+      const minX = sol[0] - 6, maxX = sol[0] + 6, minY = sol[1] - 6, maxY = sol[1] + 6;
+      const sx = x => M + (x - minX) / (maxX - minX) * (W - 2 * M), sy = y => (H - M) - (y - minY) / (maxY - minY) * (H - 2 * M);
+      for (let g = Math.ceil(minX); g <= maxX; g += 2) s += `<line x1="${sx(g)}" y1="${sy(minY)}" x2="${sx(g)}" y2="${sy(maxY)}" stroke="${grid}" stroke-width="1"/>`;
+      for (let g = Math.ceil(minY); g <= maxY; g += 2) s += `<line x1="${sx(minX)}" y1="${sy(g)}" x2="${sx(maxX)}" y2="${sy(g)}" stroke="${grid}" stroke-width="1"/>`;
+      if (minY <= 0 && maxY >= 0) s += `<line x1="${sx(minX)}" y1="${sy(0)}" x2="${sx(maxX)}" y2="${sy(0)}" stroke="${axis}" stroke-width="1.3"/>`;
+      if (minX <= 0 && maxX >= 0) s += `<line x1="${sx(0)}" y1="${sy(minY)}" x2="${sx(0)}" y2="${sy(maxY)}" stroke="${axis}" stroke-width="1.3"/>`;
+      L.forEach((ln, i) => { const c = i === 0 ? blue : aqua; s += `<line x1="${sx(minX)}" y1="${sy(ln.m * minX + ln.b)}" x2="${sx(maxX)}" y2="${sy(ln.m * maxX + ln.b)}" stroke="${c}" stroke-width="2"/>`; });
+      s += `<circle cx="${sx(sol[0])}" cy="${sy(sol[1])}" r="6" fill="${gold}" stroke="#0d0d0d" stroke-width="1"/>`;
+      s += T(sx(sol[0]) + 8, sy(sol[1]) + 4, `(${sol[0]}, ${sol[1]})`, gold, 12, "start", "bold");
+      s += T(150, 22, spec.note || "where the two lines cross = the solution", gold, 11.5, "middle", "bold");
+    }
+
+    s += `</svg>`;
+    const wrap = el("div", "plotwrap"); wrap.innerHTML = s; return wrap;
+  }
+
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
   let current = null;
@@ -876,6 +1028,7 @@
     const qf = questionFormula(q);
     if (qf) card.append(formulaBox(qf));
     if (q.plot) card.append(coordPlot(q.plot));
+    if (q.diagram) card.append(mathDiagram(q.diagram));
 
     const pat = ACT_PATTERNS[q.pattern];
     const pb = el("div", "patternbox");
@@ -962,7 +1115,44 @@
         el("span", "mval", seen < 3 ? "warming up · " + seen + " reps" : Math.round(m * 100) + "% · " + seen + " reps")
       );
       c.append(row);
+
+      // "same pattern, different words — it always works" expander
+      const demoQs = ACT_QUESTIONS.filter(x => x.pattern === pid);
+      if (demoQs.length >= 2) {
+        const wrap = el("div", "workwrap hidden");
+        let built = false;
+        const toggle = el("button", "worktoggle", "▶ See it work on 3 questions");
+        toggle.onclick = () => {
+          const show = wrap.classList.contains("hidden");
+          wrap.classList.toggle("hidden");
+          toggle.textContent = show ? "▼ Hide worked examples" : "▶ See it work on 3 questions";
+          if (show && !built) { built = true; buildWorked(wrap, demoQs); }
+        };
+        c.append(toggle, wrap);
+      }
       v.append(c);
+  }
+  function buildWorked(wrap, qs) {
+    const withVisual = qs.filter(q => q.diagram || q.plot || q.formula);
+    const pick = (withVisual.length >= 2 ? withVisual : qs).slice(0, 3);
+    const anyFormula = pick.some(q => questionFormula(q));
+    wrap.append(el("div", "workbanner", anyFormula
+      ? "🔑 Same formula every time — the words and numbers change, the key doesn't."
+      : "Same pattern every time — different words, same move."));
+    pick.forEach(q => {
+      const w = el("div", "worked");
+      if (q.context) w.append(el("div", "wctx", esc(q.context)));
+      w.append(el("div", "wq", q.passage ? renderPassage(q.passage) : esc(q.prompt || "")));
+      if (q.passage && q.prompt) w.append(el("div", "wctx", esc(q.prompt)));
+      const qf = questionFormula(q);
+      if (qf) w.append(formulaBox(qf));
+      if (q.plot) w.append(coordPlot(q.plot));
+      if (q.diagram) w.append(mathDiagram(q.diagram));
+      const correct = q.choices.find(c => c.correct);
+      w.append(el("div", "wans", "✓ " + esc(correct.text)));
+      w.append(el("div", "wwhy", esc(correct.why)));
+      wrap.append(w);
+    });
   }
 
   // ---------- progress ----------

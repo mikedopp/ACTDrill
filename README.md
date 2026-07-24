@@ -37,11 +37,16 @@ overwritten by the app.)
   12 patterns), Math (112, 14 patterns), Reading (32, 4 patterns) — the three
   sections that make up the composite score. Subject picker on the Drill tab
   (All / English / Math / Reading). Keys 1–4 answer, Enter advances.
-- **Coordinate visuals + formula keys (math)** — coordinate-geometry questions
-  draw an xy-plane showing the points, the segment/line, and the answer as a gold
-  dot on the grid. Every content-math question also shows a 🔑 formula box:
-  the formula (the key), the numbers plugged in (the data), and the answer.
-  Show, don't just tell.
+- **Visual "why it works" (math)** — questions draw a diagram of the actual math:
+  xy-plane for coordinate geometry, right triangles for Pythagorean/trig, a 2×2
+  area model for FOIL, circles with the radius drawn, bar models for ratios and
+  percents, a number line for absolute value and averages, a function machine for
+  f(x), a shaded outcome grid for probability, and two crossing lines for systems.
+  Every content-math question also shows a 🔑 formula box: the formula (the key),
+  the numbers plugged in (the data), and the answer.
+- **"See it work on 3 questions"** — every pattern in the Rulebook expands to show
+  the same formula/pattern solving three differently-worded questions side by side.
+  The point: don't get thrown by the wording — the key is always the same.
 - **One-click bank updates** — the Progress tab's "Update question bank" button
   (desktop app only) pulls the latest `questions.js` from the public
   [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.

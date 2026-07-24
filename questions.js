@@ -889,6 +889,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-1", pattern: "m_geometry", fixedOrder: true,
     passage: "A circle has diameter 12. What is its area?",
+    formula: { key: "Circle area", expr: "A = πr²  (halve the diameter to get r first)", data: "d = 12 → r = 6 → π · 6²", answer: "36π" },
+    diagram: { type: "circle", rLabel: "r = 6", dLabel: "d = 12", note: "A = πr² = 36π" },
     choices: [
       { text: "12π", why: "That's the circumference (πd), not the area." },
       { text: "24π", why: "That's 2πr with the diameter plugged in as r." },
@@ -899,6 +901,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-2", pattern: "m_geometry", fixedOrder: true,
     passage: "A right triangle has legs of length 9 and 12. How long is the hypotenuse?",
+    formula: { key: "Pythagorean theorem", expr: "a² + b² = c²", data: "9² + 12² = 81 + 144 = 225", answer: "c = √225 = 15" },
+    diagram: { type: "rightTriangle", a: 9, b: 12, c: 15, aLabel: "9", bLabel: "12", cLabel: "c = 15", note: "9² + 12² = 15²" },
     choices: [
       { text: "√63", why: "Subtracted the squares — that finds a LEG when you already have the hypotenuse." },
       { text: "15", correct: true, why: "9² + 12² = 81 + 144 = 225 = 15²." },
@@ -909,6 +913,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-3", pattern: "m_geometry", fixedOrder: true,
     passage: "A rectangle has length 8 and perimeter 28. What is its area?",
+    formula: { key: "Rectangle", expr: "P = 2(l + w)   and   A = l · w", data: "28 = 2(8 + w) → w = 6", answer: "A = 8 · 6 = 48" },
+    diagram: { type: "rectangle", w: 8, h: 6, wLabel: "l = 8", hLabel: "w = 6", area: "A = 48", note: "perimeter 28 → width 6" },
     choices: [
       { text: "28", why: "That's the perimeter they handed you." },
       { text: "48", correct: true, why: "2(8 + w) = 28 → w = 6 → area 8 × 6 = 48." },
@@ -919,6 +925,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-4", pattern: "m_geometry", fixedOrder: true,
     passage: "A triangle has base 10 and height 7. What is its area?",
+    formula: { key: "Triangle area", expr: "A = ½ · base · height", data: "½ · 10 · 7", answer: "35" },
+    diagram: { type: "rightTriangle", a: 10, b: 7, c: "", aLabel: "base 10", bLabel: "height 7", cLabel: "", note: "A = ½ · 10 · 7 = 35" },
     choices: [
       { text: "17", why: "Added base and height — area multiplies." },
       { text: "24.5", why: "½ × 7 × 7 — the height got used twice." },
@@ -941,6 +949,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-2", pattern: "m_ratio", fixedOrder: true,
     passage: "A $60 jacket is marked down 30%. What is the sale price?",
+    formula: { key: "Percent off", expr: "you PAY (100% − discount) of the price", data: "70% of $60 = 0.70 × 60", answer: "$42" },
+    diagram: { type: "barModel", segments: [{ v: 70, label: "pay 70% = $42", color: "#3987e5" }, { v: 30, label: "−30% = $18", color: "#fab219" }], caption: "$60 whole → you keep 70%" },
     choices: [
       { text: "$18", why: "That's the DISCOUNT — they asked what you pay." },
       { text: "$30", why: "Subtracted the percent number itself, not 30% of 60." },
@@ -2024,6 +2034,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-6", pattern: "m_ratio", fixedOrder: true,
     passage: "A punch recipe mixes juice and soda in a 3:5 ratio. How many cups of juice are in 40 cups of punch?",
+    formula: { key: "Ratios", expr: "add the parts, divide the total, then scale", data: "3 + 5 = 8 parts → 40 ÷ 8 = 5 per part", answer: "juice = 3 × 5 = 15" },
+    diagram: { type: "barModel", segments: [{ v: 3, label: "juice 3" }, { v: 5, label: "soda 5" }], caption: "8 parts share 40 cups → 5 cups per part" },
     choices: [
       { text: "8", why: "That's the number of SHARES, not cups of juice." },
       { text: "15", correct: true, why: "3 + 5 = 8 shares → 40 ÷ 8 = 5 per share → juice = 3 × 5 = 15." },
@@ -2056,6 +2068,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-5", pattern: "m_average", fixedOrder: true,
     passage: "What is the mean of 4, 7, 7, 10, and 12?",
+    formula: { key: "Mean (average)", expr: "mean = total ÷ count", data: "(4 + 7 + 7 + 10 + 12) ÷ 5 = 40 ÷ 5", answer: "8" },
+    diagram: { type: "numberLine", min: 3, max: 13, points: [{ x: 4 }, { x: 7 }, { x: 7 }, { x: 10 }, { x: 12 }, { x: 8, label: "mean 8", color: "#fab219" }], caption: "the mean is the balance point" },
     choices: [
       { text: "7", why: "That's the median AND the mode — the mean adds and divides." },
       { text: "8", correct: true, why: "4+7+7+10+12 = 40 → 40 ÷ 5 = 8." },
@@ -2440,6 +2454,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-3", pattern: "m_quadratic",
     passage: "Expand: (x + 4)(x − 2)",
+    formula: { key: "FOIL / area model", expr: "multiply every part by every part", data: "x·x + x·(−2) + 4·x + 4·(−2)", answer: "x² + 2x − 8" },
+    diagram: { type: "areaModel", top: ["x", "−2"], left: ["x", "+4"], cells: [["x²", "−2x"], ["4x", "−8"]], note: "(x+4)(x−2) = x² + 2x − 8" },
     choices: [
       { text: "x² + 2x − 8", correct: true, why: "FOIL: x² −2x +4x −8 = x² + 2x − 8." },
       { text: "x² − 2x − 8", why: "Sign slip on the middle: +4x and −2x give +2x, not −2x." },
@@ -2480,6 +2496,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-7", pattern: "m_quadratic",
     passage: "Expand: (x − 5)²",
+    formula: { key: "Square of a difference", expr: "(a − b)² = a² − 2ab + b²", data: "x² − 2·5·x + 5²", answer: "x² − 10x + 25" },
+    diagram: { type: "areaModel", top: ["x", "−5"], left: ["x", "−5"], cells: [["x²", "−5x"], ["−5x", "25"]], note: "(x−5)² = x² − 10x + 25" },
     choices: [
       { text: "x² − 10x + 25", correct: true, why: "(a−b)² = a² − 2ab + b²: x² − 2(5)x + 25." },
       { text: "x² − 25", why: "That's (x−5)(x+5). A square keeps the middle term." },
@@ -2502,6 +2520,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-1", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = 3x − 2, what is f(4)?",
+    formula: { key: "Substitute the input", expr: "replace every x with the input", data: "3 · 4 − 2", answer: "10" },
+    diagram: { type: "functionMachine", input: "4", rule: "3x − 2", output: "10" },
     choices: [
       { text: "2", why: "That's 3 − ... no: substitute 4 for x, don't subtract from 3." },
       { text: "10", correct: true, why: "f(4) = 3(4) − 2 = 12 − 2 = 10." },
@@ -2562,6 +2582,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-7", pattern: "m_functions", fixedOrder: true,
     passage: "If h(x) = |x − 3|, what is h(−2)?",
+    formula: { key: "Absolute value = distance", expr: "|x − 3| = how far x is from 3", data: "from −2 to 3 on the number line", answer: "5" },
+    diagram: { type: "numberLine", min: -4, max: 5, points: [{ x: -2, label: "−2", color: "#3987e5" }, { x: 3, label: "3", color: "#0ca30c" }], distance: { from: -2, to: 3, label: "5" }, caption: "|−2 − 3| = distance = 5" },
     choices: [
       { text: "−5", why: "Absolute value can't be negative — the bars make it positive." },
       { text: "−1", why: "That's |−2| − 3 = 2 − 3. The subtraction happens INSIDE the bars." },
@@ -2584,6 +2606,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-1", pattern: "m_trig", fixedOrder: true,
     passage: "In a right triangle, the side opposite angle θ is 3, the adjacent side is 4, and the hypotenuse is 5. What is sin θ?",
+    formula: { key: "SOHCAHTOA", expr: "sin = opposite / hypotenuse", data: "opposite 3, hypotenuse 5", answer: "3/5" },
+    diagram: { type: "rightTriangle", a: 4, b: 3, c: 5, aLabel: "adj 4", bLabel: "opp 3", cLabel: "hyp 5", angle: true, note: "sin θ = opp / hyp = 3/5" },
     choices: [
       { text: "3/5", correct: true, why: "SOH: sine = opposite / hypotenuse = 3/5." },
       { text: "3/4", why: "That's tangent (opposite/adjacent), not sine." },
@@ -2624,6 +2648,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-5", pattern: "m_trig", fixedOrder: true,
     passage: "A ladder leans against a wall, reaching 12 ft up, with its base 5 ft from the wall (hypotenuse 13 ft). What is the tangent of the angle the ladder makes with the ground?",
+    formula: { key: "SOHCAHTOA", expr: "tan = opposite / adjacent", data: "opposite (height) 12, adjacent (base) 5", answer: "12/5" },
+    diagram: { type: "rightTriangle", a: 5, b: 12, c: 13, aLabel: "base 5", bLabel: "height 12", cLabel: "ladder 13", angle: true, note: "tan θ = opp / adj = 12/5" },
     choices: [
       { text: "5/13", why: "That's the cosine (adjacent/hypotenuse) of the ground angle." },
       { text: "5/12", why: "Flipped — tangent is opposite (height) over adjacent (base)." },
@@ -2686,6 +2712,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-3", pattern: "m_probability", fixedOrder: true,
     passage: "A standard die is rolled once. What is the probability of an even number?",
+    formula: { key: "Probability", expr: "favorable ÷ total", data: "evens {2, 4, 6} = 3 of 6", answer: "1/2" },
+    diagram: { type: "probGrid", count: 6, favIdx: [1, 3, 5], perRow: 6, caption: "3 favorable of 6 = 1/2" },
     choices: [
       { text: "1/6", why: "That's the chance of one specific number, not all three evens." },
       { text: "1/3", why: "Only counted... there are three evens (2,4,6) out of six." },
@@ -2726,6 +2754,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-7", pattern: "m_probability", fixedOrder: true,
     passage: "Two standard dice are rolled. What is the probability that both show a 6?",
+    formula: { key: "Independent events", expr: "P(A and B) = P(A) × P(B)", data: "1/6 × 1/6", answer: "1/36" },
+    diagram: { type: "probGrid", count: 36, favIdx: [35], favColor: "#fab219", perRow: 6, caption: "1 favorable of 36 = 1/36" },
     choices: [
       { text: "1/36", correct: true, why: "Independent: (1/6) · (1/6) = 1/36." },
       { text: "1/6", why: "That's one die — two dice multiply." },
@@ -2736,6 +2766,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-8", pattern: "m_probability", fixedOrder: true,
     passage: "A class has 12 girls and 8 boys. One student is chosen at random. What is the probability the student is a boy?",
+    formula: { key: "Probability", expr: "favorable ÷ TOTAL (not the other group)", data: "8 boys ÷ 20 students", answer: "8/20 = 2/5" },
+    diagram: { type: "probGrid", count: 20, favIdx: [0, 1, 2, 3, 4, 5, 6, 7], favColor: "#3987e5", otherColor: "#4a3aa7", perRow: 10, caption: "8 boys of 20 total = 2/5" },
     choices: [
       { text: "2/5", correct: true, why: "8 boys out of 20 total = 8/20 = 2/5." },
       { text: "2/3", why: "That's boys-to-girls as a ratio (8:12), not out of the whole class." },
@@ -2748,6 +2780,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-1", pattern: "m_systems", fixedOrder: true,
     passage: "x + y = 10 and x − y = 2. What is x?",
+    formula: { key: "Elimination", expr: "add the equations to cancel a variable", data: "(x+y) + (x−y) = 10 + 2 → 2x = 12", answer: "x = 6  (then y = 4)" },
+    diagram: { type: "systemLines", lines: [{ m: -1, b: 10 }, { m: 1, b: -2 }], solution: [6, 4], note: "x+y=10 and x−y=2 cross at (6, 4)" },
     choices: [
       { text: "4", why: "That's y. Adding the equations solves for x first." },
       { text: "5", why: "That's just 10÷2 — the two equations don't split evenly like that." },
@@ -2818,6 +2852,8 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-8", pattern: "m_systems", fixedOrder: true,
     passage: "Two numbers add to 20 and differ by 6. What is the larger number?",
+    formula: { key: "Set up a system", expr: "x + y = 20,  x − y = 6,  then add", data: "2x = 26", answer: "x = 13  (y = 7)" },
+    diagram: { type: "systemLines", lines: [{ m: -1, b: 20 }, { m: 1, b: -6 }], solution: [13, 7], note: "the two conditions cross at (13, 7)" },
     choices: [
       { text: "7", why: "That's the smaller number." },
       { text: "10", why: "That's half of 20 — the two numbers aren't equal, they differ by 6." },
@@ -2827,7 +2863,7 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v4 · 2026-07-12";
+const BANK_VERSION = "v5 · 2026-07-12";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });
