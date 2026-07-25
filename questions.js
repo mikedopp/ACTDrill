@@ -94,6 +94,7 @@ const ACT_QUESTIONS = [
   {
     id: "runons-1", pattern: "runons",
     passage: "The hikers reached the summit at |noon, they ate| lunch while the clouds drifted below.",
+    decode: "Look at the underlined join. Is there a complete sentence on BOTH sides? If so, a comma alone can't hold them together.",
     choices: [
       { text: "NO CHANGE", why: "Comma splice — there's a complete sentence on each side, and a comma alone can't hold them together." },
       { text: "noon, and they ate", correct: true, why: "Comma + “and” (a FANBOYS word) legally joins two complete sentences." },
@@ -671,6 +672,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_asked-1", pattern: "m_asked", fixedOrder: true,
     passage: "If 2x + 7 = 19, what is the value of 4x?",
+    decode: "They give an equation to find x — but ask for 4x. Solve for x, then keep going one more step.",
     choices: [
       { text: "6", why: "That's x. They asked for 4x — the classic stop-early trap." },
       { text: "12", why: "That's 2x, the left side of your last step." },
@@ -713,6 +715,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_backsolve-1", pattern: "m_backsolve", fixedOrder: true,
     passage: "Which value of x satisfies √(x + 7) = 5 ?",
+    decode: "The answers are plain numbers, so you can test them. Which x makes the square root come out to exactly 5?",
     choices: [
       { text: "−2", why: "Plug it in: √(−2 + 7) = √5 ≈ 2.2. Not 5." },
       { text: "2", why: "√9 = 3. Close, not 5." },
@@ -755,6 +758,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_plugin-1", pattern: "m_plugin",
     passage: "If x is an even integer, which of the following must be odd?",
+    decode: "The choices are expressions, not numbers. Pick an easy even value for x, run each one, and see which comes out odd.",
     choices: [
       { text: "3x", why: "Try x = 2 → 6. An even number times anything stays even." },
       { text: "x²", why: "2² = 4 — even squared is even." },
@@ -797,6 +801,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_translate-1", pattern: "m_translate",
     passage: "Which expression represents \"4 less than three times a number n\"?",
+    decode: "Turn the words into symbols piece by piece — and watch the order: 'less than' flips it.",
     choices: [
       { text: "3(n − 4)", why: "That's 'three times the quantity n minus 4' — parentheses change everything." },
       { text: "3n − 4", correct: true, why: "'4 less than' means subtract 4 AFTER tripling." },
@@ -901,6 +906,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-2", pattern: "m_geometry", fixedOrder: true,
     passage: "A right triangle has legs of length 9 and 12. How long is the hypotenuse?",
+    decode: "You're given the two legs of a right triangle. They want the longest side — the hypotenuse across from the right angle.",
     formula: { key: "Pythagorean theorem", expr: "a² + b² = c²", data: "9² + 12² = 81 + 144 = 225", answer: "c = √225 = 15" },
     diagram: { type: "rightTriangle", a: 9, b: 12, c: 15, aLabel: "9", bLabel: "12", cLabel: "c = 15", note: "9² + 12² = 15²" },
     choices: [
@@ -951,6 +957,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_ratio-2", pattern: "m_ratio", fixedOrder: true,
     passage: "A $60 jacket is marked down 30%. What is the sale price?",
+    decode: "A price and a percent off. They want what you actually PAY — not the size of the discount.",
     formula: { key: "Percent off", expr: "you PAY (100% − discount) of the price", data: "70% of $60 = 0.70 × 60", answer: "$42" },
     diagram: { type: "barModel", segments: [{ v: 70, label: "pay 70% = $42", color: "#3987e5" }, { v: 30, label: "−30% = $18", color: "#fab219" }], caption: "$60 whole → you keep 70%" },
     choices: [
@@ -1075,6 +1082,7 @@ ACT_QUESTIONS.push(
   {
     id: "r_mainidea-1", pattern: "r_mainidea",
     context: "For decades, city planners treated rain as a problem to be piped away as fast as possible: streets were crowned, gutters widened, storm drains enlarged. Today many of those same cities are ripping up pavement to let rain soak in where it falls, feeding underground aquifers instead of overwhelmed rivers. The hard lesson: water you rush away in spring is water you don't have in August.",
+    decode: "They want the WHOLE passage's job in one sentence — not a true detail that only covers one line.",
     prompt: "The main purpose of the passage is to:",
     choices: [
       { text: "describe a shift in how cities manage rainwater.", correct: true, why: "Covers the whole arc: old approach → new approach → why." },
@@ -1979,6 +1987,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_lines-8", pattern: "m_lines", fixedOrder: true,
     passage: "What is the midpoint of the segment from (1, 8) to (7, 2)?",
+    decode: "You're given two endpoints. They want the point exactly halfway between them — so average the x's and average the y's.",
     formula: { key: "Midpoint", expr: "( (x₁ + x₂) / 2 ,  (y₁ + y₂) / 2 )", data: "( (1 + 7) / 2 ,  (8 + 2) / 2 )", answer: "(4, 5)" },
     plot: { points: [[1, 8, "A"], [7, 2, "B"]], segment: [0, 1], answer: [4, 5, "M"] },
     choices: [
@@ -2091,6 +2100,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-5", pattern: "m_average", fixedOrder: true,
     passage: "What is the mean of 4, 7, 7, 10, and 12?",
+    decode: "A list of numbers. They want the average: add them all up, then divide by how many there are.",
     formula: { key: "Mean (average)", expr: "mean = total ÷ count", data: "(4 + 7 + 7 + 10 + 12) ÷ 5 = 40 ÷ 5", answer: "8" },
     diagram: { type: "numberLine", min: 3, max: 13, points: [{ x: 4 }, { x: 7 }, { x: 7 }, { x: 10 }, { x: 12 }, { x: 8, label: "mean 8", color: "#fab219" }], caption: "the mean is the balance point" },
     choices: [
@@ -2378,6 +2388,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_exponents-1", pattern: "m_exponents",
     passage: "x⁵ · x³ = ?",
+    decode: "Same base multiplied together. They want it written as one power of x.",
     formula: { key: "Multiply like bases", expr: "xᵃ · xᵇ = xᵃ⁺ᵇ  (add the exponents)", data: "x⁵⁺³", answer: "x⁸" },
     choices: [
       { text: "x⁸", correct: true, why: "Same base, multiplying: ADD the exponents. 5 + 3 = 8." },
@@ -2491,6 +2502,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-3", pattern: "m_quadratic",
     passage: "Expand: (x + 4)(x − 2)",
+    decode: "Two binomials multiplied. They want the expanded form — every part of the first times every part of the second.",
     formula: { key: "FOIL / area model", expr: "multiply every part by every part", data: "x·x + x·(−2) + 4·x + 4·(−2)", answer: "x² + 2x − 8" },
     diagram: { type: "areaModel", top: ["x", "−2"], left: ["x", "+4"], cells: [["x²", "−2x"], ["4x", "−8"]], note: "(x+4)(x−2) = x² + 2x − 8" },
     choices: [
@@ -2563,6 +2575,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_functions-1", pattern: "m_functions", fixedOrder: true,
     passage: "If f(x) = 3x − 2, what is f(4)?",
+    decode: "A rule and an input. They want the output — put 4 wherever x appears in the rule.",
     formula: { key: "Substitute the input", expr: "replace every x with the input", data: "3 · 4 − 2", answer: "10" },
     diagram: { type: "functionMachine", input: "4", rule: "3x − 2", output: "10" },
     choices: [
@@ -2658,6 +2671,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_trig-1", pattern: "m_trig", fixedOrder: true,
     passage: "In a right triangle, the side opposite angle θ is 3, the adjacent side is 4, and the hypotenuse is 5. What is sin θ?",
+    decode: "A right triangle with all three sides labeled. They want one specific ratio — sine — so you only need two of the sides.",
     formula: { key: "SOHCAHTOA", expr: "sin = opposite / hypotenuse", data: "opposite 3, hypotenuse 5", answer: "3/5" },
     diagram: { type: "rightTriangle", a: 4, b: 3, c: 5, aLabel: "adj 4", bLabel: "opp 3", cLabel: "hyp 5", angle: true, note: "sin θ = opp / hyp = 3/5" },
     choices: [
@@ -2826,6 +2840,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_probability-7", pattern: "m_probability", fixedOrder: true,
     passage: "Two standard dice are rolled. What is the probability that both show a 6?",
+    decode: "Two dice at once. They want the chance BOTH land on 6 — an 'and', so the two chances multiply.",
     formula: { key: "Independent events", expr: "P(A and B) = P(A) × P(B)", data: "1/6 × 1/6", answer: "1/36" },
     diagram: { type: "probGrid", count: 36, favIdx: [35], favColor: "#fab219", perRow: 6, caption: "1 favorable of 36 = 1/36" },
     choices: [
@@ -2852,6 +2867,7 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-1", pattern: "m_systems", fixedOrder: true,
     passage: "x + y = 10 and x − y = 2. What is x?",
+    decode: "Two equations sharing x and y. They want the single x that makes BOTH true at once.",
     formula: { key: "Elimination", expr: "add the equations to cancel a variable", data: "(x+y) + (x−y) = 10 + 2 → 2x = 12", answer: "x = 6  (then y = 4)" },
     diagram: { type: "systemLines", lines: [{ m: -1, b: 10 }, { m: 1, b: -2 }], solution: [6, 4], note: "x+y=10 and x−y=2 cross at (6, 4)" },
     choices: [
@@ -2945,7 +2961,7 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v6 · 2026-07-12";
+const BANK_VERSION = "v7 · 2026-07-25";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });

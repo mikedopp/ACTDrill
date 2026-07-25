@@ -47,6 +47,11 @@ overwritten by the app.)
 - **"See it work on 3 questions"** — every pattern in the Rulebook expands to show
   the same formula/pattern solving three differently-worded questions side by side.
   The point: don't get thrown by the wording — the key is always the same.
+- **Coaching / scaffold mode** — a "before you answer" box that decodes what the
+  question is really asking, names the move, and points at the formula to reach
+  for. Three levels (cycle the 🎓 button): **Full** (always), **Auto-fade**
+  (default — shows until you master a pattern, then steps back for test-realism),
+  **Off** (test mode). Works in every section; math also gets the formula hint.
 - **"Why this?" reasoning chat** — after any answer, a button opens a panel that
   explains *why this approach and not another* (the "why not the circle in the
   square hole" reasoning), hand-written per pattern so it's always available. If

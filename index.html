@@ -144,6 +144,17 @@
   .chatft { padding: 12px 14px; border-top: 1px solid var(--grid); display: flex; gap: 8px; }
   .chatft input { flex: 1; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; font-size: 14px; padding: 9px 12px; }
   .chatft input:disabled { opacity: 0.5; }
+
+  /* Coaching control + "before you answer" scaffold */
+  .coachbar { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .coachbar button { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font: inherit; font-size: 13px; padding: 4px 14px; cursor: pointer; }
+  .coachbar button:hover { color: var(--ink2); border-color: var(--accent); }
+  .coachbar button.on { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
+  .scaffold { margin-bottom: 14px; padding: 12px 14px; border-left: 3px solid var(--aqua, #1baf7a); background: var(--raised); border-radius: 0 10px 10px 0; }
+  .scaffold .slabel { font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #1baf7a; font-weight: 700; }
+  .scaffold .srow { font-size: 14px; color: var(--ink2); margin-top: 7px; }
+  .scaffold .srow b { color: var(--ink); font-weight: 600; }
+  .scaffold .sform { font-family: Consolas, "Cascadia Mono", monospace; color: var(--ink); }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
 
@@ -352,7 +363,7 @@
   function blankState() {
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
-             audio: { on: true, rate: 0.9, autoRead: true } };
+             audio: { on: true, rate: 0.9, autoRead: true }, coach: "auto" };
   }
   function load() {
     try {
@@ -1035,7 +1046,8 @@
       el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything."),
       el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die."),
       el("p", null, "Prefer to <b>hear</b> it? A <b>🔊 Voice</b> bar sits above each question — read the problem aloud, and have the explanation read to you automatically. Adjust the speed to whatever helps you follow. The <b>Reference</b> tab holds every ACT formula plus a look at where each subject leads in college."),
-      el("p", null, "Still wondering <i>why</i> — why this formula and not another one? Hit <b>🤔 Why this?</b> after any answer. You'll get a plain-English reason, and if <b>Ollama</b> is running you can ask it follow-ups — a private tutor that lives on this computer, no internet needed.")
+      el("p", null, "Still wondering <i>why</i> — why this formula and not another one? Hit <b>🤔 Why this?</b> after any answer. You'll get a plain-English reason, and if <b>Ollama</b> is running you can ask it follow-ups — a private tutor that lives on this computer, no internet needed."),
+      el("p", null, "New to a topic? <b>🎓 Coaching</b> shows a 'before you answer' hint — what the question is really asking, and which formula to reach for. On <b>Auto-fade</b> it helps until you master a pattern, then quietly steps back so you're ready for the real test. Flip it to Full or Off anytime.")
     );
     const a = el("div", "actions");
     const b = el("button", "btn", "Start");
@@ -1057,6 +1069,37 @@
     return bar;
   }
 
+  // ---------- coaching: scaffold now, fade as mastery grows ----------
+  const COACH = { full: "Full", auto: "Auto-fade", off: "Off" };
+  const COACH_ORDER = ["auto", "full", "off"];
+  function coachBar() {
+    const bar = el("div", "coachbar");
+    const b = el("button", "on", "🎓 Coaching: " + COACH[S.coach || "auto"]);
+    b.title = "Full = always show hints · Auto-fade = hints until you master a pattern · Off = test mode";
+    b.onclick = () => {
+      const i = COACH_ORDER.indexOf(S.coach || "auto");
+      S.coach = COACH_ORDER[(i + 1) % COACH_ORDER.length];
+      save(); nextQuestion();
+    };
+    bar.append(b);
+    return bar;
+  }
+  function shouldCoach(q) {
+    if (S.coach === "off") return false;
+    if (S.coach === "full") return true;
+    return !isMastered(q.pattern); // auto: help until this pattern is mastered, then fade
+  }
+  function scaffoldBox(q) {
+    const pat = ACT_PATTERNS[q.pattern];
+    const f = questionFormula(q);
+    const box = el("div", "scaffold");
+    box.append(el("div", "slabel", "Before you answer"));
+    if (q.decode) box.append(el("div", "srow", "<b>What they're asking:</b> " + esc(q.decode)));
+    box.append(el("div", "srow", "<b>The move:</b> " + esc(pat.cue)));
+    if (f) box.append(el("div", "srow", "<b>Reach for:</b> <span class='sform'>" + esc(f.key + " — " + f.expr) + "</span>"));
+    return box;
+  }
+
   function nextQuestion() {
     stopSpeech();
     // stepped away on their own? counters reset quietly — no nagging someone who already rested
@@ -1067,6 +1110,7 @@
     current = { q, choices: orderedChoices(q), answered: false };
     viewDrill.innerHTML = "";
     viewDrill.append(subjectBar());
+    viewDrill.append(coachBar());
     viewDrill.append(audioBar());
 
     const card = el("div", "card");
@@ -1082,6 +1126,8 @@
     const rqRow = el("div", "readrow");
     rqRow.append(speakerButton("Read question", () => questionSpeech(q, current.choices)));
     card.append(rqRow);
+    // scaffold (coaching): decode the question + point at the formula, before answering
+    if (shouldCoach(q)) card.append(scaffoldBox(q));
 
     const list = el("div", "choices");
     current.choices.forEach((c, idx) => {
