@@ -3001,7 +3001,499 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v8 · 2026-07-25";
+// ============================================================
+// WAVE 4 — blueprint rebalance: add the under-covered ACT
+// reporting categories (English rhetoric + word choice,
+// Math essential skills/rates, Reading argument & evidence).
+// ============================================================
+
+Object.assign(ACT_PATTERNS, {
+  e_purpose: {
+    subject: "English",
+    name: "Accomplish the writer's goal",
+    rule: "These ask which choice best does a STATED job — 'most effectively introduces,' 'best emphasizes X,' 'most specific detail.' Judge only against that stated goal, not against what sounds nicest.",
+    cue: "The question names a goal. Reread the goal, then pick the choice that does exactly THAT — even if another option is prettier or true.",
+    example: "'Which most vividly shows the storm?' → the concrete sensory line, not the plain, correct one."
+  },
+  e_order: {
+    subject: "English",
+    name: "Sentence & paragraph order",
+    rule: "Ideas must flow logically. A sentence belongs where its linking words (however, then, as a result, this) actually connect. Steps go in the order you'd really do them.",
+    cue: "'Where should this sentence go?' — follow the connecting words and the real-world sequence to the one spot it fits.",
+    example: "A sentence starting 'Despite this setback…' belongs right after a setback is described."
+  },
+  e_wordchoice: {
+    subject: "English",
+    name: "Word choice & register",
+    rule: "Pick the word that is precise AND fits the tone. Watch near-synonyms with the wrong shade of meaning, idioms (depend ON, different FROM, effect vs. affect), and words too casual or too fancy for the passage.",
+    cue: "All four choices roughly 'mean' the same? It's testing precision or idiom — pick the exact meaning in the right register.",
+    example: "A scientist 'uncovered,' not 'dug up,' a pattern — same idea, right register."
+  },
+  m_rates: {
+    subject: "Math",
+    name: "Rates, proportions & unit conversion",
+    rule: "A rate is a division with units (miles per hour, $ per pound). Build the rate, then multiply — and make the units cancel. Unit changes multiply by a conversion written as a fraction. Proportions cross-multiply.",
+    cue: "'Per,' 'each,' 'at this rate,' or a unit change (min→sec, yards→feet) → find the rate and let the units cancel.",
+    example: "150 miles in 3 hours = 50 mph; over 5 hours → 50 × 5 = 250 miles.",
+    formula: { key: "Rate", expr: "amount = rate × time   ·   set it up so the units cancel" }
+  },
+  r_argument: {
+    subject: "Reading",
+    name: "Argument & evidence",
+    rule: "Find the author's CLAIM, then the EVIDENCE that backs it. Questions ask what strengthens or weakens a point, what a piece of evidence is doing, or how two views relate.",
+    cue: "Ask two things: what is the author trying to PROVE, and what are they using to prove it? Then match (or mismatch) evidence to claim.",
+    example: "Claim: 'the bridge is unsafe.' The support is the crack data — not the bridge's age."
+  }
+});
+
+ACT_QUESTIONS.push(
+  // ---------------- English: accomplish the writer's goal ----------------
+  {
+    id: "e_purpose-1", pattern: "e_purpose",
+    context: "The paragraph describes how a beekeeper settles a hive before an inspection.",
+    prompt: "Which choice most effectively emphasizes how CALM the process is?",
+    choices: [
+      { text: "The beekeeper puffs cool smoke, and the bees drift into a slow, sleepy hum.", correct: true, why: "Concrete, sensory, and calm — it does the exact job the question asked for." },
+      { text: "The beekeeper does several things before opening the hive.", why: "Vague — it shows nothing calm or otherwise." },
+      { text: "Inspections are required twice a year by law.", why: "True but off-goal; nothing about calm." },
+      { text: "Bees can sting when they feel threatened.", why: "Opposite tone — it raises tension, not calm." }
+    ]
+  },
+  {
+    id: "e_purpose-2", pattern: "e_purpose",
+    context: "An essay argues that city parks improve public health.",
+    prompt: "Which choice best supports the claim with a specific statistic?",
+    choices: [
+      { text: "Studies show neighborhoods near parks have 12% lower rates of heart disease.", correct: true, why: "A concrete number tied to the health claim — exactly what 'specific statistic' asks for." },
+      { text: "Parks are nice places to relax.", why: "Generic and unmeasured." },
+      { text: "Many cities have parks of different sizes.", why: "Irrelevant to health." },
+      { text: "People enjoy walking outdoors.", why: "Vague, no data." }
+    ]
+  },
+  {
+    id: "e_purpose-3", pattern: "e_purpose",
+    context: "A profile of a self-taught chef reaches its concluding sentence; the essay's focus has been her learning entirely on her own.",
+    prompt: "Which choice provides the most effective conclusion, tying back to that focus?",
+    choices: [
+      { text: "She now trains new cooks the same way she once taught herself.", correct: true, why: "Loops back to the self-taught theme and closes it." },
+      { text: "Her restaurant has thirty tables.", why: "A detail unrelated to the essay's point." },
+      { text: "Cooking is popular on television today.", why: "Off-topic generality." },
+      { text: "She prefers copper pans.", why: "Trivial, no connection to the theme." }
+    ]
+  },
+  {
+    id: "e_purpose-4", pattern: "e_purpose",
+    context: "The writer wants to OPEN a paragraph that will describe a storm arriving suddenly.",
+    prompt: "Which choice most effectively sets up the paragraph?",
+    choices: [
+      { text: "Within minutes, the calm sky turned the color of a bruise.", correct: true, why: "Vivid and sets up a sudden storm — the stated job." },
+      { text: "The weather can change.", why: "Flat and generic; sets up nothing." },
+      { text: "The forecast is made by meteorologists.", why: "Off-topic; no scene set." },
+      { text: "Storms have happened before.", why: "Adds nothing and creates no lead-in." }
+    ]
+  },
+  {
+    id: "e_purpose-5", pattern: "e_purpose",
+    context: "A paragraph about a marathon runner's final mile.",
+    prompt: "Which choice best conveys the runner's exhaustion?",
+    choices: [
+      { text: "Her legs had turned to wet sand, each step a negotiation.", correct: true, why: "A vivid image that makes the exhaustion felt." },
+      { text: "She kept running.", why: "States action but not exhaustion." },
+      { text: "The race was 26.2 miles long.", why: "A fact, not a feeling." },
+      { text: "She had trained for months.", why: "Backstory, not the fatigue asked for." }
+    ]
+  },
+  {
+    id: "e_purpose-6", pattern: "e_purpose",
+    context: "The essay's goal here is to persuade readers to try community gardening.",
+    prompt: "Which choice best persuades with a concrete benefit?",
+    choices: [
+      { text: "A single raised bed can cut a family's summer produce bill in half.", correct: true, why: "A specific, tangible payoff — persuasive and concrete." },
+      { text: "Gardening exists in many forms.", why: "Neutral fact, no benefit." },
+      { text: "Some people dislike gardening.", why: "Works against the goal." },
+      { text: "Gardens need water.", why: "A requirement, not a benefit." }
+    ]
+  },
+  {
+    id: "e_purpose-7", pattern: "e_purpose",
+    context: "A science paragraph on how octopuses change color.",
+    prompt: "Which choice most clearly explains HOW the camouflage works?",
+    choices: [
+      { text: "Special skin cells expand and contract to shift color in under a second.", correct: true, why: "Explains the mechanism — the 'how' the question wants." },
+      { text: "Octopuses are amazing animals.", why: "Opinion, no explanation." },
+      { text: "Octopuses live in oceans worldwide.", why: "Habitat, not mechanism." },
+      { text: "Camouflage is common in nature.", why: "General context, not how it works." }
+    ]
+  },
+  {
+    id: "e_purpose-8", pattern: "e_purpose",
+    context: "The writer wants to add a specific sensory detail about a bakery.",
+    prompt: "Which choice best accomplishes this?",
+    choices: [
+      { text: "The bakery smelled of warm cinnamon and scorched sugar.", correct: true, why: "Precise sensory detail — smell you can almost catch." },
+      { text: "The bakery smelled good.", why: "Sensory but not specific." },
+      { text: "The bakery was a business.", why: "No sensory detail at all." },
+      { text: "The bakery opened early.", why: "A fact about hours, not a sense." }
+    ]
+  },
+
+  // ---------------- English: sentence & paragraph order ----------------
+  {
+    id: "e_order-1", pattern: "e_order", fixedOrder: true,
+    context: "[1] Maria planted the seeds in April. [2] By June, green shoots covered the bed. [3] She watered them every morning. [4] By August, tomatoes hung heavy on the vines.",
+    prompt: "For the most logical order, Sentence 3 should be placed:",
+    choices: [
+      { text: "where it is now", why: "Watering 'every morning' reads oddly only after the shoots already appeared." },
+      { text: "after Sentence 1", correct: true, why: "Plant → water daily → shoots appear → tomatoes. The care comes right after planting." },
+      { text: "after Sentence 4", why: "Watering after the harvest makes no sense." },
+      { text: "before Sentence 1", why: "You can't water seeds you haven't planted yet." }
+    ]
+  },
+  {
+    id: "e_order-2", pattern: "e_order", fixedOrder: true,
+    context: "A paragraph describes a failed first experiment, then a successful second attempt.",
+    prompt: "The writer wants to add the sentence 'The second attempt went differently.' Where should it go?",
+    choices: [
+      { text: "right before the description of the second attempt", correct: true, why: "A transition sentence belongs at the hinge — just before the thing it introduces." },
+      { text: "at the very start of the paragraph", why: "There's no 'second' yet — the first attempt hasn't been described." },
+      { text: "at the very end", why: "By then the second attempt is already over; the setup is wasted." },
+      { text: "right after the first sentence", why: "Too early — the first experiment isn't finished being described." }
+    ]
+  },
+  {
+    id: "e_order-3", pattern: "e_order", fixedOrder: true,
+    context: "[1] The museum added a night program. [2] Attendance doubled. [3] It features flashlight tours of the dinosaur hall. [4] Families now book weeks in advance.",
+    prompt: "Sentence 3 is most logically placed:",
+    choices: [
+      { text: "where it is now", why: "Describing the program after its RESULT (doubled attendance) is out of order." },
+      { text: "after Sentence 1", correct: true, why: "Introduce the program, describe it, THEN give its results." },
+      { text: "after Sentence 4", why: "The description comes too late to help." },
+      { text: "before Sentence 1", why: "You can't describe 'it' before naming the program." }
+    ]
+  },
+  {
+    id: "e_order-4", pattern: "e_order", fixedOrder: true,
+    context: "A four-paragraph essay. Paragraph 3 begins, 'Despite these advantages, the plan has one flaw.'",
+    prompt: "Paragraph 3 is best placed:",
+    choices: [
+      { text: "right after the paragraph that lists the advantages", correct: true, why: "'Despite these advantages' must follow the advantages it refers back to." },
+      { text: "first", why: "'These advantages' would point to nothing." },
+      { text: "before any advantages are mentioned", why: "The backward reference would be broken." },
+      { text: "last, no matter what", why: "Position must follow the logic, not a fixed slot." }
+    ]
+  },
+  {
+    id: "e_order-5", pattern: "e_order", fixedOrder: true,
+    context: "[1] He preheated the oven. [2] The cake rose perfectly. [3] He mixed the batter. [4] He poured it into the pan.",
+    prompt: "Which is the most logical order of the sentences?",
+    choices: [
+      { text: "1, 3, 4, 2", correct: true, why: "Preheat, mix, pour, then it rises — the real sequence of baking." },
+      { text: "1, 2, 3, 4", why: "The cake can't rise before the batter is even mixed." },
+      { text: "3, 1, 4, 2", why: "Workable steps, but the oven should be preheating first." },
+      { text: "2, 1, 3, 4", why: "Starts with the result before anything is done." }
+    ]
+  },
+  {
+    id: "e_order-6", pattern: "e_order", fixedOrder: true,
+    context: "A paragraph on a river cleanup ends with volunteers celebrating their finished work.",
+    prompt: "The writer wants to add 'By noon, they had filled forty trash bags.' Where does it fit best?",
+    choices: [
+      { text: "in the middle, showing progress before the celebration", correct: true, why: "Progress belongs between starting and celebrating — it earns the ending." },
+      { text: "before the cleanup begins", why: "They can't have filled bags before starting." },
+      { text: "as the very first sentence", why: "Same problem — it jumps to a result with no setup." },
+      { text: "it shouldn't be added at all", why: "It's relevant and concrete; it strengthens the paragraph in the right spot." }
+    ]
+  },
+  {
+    id: "e_order-7", pattern: "e_order", fixedOrder: true,
+    context: "[1] Sand the surface. [2] The primer bonds tightly to it. [3] Wipe away the dust. [4] Apply the primer.",
+    prompt: "Sentence 2 is best placed:",
+    choices: [
+      { text: "after Sentence 4", correct: true, why: "The primer can only 'bond' after you've applied it — so it comes last." },
+      { text: "where it is now", why: "It describes a result before the primer is even applied." },
+      { text: "before Sentence 1", why: "Nothing has happened yet for the primer to bond to." },
+      { text: "after Sentence 3", why: "Still before the primer is applied — too early." }
+    ]
+  },
+  {
+    id: "e_order-8", pattern: "e_order", fixedOrder: true,
+    context: "A paragraph describes a strange discovery and then, later, its scientific explanation.",
+    prompt: "The sentence 'At first, no one could explain it' is best placed:",
+    choices: [
+      { text: "right after the discovery, before the explanation", correct: true, why: "The mystery belongs between finding the thing and solving it." },
+      { text: "after the explanation is given", why: "Once explained, 'no one could explain it' contradicts what came before." },
+      { text: "at the very end", why: "Ends on confusion the paragraph already resolved." },
+      { text: "as the opening line", why: "'It' has no antecedent yet — nothing's been discovered." }
+    ]
+  },
+
+  // ---------------- English: word choice & register ----------------
+  {
+    id: "e_wordchoice-1", pattern: "e_wordchoice",
+    passage: "After months of work, the detective |dug up| the evidence that reopened the case.",
+    choices: [
+      { text: "NO CHANGE", why: "'Dug up' is too casual and literal for a detective and evidence." },
+      { text: "uncovered", correct: true, why: "Precise and the right register for discovering evidence." },
+      { text: "excavated", why: "Implies literal digging in the ground." },
+      { text: "found out about", why: "Wordy and vague compared with 'uncovered.'" }
+    ]
+  },
+  {
+    id: "e_wordchoice-2", pattern: "e_wordchoice",
+    passage: "The bridge's cable design is |different than| the original.",
+    choices: [
+      { text: "NO CHANGE", why: "'Different than' is nonstandard in this construction." },
+      { text: "different from", correct: true, why: "The standard idiom: different FROM." },
+      { text: "differ from", why: "Wrong verb form — needs the adjective 'different.'" },
+      { text: "differently from", why: "An adverb can't describe the noun 'design.'" }
+    ]
+  },
+  {
+    id: "e_wordchoice-3", pattern: "e_wordchoice",
+    passage: "The results are not |dependent of| outside funding.",
+    choices: [
+      { text: "NO CHANGE", why: "'Dependent of' is not an English idiom." },
+      { text: "dependent on", correct: true, why: "The fixed idiom is dependent ON." },
+      { text: "depending of", why: "Wrong form and wrong preposition." },
+      { text: "dependent with", why: "Wrong preposition." }
+    ]
+  },
+  {
+    id: "e_wordchoice-4", pattern: "e_wordchoice",
+    passage: "The senator delivered a |ginormous| speech on tax reform.",
+    choices: [
+      { text: "NO CHANGE", why: "'Ginormous' is slang — wrong register for a formal passage." },
+      { text: "lengthy", correct: true, why: "Precise and appropriately formal for a speech." },
+      { text: "big", why: "Imprecise for describing a speech." },
+      { text: "humongous", why: "Also slang; same register problem." }
+    ]
+  },
+  {
+    id: "e_wordchoice-5", pattern: "e_wordchoice",
+    passage: "The cold front will |proceed| the storm, arriving hours before it.",
+    choices: [
+      { text: "NO CHANGE", why: "'Proceed' means to go forward — wrong word here." },
+      { text: "precede", correct: true, why: "To 'precede' is to come before — matches 'arriving hours before it.'" },
+      { text: "preview", why: "A front doesn't 'preview' a storm; wrong meaning." },
+      { text: "proceed with", why: "Still the wrong verb, now with a stray preposition." }
+    ]
+  },
+  {
+    id: "e_wordchoice-6", pattern: "e_wordchoice",
+    passage: "She was |anxious| to open her acceptance letter, grinning as she tore the envelope.",
+    choices: [
+      { text: "NO CHANGE", why: "'Anxious' implies worry, but the grin shows she's happily impatient." },
+      { text: "eager", correct: true, why: "Matches the grin — positive impatience, the precise meaning." },
+      { text: "reluctant", why: "The opposite of what the grin shows." },
+      { text: "nervous", why: "Same worry problem as 'anxious.'" }
+    ]
+  },
+  {
+    id: "e_wordchoice-7", pattern: "e_wordchoice",
+    passage: "The new evidence had a strong |affect| on the jury's verdict.",
+    choices: [
+      { text: "NO CHANGE", why: "'Affect' is normally the verb; the noun here needs 'effect.'" },
+      { text: "effect", correct: true, why: "'An effect on' — the noun form is what the sentence needs." },
+      { text: "affects", why: "Still the verb form, and now plural." },
+      { text: "effected", why: "A verb meaning 'brought about' — wrong part of speech here." }
+    ]
+  },
+  {
+    id: "e_wordchoice-8", pattern: "e_wordchoice",
+    passage: "By the end of the trek the hikers were |literally| starving, so they ate the moment camp was set.",
+    choices: [
+      { text: "NO CHANGE", why: "They weren't LITERALLY starving — 'literally' misstates it." },
+      { text: "practically", correct: true, why: "'Practically starving' precisely means very hungry without the false 'literally.'" },
+      { text: "figuratively", why: "Technically accurate but clunky and unidiomatic here." },
+      { text: "really", why: "Casual and vague compared with 'practically.'" }
+    ]
+  },
+
+  // ---------------- Math: rates, proportions & conversion ----------------
+  {
+    id: "m_rates-1", pattern: "m_rates", fixedOrder: true,
+    passage: "A car travels 150 miles in 3 hours. At that rate, how far will it travel in 5 hours?",
+    decode: "They give distance and time — find the speed (a rate), then apply it to a new time.",
+    formula: { key: "Rate", expr: "distance = rate × time", data: "rate = 150 ÷ 3 = 50 mph; then 50 × 5", answer: "250 miles" },
+    choices: [
+      { text: "50", why: "That's the rate (mph), not the distance in 5 hours." },
+      { text: "250", correct: true, why: "50 mph × 5 h = 250 miles." },
+      { text: "450", why: "That's 150 × 3 — multiplying the wrong numbers." },
+      { text: "750", why: "That's 150 × 5 — using the 3-hour distance as if it were the rate." }
+    ]
+  },
+  {
+    id: "m_rates-2", pattern: "m_rates", fixedOrder: true,
+    passage: "A printer prints 24 pages per minute. How many pages does it print in 15 seconds?",
+    formula: { key: "Rate", expr: "amount = rate × time (same units!)", data: "15 sec = ¼ min; 24 × ¼", answer: "6 pages" },
+    choices: [
+      { text: "6", correct: true, why: "15 seconds is ¼ of a minute, so ¼ × 24 = 6." },
+      { text: "8", why: "Doesn't match any correct setup." },
+      { text: "90", why: "Mismatched units — mixing minutes and seconds." },
+      { text: "360", why: "That's 24 × 15, treating seconds as minutes." }
+    ]
+  },
+  {
+    id: "m_rates-3", pattern: "m_rates", fixedOrder: true,
+    passage: "Three pounds of apples cost $4.50. At that rate, how much do 7 pounds cost?",
+    decode: "Find the price per pound (a unit rate), then multiply by the new number of pounds.",
+    formula: { key: "Unit rate", expr: "cost = (price per pound) × pounds", data: "4.50 ÷ 3 = $1.50/lb; × 7", answer: "$10.50" },
+    choices: [
+      { text: "$9.00", why: "That's 6 pounds' worth ($1.50 × 6)." },
+      { text: "$10.50", correct: true, why: "$1.50 per pound × 7 = $10.50." },
+      { text: "$13.50", why: "That's $4.50 × 3 — wrong operation." },
+      { text: "$31.50", why: "That's $4.50 × 7 — using the 3-lb price as the per-pound price." }
+    ]
+  },
+  {
+    id: "m_rates-4", pattern: "m_rates", fixedOrder: true,
+    passage: "A rope is 2.5 yards long. How many feet is that? (1 yard = 3 feet)",
+    formula: { key: "Unit conversion", expr: "multiply by the conversion (3 ft / 1 yd)", data: "2.5 × 3", answer: "7.5 feet" },
+    choices: [
+      { text: "0.83", why: "That's 2.5 ÷ 3 — dividing when you should multiply." },
+      { text: "5", why: "Doesn't use the 3-feet-per-yard conversion." },
+      { text: "7.5", correct: true, why: "2.5 yards × 3 feet/yard = 7.5 feet." },
+      { text: "30", why: "That's 2.5 × 12 — using inches, not feet." }
+    ]
+  },
+  {
+    id: "m_rates-5", pattern: "m_rates", fixedOrder: true,
+    passage: "A recipe for 4 servings needs 3 cups of flour. How much flour is needed for 10 servings?",
+    formula: { key: "Proportion", expr: "3 cups / 4 servings = x / 10", data: "x = (3 ÷ 4) × 10 = 0.75 × 10", answer: "7.5 cups" },
+    choices: [
+      { text: "1.2", why: "That's 4 ÷ 3 ish — the ratio flipped." },
+      { text: "7.5", correct: true, why: "0.75 cup per serving × 10 = 7.5 cups." },
+      { text: "12", why: "That's 3 × 4 — not a proportion." },
+      { text: "13.3", why: "That's 40 ÷ 3 — set up upside down." }
+    ]
+  },
+  {
+    id: "m_rates-6", pattern: "m_rates", fixedOrder: true,
+    passage: "A machine makes 500 widgets in 8 hours. At that rate, how many does it make in a 40-hour week?",
+    formula: { key: "Rate", expr: "amount = rate × time", data: "500 ÷ 8 = 62.5/hr; × 40", answer: "2,500 widgets" },
+    choices: [
+      { text: "62.5", why: "That's the hourly rate, not the weekly total." },
+      { text: "100", why: "Doesn't match any correct setup." },
+      { text: "2,500", correct: true, why: "62.5 widgets/hour × 40 hours = 2,500." },
+      { text: "4,000", why: "That's 500 × 8 — multiplying the wrong pair." }
+    ]
+  },
+  {
+    id: "m_rates-7", pattern: "m_rates", fixedOrder: true,
+    passage: "Sound travels about 1,100 feet per second. Roughly how far does it travel in 5 seconds?",
+    formula: { key: "Rate", expr: "distance = rate × time", data: "1,100 × 5", answer: "5,500 feet" },
+    choices: [
+      { text: "220", why: "That's 1,100 ÷ 5 — dividing instead of multiplying." },
+      { text: "1,100", why: "That's one second's distance." },
+      { text: "5,500", correct: true, why: "1,100 ft/sec × 5 sec = 5,500 feet." },
+      { text: "6,600", why: "That's × 6, one second too many." }
+    ]
+  },
+  {
+    id: "m_rates-8", pattern: "m_rates", fixedOrder: true,
+    passage: "A hose fills a 60-gallon tub in 5 minutes. At that rate, how long to fill 90 gallons?",
+    decode: "Find the fill rate (gallons per minute), then divide the new amount by that rate.",
+    formula: { key: "Rate", expr: "time = amount ÷ rate", data: "rate = 60 ÷ 5 = 12 gal/min; 90 ÷ 12", answer: "7.5 minutes" },
+    choices: [
+      { text: "4.5", why: "Doesn't match the 12-gal/min rate." },
+      { text: "6", why: "That's 90 ÷ 15 — wrong rate." },
+      { text: "7.5", correct: true, why: "12 gallons/minute → 90 ÷ 12 = 7.5 minutes." },
+      { text: "15", why: "That's 90 ÷ 6 — halved the rate by mistake." }
+    ]
+  },
+
+  // ---------------- Reading: argument & evidence ----------------
+  {
+    id: "r_argument-1", pattern: "r_argument",
+    context: "The author argues that remote work boosts productivity, citing a six-month study in which remote employees completed 13% more tasks than in-office peers.",
+    prompt: "Which best identifies the EVIDENCE the author uses for the claim?",
+    choices: [
+      { text: "The study's finding that remote workers completed 13% more tasks.", correct: true, why: "That measured result is the actual support for the productivity claim." },
+      { text: "Remote workers save time by not commuting.", why: "Plausible, but it's not the evidence the author actually cited." },
+      { text: "Some people prefer working from home.", why: "A preference, not evidence of productivity." },
+      { text: "Office rent is expensive.", why: "Unrelated to whether remote work is more productive." }
+    ]
+  },
+  {
+    id: "r_argument-2", pattern: "r_argument",
+    context: "A writer claims a new streetlight design cut nighttime crashes. A critic notes that crashes fell across the whole city that year, not only where the new lights were installed.",
+    prompt: "The critic's point weakens the claim because it:",
+    choices: [
+      { text: "offers another explanation for the drop besides the lights.", correct: true, why: "If crashes fell everywhere, something citywide — not the lights — may be the cause." },
+      { text: "shows the lights were expensive.", why: "Cost doesn't address whether they worked." },
+      { text: "proves the lights caused the drop.", why: "It does the opposite — it undercuts that." },
+      { text: "agrees the lights worked.", why: "The critic is disputing, not agreeing." }
+    ]
+  },
+  {
+    id: "r_argument-3", pattern: "r_argument",
+    context: "An essay claims zoos aid conservation, noting that several endangered species have been bred in zoos and released into the wild.",
+    prompt: "Which addition would MOST strengthen the argument?",
+    choices: [
+      { text: "Data showing wild populations rose after zoo-bred animals were released.", correct: true, why: "It directly links the zoo program to a real conservation gain." },
+      { text: "Zoos are popular with families.", why: "Popularity isn't conservation." },
+      { text: "Zoos charge admission.", why: "Irrelevant to the claim." },
+      { text: "Some animals dislike captivity.", why: "If anything, that weakens it." }
+    ]
+  },
+  {
+    id: "r_argument-4", pattern: "r_argument",
+    context: "Two authors discuss homework. Author A says it builds discipline. Author B says it widens the gap between students who have support at home and those who don't.",
+    prompt: "The two authors primarily disagree about:",
+    choices: [
+      { text: "whether homework's overall effect is beneficial or harmful.", correct: true, why: "A frames it as a benefit; B frames it as a harm — that's the core disagreement." },
+      { text: "whether homework exists.", why: "Both take it as given." },
+      { text: "how long homework takes.", why: "Neither is arguing about time." },
+      { text: "which subjects assign homework.", why: "Subject matter never comes up." }
+    ]
+  },
+  {
+    id: "r_argument-5", pattern: "r_argument",
+    context: "A columnist argues a city's soda tax reduced soda consumption, pointing to a 20% drop in soda sales within the city after the tax.",
+    prompt: "Which finding, if true, would MOST weaken the argument?",
+    choices: [
+      { text: "Shoppers simply bought their soda in the next town, where there was no tax.", correct: true, why: "Then consumption didn't really fall — the sales just moved, breaking the claim." },
+      { text: "The tax raised money for local schools.", why: "A side effect, not about consumption." },
+      { text: "Soda is sold in many stores.", why: "Irrelevant to the tax's effect." },
+      { text: "Soda contains sugar.", why: "True but says nothing about the argument." }
+    ]
+  },
+  {
+    id: "r_argument-6", pattern: "r_argument",
+    context: "An author argues a new diet is effective, citing a trial in which 8 of 10 participants lost weight.",
+    prompt: "In the argument, that '8 of 10' statistic functions to:",
+    choices: [
+      { text: "serve as evidence that the diet works.", correct: true, why: "It's offered as measured support for the effectiveness claim." },
+      { text: "introduce a counterargument.", why: "It supports, not opposes, the claim." },
+      { text: "define a term.", why: "It defines nothing." },
+      { text: "state the author's personal opinion.", why: "It's data, not opinion." }
+    ]
+  },
+  {
+    id: "r_argument-7", pattern: "r_argument",
+    context: "Passage A praises a poet's plain, simple style as honest. Passage B calls that same poet's work 'thin' and unambitious.",
+    prompt: "How do the two passages relate?",
+    choices: [
+      { text: "They reach opposite judgments about the same trait of the poet's work.", correct: true, why: "Both discuss the simplicity; A admires it, B faults it." },
+      { text: "They agree completely.", why: "Their verdicts are opposed." },
+      { text: "They discuss entirely different poets.", why: "It's the same poet." },
+      { text: "Passage B simply repeats Passage A.", why: "B contradicts A rather than echoing it." }
+    ]
+  },
+  {
+    id: "r_argument-8", pattern: "r_argument",
+    context: "An author argues an old bridge should be replaced, citing inspection reports of severe corrosion in its main supports.",
+    prompt: "Which addition would MOST strengthen the author's case?",
+    choices: [
+      { text: "Engineering data showing the corrosion has weakened the bridge beyond safe limits.", correct: true, why: "It ties the corrosion directly to a safety threshold — exactly what the claim needs." },
+      { text: "The bridge is over fifty years old.", why: "Age alone doesn't prove danger." },
+      { text: "The bridge is painted gray.", why: "Irrelevant detail." },
+      { text: "Thousands of cars use the bridge daily.", why: "Raises stakes but isn't evidence it's unsafe." }
+    ]
+  }
+);
+
+const BANK_VERSION = "v9 · 2026-07-25";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });
