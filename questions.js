@@ -673,6 +673,11 @@ ACT_QUESTIONS.push(
     id: "m_asked-1", pattern: "m_asked", fixedOrder: true,
     passage: "If 2x + 7 = 19, what is the value of 4x?",
     decode: "They give an equation to find x — but ask for 4x. Solve for x, then keep going one more step.",
+    steps: [
+      { do: "Read what they want: 4x — not x. Underline it.", why: "The whole trap is answering for x. Know the real target first." },
+      { do: "Solve for x: 2x + 7 = 19 → subtract 7 → 2x = 12 → divide by 2 → x = 6.", why: "Peel off the +7, then the ×2 — undo it in reverse order." },
+      { do: "Finish the real question: 4x = 4 × 6 = 24.", why: "Don't stop at x. They asked for 4x — one more step." }
+    ],
     choices: [
       { text: "6", why: "That's x. They asked for 4x — the classic stop-early trap." },
       { text: "12", why: "That's 2x, the left side of your last step." },
@@ -919,6 +924,11 @@ ACT_QUESTIONS.push(
   {
     id: "m_geometry-3", pattern: "m_geometry", fixedOrder: true,
     passage: "A rectangle has length 8 and perimeter 28. What is its area?",
+    steps: [
+      { do: "Write the perimeter rule: P = 2(l + w). Fill in what you know: 28 = 2(8 + w).", why: "Start from the rule that links what you have (perimeter, length) to what you need." },
+      { do: "Divide both sides by 2: 14 = 8 + w. Then subtract 8: w = 6.", why: "Undo the ×2, then the +8, to get the width by itself." },
+      { do: "Now the area: A = l × w = 8 × 6 = 48.", why: "They asked for area, not width — one more step with the width you just found." }
+    ],
     formula: { key: "Rectangle", expr: "P = 2(l + w)   and   A = l · w", data: "28 = 2(8 + w) → w = 6", answer: "A = 8 · 6 = 48" },
     diagram: { type: "rectangle", w: 8, h: 6, wLabel: "l = 8", hLabel: "w = 6", area: "A = 48", note: "perimeter 28 → width 6" },
     choices: [
@@ -958,6 +968,11 @@ ACT_QUESTIONS.push(
     id: "m_ratio-2", pattern: "m_ratio", fixedOrder: true,
     passage: "A $60 jacket is marked down 30%. What is the sale price?",
     decode: "A price and a percent off. They want what you actually PAY — not the size of the discount.",
+    steps: [
+      { do: "You KEEP 100% − 30% = 70% of the price.", why: "'Off' means you pay the rest — flip the discount to what stays." },
+      { do: "Take 70% of 60: 0.70 × 60 = 42.", why: "'Of' means multiply, and 70% is 0.70." },
+      { do: "Sale price = $42.", why: "That's what you hand over at the register — the actual question." }
+    ],
     formula: { key: "Percent off", expr: "you PAY (100% − discount) of the price", data: "70% of $60 = 0.70 × 60", answer: "$42" },
     diagram: { type: "barModel", segments: [{ v: 70, label: "pay 70% = $42", color: "#3987e5" }, { v: 30, label: "−30% = $18", color: "#fab219" }], caption: "$60 whole → you keep 70%" },
     choices: [
@@ -996,6 +1011,11 @@ ACT_QUESTIONS.push(
   {
     id: "m_average-1", pattern: "m_average", fixedOrder: true,
     passage: "Sam's first four test scores average 85. What must he score on the fifth test to raise his average to 87?",
+    steps: [
+      { do: "Turn the goal into a total: 5 tests averaging 87 need a total of 87 × 5 = 435.", why: "total = average × count. Totals are far easier to work with than averages." },
+      { do: "Total he has so far: 4 tests averaging 85 = 85 × 4 = 340.", why: "Same rule, for the tests already taken." },
+      { do: "The 5th test fills the gap: 435 − 340 = 95.", why: "Whatever's missing from the total he needs is exactly the score required." }
+    ],
     formula: { key: "Averages via totals", expr: "total = avg × count", data: "need 5×87 = 435; have 4×85 = 340", answer: "435 − 340 = 95" },
     choices: [
       { text: "85", why: "His current average — matching it moves nothing." },
@@ -2491,6 +2511,12 @@ ACT_QUESTIONS.push(
   {
     id: "m_quadratic-2", pattern: "m_quadratic", fixedOrder: true,
     passage: "Solve: x² − 5x + 6 = 0",
+    steps: [
+      { do: "Find two numbers that multiply to +6 and add to −5.", why: "That's the whole game for factoring x² + bx + c." },
+      { do: "−2 and −3 work: (−2)(−3) = 6 and (−2) + (−3) = −5. So it factors to (x − 2)(x − 3) = 0.", why: "Those two numbers drop straight into the parentheses." },
+      { do: "Set each factor to zero: x − 2 = 0  or  x − 3 = 0.", why: "If two things multiply to zero, at least one of them must BE zero." },
+      { do: "Solve each: x = 2  or  x = 3.", why: "Two answers — a quadratic can cross zero twice." }
+    ],
     formula: { key: "Factor, then zero each part", expr: "(x − 2)(x − 3) = 0", data: "x − 2 = 0  or  x − 3 = 0", answer: "x = 2 or 3" },
     choices: [
       { text: "x = −2 or −3", why: "Sign flip: the factors are (x−2)(x−3), so the roots that make them zero are +2 and +3." },
@@ -2868,6 +2894,12 @@ ACT_QUESTIONS.push(
     id: "m_systems-1", pattern: "m_systems", fixedOrder: true,
     passage: "x + y = 10 and x − y = 2. What is x?",
     decode: "Two equations sharing x and y. They want the single x that makes BOTH true at once.",
+    steps: [
+      { do: "Line the two up: x + y = 10, and x − y = 2.", why: "Stacked, the matching pieces can cancel." },
+      { do: "Add them straight down: +y and −y cancel, leaving 2x = 12.", why: "Adding kills y in one move — that's elimination." },
+      { do: "Divide both sides by 2: x = 6.", why: "Undo the 'times 2' to free x." },
+      { do: "Back-substitute: 6 + y = 10, so y = 4. Check: 6 − 4 = 2. ✓", why: "Find the other letter and confirm both equations hold." }
+    ],
     formula: { key: "Elimination", expr: "add the equations to cancel a variable", data: "(x+y) + (x−y) = 10 + 2 → 2x = 12", answer: "x = 6  (then y = 4)" },
     diagram: { type: "systemLines", lines: [{ m: -1, b: 10 }, { m: 1, b: -2 }], solution: [6, 4], note: "x+y=10 and x−y=2 cross at (6, 4)" },
     choices: [
@@ -2880,6 +2912,14 @@ ACT_QUESTIONS.push(
   {
     id: "m_systems-2", pattern: "m_systems", fixedOrder: true,
     passage: "2x + y = 11 and y = x + 2. What is x?",
+    steps: [
+      { do: "Write both down: 2x + y = 11, and y = x + 2.", why: "See exactly what you've got before touching anything." },
+      { do: "The second one already says y = x + 2. Put (x + 2) in place of y in the first: 2x + (x + 2) = 11.", why: "Substitution — trade y for what it equals, so there's only ONE letter left to deal with." },
+      { do: "Add the x's: 2x + x = 3x. Now it reads 3x + 2 = 11.", why: "2x and x are like terms — same letter, so they just combine. (This is the exact step you got right.)" },
+      { do: "Subtract 2 from both sides: 3x = 9.", why: "Peel off everything sitting around x. Do the same to both sides so it stays balanced." },
+      { do: "Divide both sides by 3: x = 3.", why: "3x means 3 times x, so divide by 3 to set x free — divide by 3, not 3 ÷ x." },
+      { do: "Check: y = 3 + 2 = 5, and 2(3) + 5 = 11. ✓", why: "Plug back in — when both equations are happy, you nailed it." }
+    ],
     formula: { key: "Substitution", expr: "y is already solved — plug it in", data: "2x + (x + 2) = 11 → 3x = 9", answer: "x = 3  (y = 5)" },
     diagram: { type: "systemLines", lines: [{ m: -2, b: 11 }, { m: 1, b: 2 }], solution: [3, 5], note: "the two lines cross at (3, 5)" },
     choices: [
@@ -2961,7 +3001,7 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v7 · 2026-07-25";
+const BANK_VERSION = "v8 · 2026-07-25";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });

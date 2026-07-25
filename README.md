@@ -47,6 +47,10 @@ overwritten by the app.)
 - **"See it work on 3 questions"** — every pattern in the Rulebook expands to show
   the same formula/pattern solving three differently-worded questions side by side.
   The point: don't get thrown by the wording — the key is always the same.
+- **"Break it down" step walkthrough** — on multi-step questions, reveals the
+  solution **one small step at a time** (click for the next), each with what you
+  do and *why*. Built for the moment the brain panics at a whole equation — you
+  only ever look at one move. Fades nothing; always available where steps exist.
 - **Coaching / scaffold mode** — a "before you answer" box that decodes what the
   question is really asking, names the move, and points at the formula to reach
   for. Three levels (cycle the 🎓 button): **Full** (always), **Auto-fade**
@@ -71,6 +75,12 @@ The reasoning guide works with zero setup. For live follow-up questions:
 If Ollama is off, the panel simply shows the hand-written reasoning and says so.
 **Quick test:** with Ollama running + a model pulled, open Why this? → the status
 line should read "🟢 Local AI ready (model)" and you can type a question.
+
+**Speed:** the app disables the model's "thinking" phase and pre-warms it on open,
+so answers land in a few seconds (the very first one after launch can take longer
+while the model loads into memory). If Ollama's status shows "running but no model,"
+your models folder isn't being read — restart the Ollama app (models live at
+`F:\mikedopp\ollama\models` via the `OLLAMA_MODELS` env var).
 - **One-click bank updates** — the Progress tab's "Update question bank" button
   (desktop app only) pulls the latest `questions.js` from the public
   [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.

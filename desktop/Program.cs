@@ -134,6 +134,8 @@ class MainForm : Form
         }
     }
 
+    string _model = "";
+
     // Is the student's Ollama running, and which chat model should we use?
     async Task OllamaPingAsync(string id)
     {
@@ -147,15 +149,31 @@ class MainForm : Form
             string Pick() =>
                 names.FirstOrDefault(x => x.Contains("qwen3", StringComparison.OrdinalIgnoreCase))
                 ?? names.FirstOrDefault(x => x.Contains("qwen", StringComparison.OrdinalIgnoreCase))
-                ?? names.FirstOrDefault(x => !x.Contains("embed", StringComparison.OrdinalIgnoreCase))
+                ?? names.FirstOrDefault(x => !x.Contains("embed", StringComparison.OrdinalIgnoreCase) && !x.Contains("vl", StringComparison.OrdinalIgnoreCase))
                 ?? names.FirstOrDefault() ?? "";
-            var model = Pick();
-            Reply(new { kind = "ollamaReply", id, ok = !string.IsNullOrEmpty(model), model, models = names });
+            _model = Pick();
+            // server answered → it's running. ok means we also have a usable model.
+            Reply(new { kind = "ollamaReply", id, ok = !string.IsNullOrEmpty(_model), running = true, model = _model, models = names });
+            if (!string.IsNullOrEmpty(_model)) _ = WarmAsync(_model); // load into memory so the first real question is fast
         }
         catch
         {
-            Reply(new { kind = "ollamaReply", id, ok = false, model = "", error = "offline" });
+            Reply(new { kind = "ollamaReply", id, ok = false, running = false, model = "", error = "offline" });
         }
+    }
+
+    // Fire-and-forget: get the model resident in RAM (cold load is the slow part).
+    async Task WarmAsync(string model)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
+            var body = new { model, stream = false, think = false, keep_alive = "30m",
+                             messages = new object[] { new { role = "user", content = "hi" } } };
+            await http.PostAsync(OllamaBase + "/api/chat",
+                new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
+        }
+        catch { /* best effort */ }
     }
 
     // Ask the local model to EXPLAIN already-known-correct content (grounded → won't invent math).
@@ -166,29 +184,31 @@ class MainForm : Form
             var model = m.GetProperty("model").GetString();
             var system = m.TryGetProperty("system", out var s) ? s.GetString() : "";
             var prompt = m.GetProperty("prompt").GetString();
-            var body = new
-            {
-                model,
-                stream = false,
-                messages = new object[]
-                {
-                    new { role = "system", content = system },
-                    new { role = "user", content = prompt }
-                }
-            };
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
-            var resp = await http.PostAsync(OllamaBase + "/api/chat",
-                new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
-            var txt = await resp.Content.ReadAsStringAsync();
-            var content = JsonDocument.Parse(txt).RootElement.GetProperty("message").GetProperty("content").GetString() ?? "";
-            // thinking models (qwen3) may wrap reasoning in <think>…</think> — strip it for the student
-            content = Regex.Replace(content, "(?s)<think>.*?</think>", "").Trim();
+            string content;
+            try { content = await ChatOnce(model, system, prompt, noThink: true); }   // fast path (qwen3 etc.)
+            catch { content = await ChatOnce(model, system, prompt, noThink: false); } // model may reject the 'think' field
+            content = Regex.Replace(content, "(?s)<think>.*?</think>", "").Trim();       // strip any reasoning block
             Reply(new { kind = "ollamaReply", id, ok = true, text = content });
         }
         catch (Exception ex)
         {
             Reply(new { kind = "ollamaReply", id, ok = false, error = ex.Message });
         }
+    }
+
+    async Task<string> ChatOnce(string model, string system, string prompt, bool noThink)
+    {
+        object body = noThink
+            ? new { model, stream = false, think = false, keep_alive = "30m",
+                    messages = new object[] { new { role = "system", content = system }, new { role = "user", content = prompt } } }
+            : new { model, stream = false, keep_alive = "30m",
+                    messages = new object[] { new { role = "system", content = system }, new { role = "user", content = prompt } } };
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        var resp = await http.PostAsync(OllamaBase + "/api/chat",
+            new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
+        var txt = await resp.Content.ReadAsStringAsync();
+        if (!resp.IsSuccessStatusCode) throw new Exception("ollama " + (int)resp.StatusCode);
+        return JsonDocument.Parse(txt).RootElement.GetProperty("message").GetProperty("content").GetString() ?? "";
     }
 
     /// <summary>

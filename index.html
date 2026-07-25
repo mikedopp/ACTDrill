@@ -155,6 +155,16 @@
   .scaffold .srow { font-size: 14px; color: var(--ink2); margin-top: 7px; }
   .scaffold .srow b { color: var(--ink); font-weight: 600; }
   .scaffold .sform { font-family: Consolas, "Cascadia Mono", monospace; color: var(--ink); }
+
+  /* Step-by-step "break it down" walkthrough */
+  .stepq { font-size: 15px; color: var(--ink); background: var(--raised); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .steplist { display: flex; flex-direction: column; gap: 10px; }
+  .stepitem { border-left: 3px solid var(--accent); background: var(--raised); border-radius: 0 10px 10px 0; padding: 10px 13px; animation: stepin 0.25s ease; }
+  @keyframes stepin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .stepitem .stepnum { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--accent); font-weight: 700; }
+  .stepitem .stepdo { font-size: 15px; color: var(--ink); margin-top: 4px; }
+  .stepitem .stepwhy { font-size: 13px; color: var(--ink2); margin-top: 5px; }
+  .stepdone { text-align: center; color: var(--good); font-size: 14px; font-weight: 600; margin-top: 12px; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
 
@@ -952,7 +962,7 @@
   async function ollamaCheck() {
     if (_ollama.checked) return _ollama;
     const r = await bridge("ollamaPing", {}, 6000);
-    _ollama = { checked: true, ok: !!r.ok, model: r.model || "", models: r.models || [] };
+    _ollama = { checked: true, ok: !!r.ok, running: !!r.running, model: r.model || "", models: r.models || [] };
     return _ollama;
   }
   const ollamaAsk = (system, prompt) => bridge("ollamaChat", { model: _ollama.model, system, prompt }, 120000);
@@ -1011,7 +1021,7 @@
     async function ask(userQ) {
       addMsg("user", userQ);
       input.value = ""; input.disabled = true; send.disabled = true;
-      const thinking = addMsg("ai", "…thinking…");
+      const thinking = addMsg("ai", "…thinking… (the very first answer can take a few seconds while the model warms up)");
       const r = await ollamaAsk(CHAT_SYSTEM, ctx + "\nStudent's question: " + userQ);
       thinking.remove();
       if (r.ok && r.text) addMsg("ai", r.text);
@@ -1028,8 +1038,49 @@
       status.textContent = "🟢 Local AI ready (" + oll.model + ") — private & offline. Ask anything about this problem.";
       input.disabled = false; send.disabled = false; input.focus();
       if (!guide) addMsg("sys", "Ask me why this works — or why another method wouldn't.");
-    } else
-      status.textContent = "Live Q&A is off. Start Ollama (you've got it) to chat — meanwhile the reasoning guide above still helps.";
+    } else if (oll.running)
+      status.textContent = "Ollama is running but has no model yet. In a terminal run:  ollama pull qwen3:8b  — then reopen this.";
+    else
+      status.textContent = "Live Q&A is off. Start the Ollama app to chat — meanwhile the reasoning guide above still helps.";
+  }
+
+  // ---------- step-by-step: reveal ONE small move at a time (beats panic) ----------
+  function stepPanel(q) {
+    stopSpeech();
+    const ov = el("div", "chatoverlay");
+    const panel = el("div", "chatpanel");
+    const hd = el("div", "chd");
+    hd.append(el("h3", null, "Break it down — one step at a time"));
+    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    hd.append(x); panel.append(hd);
+    const body = el("div", "cbody");
+    const qline = q.passage ? q.passage.replace(/\|/g, "") : (q.prompt || "");
+    if (qline) body.append(el("div", "stepq", esc(qline)));
+    const list = el("div", "steplist"); body.append(list);
+    panel.append(body);
+    const ft = el("div", "chatft");
+    const nextBtn = el("button", "btn", "Show first step ▶");
+    ft.append(nextBtn); panel.append(ft);
+    ov.append(panel); document.body.append(ov);
+
+    const steps = q.steps || [];
+    let i = 0;
+    function reveal() {
+      if (i >= steps.length) { ov.remove(); return; }
+      const s = steps[i]; i++;
+      const it = el("div", "stepitem");
+      it.append(el("div", "stepnum", "Step " + i + " of " + steps.length));
+      it.append(el("div", "stepdo", esc(s.do)));
+      if (s.why) it.append(el("div", "stepwhy", esc(s.why)));
+      list.append(it); body.scrollTop = body.scrollHeight;
+      if (i >= steps.length) {
+        nextBtn.textContent = "Done ✓";
+        list.append(el("div", "stepdone", "That's the whole thing — " + steps.length + " small moves, no scary leap. None of them was the monster it looked like all together."));
+      } else nextBtn.textContent = "Next step ▶";
+      nextBtn.focus();
+    }
+    nextBtn.onclick = reveal;
+    nextBtn.focus();
   }
 
   // ---------- drill view ----------
@@ -1241,7 +1292,9 @@
     nextBtn.onclick = nextQuestion;
     const whyBtn = el("button", "btn ghost", "🤔 Why this?");
     whyBtn.onclick = () => openWhyChat(q);
-    a.append(nextBtn, whyBtn, el("span", "hint", "Enter for next"));
+    a.append(nextBtn, whyBtn);
+    if (q.steps) { const sb = el("button", "btn ghost", "🪜 Break it down"); sb.onclick = () => stepPanel(q); a.append(sb); }
+    a.append(el("span", "hint", "Enter for next"));
     card.append(a);
 
     if (leveledUp) showLevelUp(newLevel, note);
