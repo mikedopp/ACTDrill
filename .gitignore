@@ -4,3 +4,7 @@ desktop/obj/
 
 # published exe — too large for a git repo; shipped via GitHub Releases instead
 dist/
+
+# installer build artifacts — the .iss script is tracked, the compiled output is not
+installer/Output/
+installer/testinstall/

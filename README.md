@@ -1,28 +1,36 @@
 # ACT Pattern Drill
 
-A local drill app for the ACT English section, built for a brain that does better
-with one question at a time than with hour-long video lessons.
+A free, offline Windows app for ACT prep — English, Math, and Reading — built for
+brains that do better with one question at a time than with hour-long video
+lessons. Made with ADHD and processing differences in mind: short reps, instant
+feedback, read-aloud, visual "why it works" diagrams, step-by-step breakdowns, and
+an optional private AI tutor. No account, no internet, no cost.
 
-## Give him the app (Windows exe)
+> The practice questions are **original**, written in ACT style — not real ACT
+> items. "ACT" is a trademark of ACT, Inc., which is not affiliated with this project.
 
-**`dist\ACTDrill.exe` is the whole thing** — self-contained, ~155 MB, no .NET or
-install needed. Copy it to his laptop and run it. Progress (XP, levels, streaks,
-mastery) saves to `%LOCALAPPDATA%\ACTDrill` automatically.
+## Run it (Windows)
+
+**`ACTDrill.exe` is the whole thing** — self-contained, ~155 MB, no .NET or install
+needed. Download it from [Releases](https://github.com/mikedopp/ACTDrill/releases),
+unzip, and run. Progress (XP, levels, streaks, mastery) saves to
+`%LOCALAPPDATA%\ACTDrill` automatically.
 
 - First run: Windows SmartScreen may warn because the exe is unsigned →
-  **More info → Run anyway**.
+  **More info → Run anyway**. (It's unsigned because code-signing certificates cost
+  money; the source is here if you'd rather build it yourself.)
 - Needs the Microsoft WebView2 Runtime (preinstalled on updated Windows 10/11).
   If it's somehow missing the app shows the download link.
 
-### ⚠ Before you build/ship: edit `notes.js`
+### Make it personal: edit `notes.js`
 
-`notes.js` is **The Corner** — short notes from people in his corner, shown at
-level-ups, daily-goal moments, and occasionally after a strong answer.
-**Rewrite the examples in your own words** (specific beats generic), and get
-mom/siblings/others to contribute lines. Then rebuild:
+`notes.js` is **The Corner** — short encouraging notes "from the student's corner,"
+shown at level-ups, daily-goal moments, and occasionally after a strong answer.
+The shipped file is a generic template. **Rewrite the notes in your own words** (a
+parent, a mentor, a friend — real names, specific praise), then rebuild:
 
 ```powershell
-dotnet publish F:\mikedopp\drop\ACTDrill\desktop\ACTDrill.Desktop.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o F:\mikedopp\drop\ACTDrill\dist
+dotnet publish desktop/ACTDrill.Desktop.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
 ```
 
 **Updating notes without rebuilding:** put a `web` folder next to `ACTDrill.exe`
@@ -77,10 +85,11 @@ If Ollama is off, the panel simply shows the hand-written reasoning and says so.
 line should read "🟢 Local AI ready (model)" and you can type a question.
 
 **Speed:** the app disables the model's "thinking" phase and pre-warms it on open,
-so answers land in a few seconds (the very first one after launch can take longer
-while the model loads into memory). If Ollama's status shows "running but no model,"
-your models folder isn't being read — restart the Ollama app (models live at
-`F:\mikedopp\ollama\models` via the `OLLAMA_MODELS` env var).
+so answers land in a second or two (the very first one after launch can take longer
+while the model loads into memory). A smaller model like `qwen2.5:3b` feels snappiest.
+If Ollama's status shows "running but no model," its model folder isn't being read —
+restart the Ollama app. (If you relocate models with the `OLLAMA_MODELS` env var,
+Ollama must be restarted after any update to pick the folder back up.)
 - **One-click bank updates** — the Progress tab's "Update question bank" button
   (desktop app only) pulls the latest `questions.js` from the public
   [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.

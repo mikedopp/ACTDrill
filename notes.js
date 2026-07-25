@@ -1,27 +1,29 @@
 // ============================================================
-// THE CORNER — notes from the people in his corner.
+// THE CORNER — encouraging notes from the student's people.
 // ------------------------------------------------------------
-// DAD: EDIT THIS FILE BEFORE GIVING HIM THE APP.
+// THIS IS A TEMPLATE. Replace these with real notes before you
+// hand the app to your student.
 //
 // The app shows one of these at big moments — hitting the daily
 // goal, leveling up, and occasionally right after a strong
-// answer. Delivered at a win, in your words, they land harder
-// than any canned praise an app could generate.
+// answer. Delivered at a win, in a familiar voice, they land
+// harder than any canned praise an app could generate.
 //
 // Rules of thumb:
 //  - SPECIFIC beats generic. "The way you handled X" beats
 //    "you're great."
 //  - Short. One or two sentences.
-//  - Get others to contribute a line: mom, siblings, cousins,
-//    a coach, anyone whose respect he'd believe. Real names.
-//  - Never mention the test. These are about HIM, not the score.
+//  - Get several people to contribute a line: a parent, a
+//    sibling, a mentor, a coach — anyone whose word he/she
+//    believes. Use real names in the "from" field.
+//  - Keep them about the PERSON, not the test score.
 //
 // Add as many as you want — more notes means less repetition.
 // ============================================================
 const VAULT_NOTES = [
-  { from: "Dad", text: "REPLACE THIS ONE: name one specific thing he did that quietly impressed you. Specific beats generic, every time." },
-  { from: "Dad", text: "My respect for you was never waiting on a test score. It's already yours. It has been for years." },
-  { from: "Dad", text: "You keep showing up to hard jobs that don't deserve you. That's not being stuck — that's the toughest skill there is, and most people never learn it." },
-  { from: "Dad", text: "You trust people. The world has been rough about it, but don't let it make you mean. It's one of the best things about you — it just needs armor, not removing." },
-  { from: "Dad", text: "Six foot four and the best part of you isn't even visible. The inch you're looking for isn't on the ruler." }
+  { from: "Your corner", text: "REPLACE ME: name one specific thing they did that quietly impressed you. Specific beats generic, every time." },
+  { from: "Your corner", text: "REPLACE ME: remind them your respect isn't waiting on a score — it's already theirs." },
+  { from: "Your corner", text: "REPLACE ME: point to a hard thing they kept showing up for. Persistence is the rarest skill." },
+  { from: "Your corner", text: "REPLACE ME: name a strength of theirs that has nothing to do with tests." },
+  { from: "Your corner", text: "REPLACE ME: something only someone who really knows them would say." }
 ];
