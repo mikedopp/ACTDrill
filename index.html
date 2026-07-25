@@ -124,6 +124,26 @@
   .worked .wq .u { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
   .worked .wans { font-size: 14px; color: var(--good); font-weight: 600; margin-top: 6px; }
   .worked .wwhy { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+  /* "Why this?" reasoning chat */
+  .chatoverlay { position: fixed; inset: 0; background: rgba(13,13,13,0.82); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 14px; }
+  .chatpanel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: min(560px, 100%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+  .chatpanel .chd { padding: 15px 18px; border-bottom: 1px solid var(--grid); display: flex; justify-content: space-between; align-items: center; }
+  .chatpanel .chd h3 { margin: 0; font-size: 16px; }
+  .chatpanel .cbody { padding: 16px 18px; overflow-y: auto; }
+  .chatreason { border-left: 3px solid var(--accent); background: var(--raised); border-radius: 0 10px 10px 0; padding: 12px 14px; margin-bottom: 12px; }
+  .chatreason .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gold); font-weight: 700; margin-top: 10px; }
+  .chatreason .lbl:first-child { margin-top: 0; }
+  .chatreason p { margin: 3px 0 0; font-size: 14px; color: var(--ink2); }
+  .chatlog { display: flex; flex-direction: column; gap: 8px; }
+  .chatmsg { padding: 9px 12px; border-radius: 10px; font-size: 14px; max-width: 92%; line-height: 1.45; }
+  .chatmsg.user { align-self: flex-end; background: var(--accent-dim); color: #fff; }
+  .chatmsg.ai { align-self: flex-start; background: var(--raised); color: var(--ink); border: 1px solid var(--border); white-space: pre-wrap; }
+  .chatmsg.sys { align-self: center; color: var(--muted); font-size: 12.5px; text-align: center; }
+  .chatstatus { font-size: 12px; color: var(--muted); padding: 2px 18px 8px; }
+  .chatft { padding: 12px 14px; border-top: 1px solid var(--grid); display: flex; gap: 8px; }
+  .chatft input { flex: 1; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; font-size: 14px; padding: 9px 12px; }
+  .chatft input:disabled { opacity: 0.5; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
 
@@ -881,6 +901,126 @@
     const wrap = el("div", "plotwrap"); wrap.innerHTML = s; return wrap;
   }
 
+  // ---------- "why this, not that?" reasoning guide (always offline) ----------
+  const WHY_GUIDE = {
+    m_asked: { whyThis: "This tests whether you read to the end — the math is usually easy. Circle exactly what's asked before you touch an answer.", whyNot: "The number from stopping early (x when they wanted 4x) is planted in the choices on purpose. 'It fits' isn't the test — 'it's what they asked for' is." },
+    m_backsolve: { whyThis: "When the answers are plain numbers, they're a gift: plug each into the problem and see which one works. A check-it problem is safer than a solve-it problem.", whyNot: "Full algebra isn't wrong, just slower with more places to slip. Reach for it only when the choices aren't numbers you can test." },
+    m_plugin: { whyThis: "When the choices contain variables (or it says 'in terms of'), invent easy numbers, run the problem, and match. It turns abstract algebra into arithmetic you can trust.", whyNot: "Pushing the letters around directly works, but one sign slip and you're lost with nothing to check against. Real numbers catch your mistakes." },
+    m_translate: { whyThis: "Word problems are English that needs converting: 'of'=×, 'per'=÷, 'is'==, 'less than' flips the order. Translate phrase by phrase, then compute.", whyNot: "Guessing the equation from the 'feel' of the sentence is where the flip-traps live — '5 less than x' is x−5, never 5−x." },
+    m_lines: { whyThis: "Two points, a graph, 'parallel/perpendicular', or y=mx+b all point to slope. Slope = rise/run is the master key for the whole coordinate plane.", whyNot: "Don't grab distance or midpoint just because there are points — the question names its own tool: steepness→slope, exact middle→midpoint, length→distance." },
+    m_geometry: { whyThis: "A handful of formulas cover it, and the picture tells you which: sides of a right triangle→Pythagorean, a round thing→circle formulas, a flat shape→its area formula.", whyNot: "The classic circle trap: they hand you a diameter and you plug it in as the radius. Same formula, wrong number in, wrong answer — read what you're actually given." },
+    m_ratio: { whyThis: "Ratios and percents are all 'part vs. whole.' Set them up as fractions and scale; percent change is always change ÷ the ORIGINAL.", whyNot: "You can't add or subtract percents of different amounts — a 30% drop then a 30% rise doesn't return you to start, because the base changed. Use proportion, not addition." },
+    m_average: { whyThis: "The move is 'total = average × count.' Convert to totals, work there, divide once at the end — almost every average problem cracks open this way.", whyNot: "Averaging the averages feels right but usually isn't: groups of different sizes don't share equally. And median ignores the extremes, so it's not the mean." },
+    m_exponents: { whyThis: "Same base? The exponents combine by four rules: add to multiply, subtract to divide, multiply for a power-of-a-power, flip for a negative.", whyNot: "The tempting shortcut — multiplying the bases, or multiplying exponents when you should add — is the #1 slip. x³·x² is x⁵, not x⁶ and not 2x⁵." },
+    m_quadratic: { whyThis: "Factoring hunts for two numbers that multiply to the last term and add to the middle. The area-model box shows exactly why those two terms appear.", whyNot: "The quadratic formula always works but is slower and error-prone — save it for when factoring won't go. And solving x²=k, don't drop the negative root; squaring hides the sign." },
+    m_functions: { whyThis: "f(x) is a machine: whatever's in the parentheses replaces every x. For f(g(x)), run the inner machine first, then feed its output to the outer one.", whyNot: "Doing the functions in the wrong order gives a different answer — f(g(2)) ≠ g(f(2)). The parentheses set the order; you don't get to rearrange them." },
+    m_trig: { whyThis: "SOHCAHTOA picks the ratio for you: name the sides from the angle's point of view, then choose sin/cos/tan by which two sides you actually have.", whyNot: "This is the real 'circle in the square hole': all three ratios fit the same triangle, but only the one matching your two sides is right. Using sin when you have adjacent+hypotenuse (that's cosine) is the trap." },
+    m_probability: { whyThis: "Probability is favorable ÷ total. Two things happening together ('and') multiply; counting how many ways multiplies the options at each step.", whyNot: "Adding when you should multiply is the classic error — two coins both heads is ½×½=¼, not ½+½. 'And' is almost never addition." },
+    m_systems: { whyThis: "Two equations, two unknowns: add/subtract to cancel a variable, or substitute one into the other. On a graph, the answer is where the two lines cross.", whyNot: "One equation alone can't pin it down — one equation with two unknowns has infinite solutions. You need both, combined, to find the single crossing point." }
+  };
+
+  // ---------- local AI bridge (the student's OWN Ollama, via the C# host — nothing leaves the machine) ----------
+  const hasBridge = () => !!(window.chrome && window.chrome.webview);
+  let _ollama = { checked: false, ok: false, model: "", models: [] };
+  const _pending = {};
+  if (hasBridge()) {
+    window.chrome.webview.addEventListener("message", ev => {
+      let d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch { return; }
+      if (d && d.kind === "ollamaReply" && _pending[d.id]) _pending[d.id](d);
+    });
+  }
+  function bridge(kind, payload, timeoutMs) {
+    return new Promise(resolve => {
+      if (!hasBridge()) { resolve({ ok: false, error: "nobridge" }); return; }
+      const id = "b" + Math.random().toString(36).slice(2);
+      const t = setTimeout(() => { if (_pending[id]) { delete _pending[id]; resolve({ ok: false, error: "timeout" }); } }, timeoutMs || 120000);
+      _pending[id] = d => { clearTimeout(t); delete _pending[id]; resolve(d); };
+      window.chrome.webview.postMessage(JSON.stringify(Object.assign({ kind, id }, payload)));
+    });
+  }
+  async function ollamaCheck() {
+    if (_ollama.checked) return _ollama;
+    const r = await bridge("ollamaPing", {}, 6000);
+    _ollama = { checked: true, ok: !!r.ok, model: r.model || "", models: r.models || [] };
+    return _ollama;
+  }
+  const ollamaAsk = (system, prompt) => bridge("ollamaChat", { model: _ollama.model, system, prompt }, 120000);
+
+  function buildChatContext(q, correct, pat) {
+    let c = "PATTERN: " + pat.name + " — " + pat.rule + "\n";
+    if (q.context) c += "PASSAGE: " + q.context + "\n";
+    if (q.passage) c += "QUESTION: " + q.passage.replace(/\|/g, "") + "\n";
+    if (q.prompt) c += "PROMPT: " + q.prompt + "\n";
+    c += "CHOICES: " + q.choices.map(ch => ch.text).join(" | ") + "\n";
+    c += "CORRECT ANSWER: " + correct.text + " — because " + correct.why + "\n";
+    const f = questionFormula(q);
+    if (f) c += "FORMULA USED: " + f.key + ": " + f.expr + (f.data ? (" ; plugging in: " + f.data) : "") + (f.answer ? (" ; = " + f.answer) : "") + "\n";
+    return c;
+  }
+
+  const CHAT_SYSTEM =
+    "You are a patient ACT tutor for a student with ADHD and a processing disability. You are GIVEN the question, its correct answer, the formula used, and the pattern. Explain the REASONING in plain, warm, encouraging language — especially WHY this approach is the right tool and WHY a tempting alternative would not work. Do NOT solve a different problem, do NOT contradict the given correct answer, and never invent a formula. If you are unsure, say so honestly. Keep it under 120 words.";
+
+  async function openWhyChat(q) {
+    stopSpeech();
+    const pat = ACT_PATTERNS[q.pattern];
+    const correct = q.choices.find(c => c.correct);
+    const guide = WHY_GUIDE[q.pattern] || null;
+
+    const ov = el("div", "chatoverlay");
+    const panel = el("div", "chatpanel");
+    const hd = el("div", "chd");
+    hd.append(el("h3", null, "Why this answer?"));
+    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    hd.append(x);
+    panel.append(hd);
+
+    const body = el("div", "cbody");
+    if (guide) {
+      const r = el("div", "chatreason");
+      r.append(el("div", "lbl", "Why this approach"), el("p", null, esc(guide.whyThis)),
+               el("div", "lbl", "Why not something else"), el("p", null, esc(guide.whyNot)));
+      body.append(r);
+    }
+    const log = el("div", "chatlog"); body.append(log);
+    panel.append(body);
+
+    const status = el("div", "chatstatus", "Checking for your local AI…");
+    panel.append(status);
+    const ft = el("div", "chatft");
+    const input = el("input"); input.type = "text";
+    input.placeholder = "Ask a follow-up — e.g. why not use the other formula?";
+    input.disabled = true;
+    const send = el("button", "btn", "Ask"); send.disabled = true;
+    ft.append(input, send); panel.append(ft);
+    ov.append(panel); document.body.append(ov);
+
+    const addMsg = (cls, text) => { const d = el("div", "chatmsg " + cls, esc(text)); log.append(d); body.scrollTop = body.scrollHeight; return d; };
+    const ctx = buildChatContext(q, correct, pat);
+    async function ask(userQ) {
+      addMsg("user", userQ);
+      input.value = ""; input.disabled = true; send.disabled = true;
+      const thinking = addMsg("ai", "…thinking…");
+      const r = await ollamaAsk(CHAT_SYSTEM, ctx + "\nStudent's question: " + userQ);
+      thinking.remove();
+      if (r.ok && r.text) addMsg("ai", r.text);
+      else addMsg("sys", "Couldn't reach the local AI just now — the reasoning guide above still answers the big one, and you can try again once Ollama is running.");
+      input.disabled = false; send.disabled = false; input.focus();
+    }
+    send.onclick = () => { const v = input.value.trim(); if (v) ask(v); };
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const v = input.value.trim(); if (v) ask(v); } });
+
+    const oll = await ollamaCheck();
+    if (!hasBridge())
+      status.textContent = "Live Q&A runs in the desktop app with Ollama. The reasoning guide above is always here.";
+    else if (oll.ok) {
+      status.textContent = "🟢 Local AI ready (" + oll.model + ") — private & offline. Ask anything about this problem.";
+      input.disabled = false; send.disabled = false; input.focus();
+      if (!guide) addMsg("sys", "Ask me why this works — or why another method wouldn't.");
+    } else
+      status.textContent = "Live Q&A is off. Start Ollama (you've got it) to chat — meanwhile the reasoning guide above still helps.";
+  }
+
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
   let current = null;
@@ -894,7 +1034,8 @@
       el("p", null, "So: <b>one question at a time.</b> Answer it, read <i>why</i> every wrong choice is wrong, move on. The app quietly serves you more of whatever you miss — that's the whole error log, automated."),
       el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything."),
       el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die."),
-      el("p", null, "Prefer to <b>hear</b> it? A <b>🔊 Voice</b> bar sits above each question — read the problem aloud, and have the explanation read to you automatically. Adjust the speed to whatever helps you follow. The <b>Reference</b> tab holds every ACT formula plus a look at where each subject leads in college.")
+      el("p", null, "Prefer to <b>hear</b> it? A <b>🔊 Voice</b> bar sits above each question — read the problem aloud, and have the explanation read to you automatically. Adjust the speed to whatever helps you follow. The <b>Reference</b> tab holds every ACT formula plus a look at where each subject leads in college."),
+      el("p", null, "Still wondering <i>why</i> — why this formula and not another one? Hit <b>🤔 Why this?</b> after any answer. You'll get a plain-English reason, and if <b>Ollama</b> is running you can ask it follow-ups — a private tutor that lives on this computer, no internet needed.")
     );
     const a = el("div", "actions");
     const b = el("button", "btn", "Start");
@@ -1052,7 +1193,9 @@
     const a = el("div", "actions");
     const nextBtn = el("button", "btn", "Next question");
     nextBtn.onclick = nextQuestion;
-    a.append(nextBtn, el("span", "hint", "Enter for next"));
+    const whyBtn = el("button", "btn ghost", "🤔 Why this?");
+    whyBtn.onclick = () => openWhyChat(q);
+    a.append(nextBtn, whyBtn, el("span", "hint", "Enter for next"));
     card.append(a);
 
     if (leveledUp) showLevelUp(newLevel, note);
@@ -1061,6 +1204,9 @@
 
   // keyboard
   document.addEventListener("keydown", (e) => {
+    // chat is open: let the user type freely; Escape closes it, everything else is ignored by the drill
+    const chat = document.querySelector(".chatoverlay");
+    if (chat) { if (e.key === "Escape") chat.remove(); return; }
     if (document.querySelector(".overlay")) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.querySelector(".overlay").remove(); }
       return;
@@ -1401,6 +1547,16 @@
         "**Line references** — read the sentence before and after the cited line; the answer often hides in the neighbors.",
         "**Extreme words** (always, never, only, all) are usually wrong; **soft words** (often, some, suggests) are usually safe.",
         "**College reading** is this scaled up: annotating, finding an author's argument and evidence, comparing sources — exactly what 'map the passage' trains."
+      ]},
+    { group: "Test-day game plan",
+      blurb: "Knowing the material is half of it; running the clock well is the other half. These habits protect the points you've earned.",
+      notes: [
+        "**Never leave a blank** — there's no penalty for a wrong guess on the ACT. With one minute left, bubble something for every remaining question. A guess is worth more than a blank, always.",
+        "**Answer easy first, flag the rest** — do a pass grabbing every question you know fast, mark the hard ones, and come back. Don't let one brutal question eat the time of five easy ones.",
+        "**On math, use your tools** — plug in the answer choices (backsolve) or plug in easy numbers when you're stuck. You don't have to solve it the 'official' way; you have to get it right.",
+        "**Extended time changes the math** — with 50% more time, slow-and-accurate beats rushed-and-sloppy. Use the extra minutes to double-check, not to grind on one problem.",
+        "**Bubble in batches, carefully** — fill answers a page at a time and check the number matches. A single mis-bubble can shift every answer after it.",
+        "**When two choices feel equal, name the difference** — the ACT rarely has two right answers. Find the exact word or number that separates them; that's the thing being tested."
       ]}
   ];
 

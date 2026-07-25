@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
@@ -19,6 +22,8 @@ class MainForm : Form
 {
     // public repo holding ONLY the question bank (original content — no real ACT items, no personal notes)
     const string BankUrl = "https://raw.githubusercontent.com/mikedopp/actdrill-bank/main/questions.js";
+    // local, offline AI — the student's own Ollama. Nothing leaves the machine.
+    const string OllamaBase = "http://localhost:11434";
 
     readonly WebView2 _web = new();
     string _webDir = "";
@@ -89,13 +94,32 @@ class MainForm : Form
     {
         string msg;
         try { msg = e.TryGetWebMessageAsString(); } catch { return; }
-        if (msg != "updateBank") return;
+        if (msg is null) return;
 
+        // legacy plain-string trigger still supported
+        if (msg == "updateBank") { await UpdateBankAsync(); return; }
+
+        // everything else is JSON: { kind, id, ... }
+        JsonElement m;
+        try { m = JsonDocument.Parse(msg).RootElement; }
+        catch { return; }
+        if (!m.TryGetProperty("kind", out var kindEl)) return;
+        var kind = kindEl.GetString();
+        var id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : "";
+
+        if (kind == "updateBank") { await UpdateBankAsync(); return; }
+        if (kind == "ollamaPing") { await OllamaPingAsync(id); return; }
+        if (kind == "ollamaChat") { await OllamaChatAsync(id, m); return; }
+    }
+
+    void Reply(object payload) => _web.CoreWebView2.PostWebMessageAsString(JsonSerializer.Serialize(payload));
+
+    async Task UpdateBankAsync()
+    {
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
             var js = await http.GetStringAsync(BankUrl);
-            // sanity check before overwriting anything
             if (!js.Contains("const ACT_QUESTIONS") || !js.Contains("const ACT_PATTERNS"))
                 throw new InvalidDataException("Downloaded file doesn't look like a question bank.");
             File.WriteAllText(Path.Combine(_webDir, "questions.js"), js);
@@ -107,6 +131,63 @@ class MainForm : Form
                 "Couldn't update the question bank:\n" + ex.Message +
                 "\n\nCheck the internet connection and try again — the current bank is untouched.",
                 "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    // Is the student's Ollama running, and which chat model should we use?
+    async Task OllamaPingAsync(string id)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
+            var json = await http.GetStringAsync(OllamaBase + "/api/tags");
+            var names = new List<string>();
+            foreach (var mdl in JsonDocument.Parse(json).RootElement.GetProperty("models").EnumerateArray())
+                if (mdl.TryGetProperty("name", out var n)) names.Add(n.GetString() ?? "");
+            string Pick() =>
+                names.FirstOrDefault(x => x.Contains("qwen3", StringComparison.OrdinalIgnoreCase))
+                ?? names.FirstOrDefault(x => x.Contains("qwen", StringComparison.OrdinalIgnoreCase))
+                ?? names.FirstOrDefault(x => !x.Contains("embed", StringComparison.OrdinalIgnoreCase))
+                ?? names.FirstOrDefault() ?? "";
+            var model = Pick();
+            Reply(new { kind = "ollamaReply", id, ok = !string.IsNullOrEmpty(model), model, models = names });
+        }
+        catch
+        {
+            Reply(new { kind = "ollamaReply", id, ok = false, model = "", error = "offline" });
+        }
+    }
+
+    // Ask the local model to EXPLAIN already-known-correct content (grounded → won't invent math).
+    async Task OllamaChatAsync(string id, JsonElement m)
+    {
+        try
+        {
+            var model = m.GetProperty("model").GetString();
+            var system = m.TryGetProperty("system", out var s) ? s.GetString() : "";
+            var prompt = m.GetProperty("prompt").GetString();
+            var body = new
+            {
+                model,
+                stream = false,
+                messages = new object[]
+                {
+                    new { role = "system", content = system },
+                    new { role = "user", content = prompt }
+                }
+            };
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+            var resp = await http.PostAsync(OllamaBase + "/api/chat",
+                new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
+            var txt = await resp.Content.ReadAsStringAsync();
+            var content = JsonDocument.Parse(txt).RootElement.GetProperty("message").GetProperty("content").GetString() ?? "";
+            // thinking models (qwen3) may wrap reasoning in <think>…</think> — strip it for the student
+            content = Regex.Replace(content, "(?s)<think>.*?</think>", "").Trim();
+            Reply(new { kind = "ollamaReply", id, ok = true, text = content });
+        }
+        catch (Exception ex)
+        {
+            Reply(new { kind = "ollamaReply", id, ok = false, error = ex.Message });
         }
     }
 

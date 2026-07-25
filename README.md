@@ -47,6 +47,25 @@ overwritten by the app.)
 - **"See it work on 3 questions"** — every pattern in the Rulebook expands to show
   the same formula/pattern solving three differently-worded questions side by side.
   The point: don't get thrown by the wording — the key is always the same.
+- **"Why this?" reasoning chat** — after any answer, a button opens a panel that
+  explains *why this approach and not another* (the "why not the circle in the
+  square hole" reasoning), hand-written per pattern so it's always available. If
+  **Ollama** is running, you can also ask free-form follow-ups: it uses the
+  student's own local model (auto-detected, prefers a `qwen` model), grounded in
+  the app's known-correct answer + formula so it explains rather than invents.
+  **Private and offline — nothing leaves the computer, no API key, no cost.**
+
+### Turning on the live "Why?" AI (optional)
+
+The reasoning guide works with zero setup. For live follow-up questions:
+1. Install/run **Ollama** (https://ollama.com) — already installed here.
+2. Pull a model once: `ollama pull qwen3:8b` (or any `qwen`/chat model).
+3. Make sure Ollama is running (it serves on `localhost:11434`).
+4. Open **🤔 Why this?** on any question — the status turns green when it connects.
+
+If Ollama is off, the panel simply shows the hand-written reasoning and says so.
+**Quick test:** with Ollama running + a model pulled, open Why this? → the status
+line should read "🟢 Local AI ready (model)" and you can type a question.
 - **One-click bank updates** — the Progress tab's "Update question bank" button
   (desktop app only) pulls the latest `questions.js` from the public
   [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.
