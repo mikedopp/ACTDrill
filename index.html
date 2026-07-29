@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ACT Pattern Drill</title>
 <style>
-  :root {
+  :root, :root[data-theme="dark"] {
     --page: #0d0d0d;
     --surface: #1a1a19;
     --raised: #222221;
@@ -20,6 +20,22 @@
     --good: #0ca30c;
     --bad: #d03b3b;
     --gold: #fab219;
+  }
+  :root[data-theme="light"] {
+    --page: #f4f4f1;
+    --surface: #ffffff;
+    --raised: #f0efeb;
+    --ink: #0b0b0b;
+    --ink2: #3f3e3b;
+    --muted: #6b6a66;
+    --grid: #e4e3dc;
+    --baseline: #c3c2b7;
+    --border: rgba(0,0,0,0.14);
+    --accent: #2a78d6;
+    --accent-dim: #1c5cab;
+    --good: #006300;
+    --bad: #c62f2f;
+    --gold: #8a5a00;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -73,14 +89,14 @@
   .subhead { margin: 22px 0 10px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
 
   /* Formula reference */
-  .frow { display: flex; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--grid); align-items: baseline; flex-wrap: wrap; }
+  .frow { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--grid); align-items: baseline; flex-wrap: wrap; }
   .frow:last-child { border-bottom: none; }
-  .frow .fname { flex: 0 0 165px; font-size: 14px; color: var(--ink2); }
-  .frow .fform { flex: 0 0 auto; min-width: 210px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 14.5px; color: var(--ink); }
-  .frow .fex { flex: 1; font-size: 13px; color: var(--muted); min-width: 170px; }
+  .frow .fname { flex: 0 0 180px; font-size: 16px; color: var(--ink2); font-weight: 600; }
+  .frow .fform { flex: 1 1 260px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 17px; color: var(--ink); }
+  .frow .fex { flex: 1 1 200px; font-size: 15px; color: var(--muted); }
 
   /* Reference notes (writing/reading/science prose) */
-  .rnote { padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 14px; color: var(--ink2); }
+  .rnote { padding: 9px 0; border-bottom: 1px solid var(--grid); font-size: 15.5px; line-height: 1.55; color: var(--ink2); }
   .rnote:last-child { border-bottom: none; }
   .rnote b { color: var(--ink); font-weight: 600; }
   .card .blurb { color: var(--ink2); font-size: 14.5px; margin: 0 0 10px; }
@@ -144,6 +160,25 @@
   .chatft { padding: 12px 14px; border-top: 1px solid var(--grid); display: flex; gap: 8px; }
   .chatft input { flex: 1; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; font-size: 14px; padding: 9px 12px; }
   .chatft input:disabled { opacity: 0.5; }
+
+  /* Settings */
+  .gearbtn { cursor: pointer; font: inherit; }
+  .gearbtn:hover { color: var(--ink); border-color: var(--accent); }
+  .setgroup { margin-bottom: 20px; }
+  .setgroup .setlabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+  .setgroup .setnote { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .setopts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .setbtn { background: var(--raised); border: 1px solid var(--border); border-radius: 10px; color: var(--ink2); font: inherit; font-size: 15px; padding: 10px 16px; cursor: pointer; }
+  .setbtn:hover { border-color: var(--accent); color: var(--ink); }
+  .setbtn.on { border-color: var(--accent); background: rgba(57,135,229,0.14); color: var(--ink); font-weight: 600; }
+  .aistat { font-size: 14.5px; color: var(--ink2); margin-bottom: 8px; }
+  .aistat b { color: var(--ink); }
+  .aiprogwrap { margin-top: 12px; }
+  .aiprog { height: 12px; background: var(--grid); border-radius: 6px; overflow: hidden; }
+  .aiprog > i { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 6px; transition: width 0.3s ease; }
+  .aiproglabel { font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .aiok { color: var(--good); font-weight: 600; }
+  .aibad { color: var(--bad); }
 
   /* Coaching control + "before you answer" scaffold */
   .coachbar { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -324,6 +359,7 @@
       <div class="chip" id="chip-level"></div>
       <div class="chip" id="chip-streak"></div>
       <div class="chip" id="chip-today"></div>
+      <button class="chip gearbtn" id="gearbtn" title="Settings — theme &amp; text size">⚙ Settings</button>
     </div>
   </header>
 
@@ -373,7 +409,8 @@
   function blankState() {
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
-             audio: { on: true, rate: 0.9, autoRead: true }, coach: "auto" };
+             audio: { on: true, rate: 0.9, autoRead: true }, coach: "auto",
+             theme: "dark", fontScale: 1 };
   }
   function load() {
     try {
@@ -384,6 +421,16 @@
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
   let S = load();
+
+  // ---------- appearance: theme + text size ----------
+  function applyTheme() { document.documentElement.setAttribute("data-theme", S.theme === "light" ? "light" : "dark"); }
+  function applyFontScale() { document.body.style.zoom = String(S.fontScale || 1); }
+  // diagram/plot colors that follow the current theme (SVGs are rebuilt each render)
+  function vizColors() {
+    return S.theme === "light"
+      ? { blue: "#2a78d6", gold: "#b06f00", ink: "#3f3e3b", ink2: "#6b6a66", grid: "#e4e3dc", axis: "#b8b7ae", good: "#006300", surf: "#ffffff", aqua: "#188a63" }
+      : { blue: "#3987e5", gold: "#fab219", ink: "#c3c2b7", ink2: "#898781", grid: "#2c2c2a", axis: "#52514e", good: "#0ca30c", surf: "#1a1a19", aqua: "#1baf7a" };
+  }
 
   const todayKey = () => new Date().toLocaleDateString("sv");
   const dayKeyOffset = (n) => {
@@ -742,7 +789,7 @@
     const W = 300, H = 240, M = 24;
     const sx = x => M + (x - minX) / (maxX - minX) * (W - 2 * M);
     const sy = y => (H - M) - (y - minY) / (maxY - minY) * (H - 2 * M);
-    const gA = "#2c2c2a", axis = "#52514e", blue = "#3987e5", gold = "#fab219", ink = "#c3c2b7";
+    const _c = vizColors(), gA = _c.grid, axis = _c.axis, blue = _c.blue, gold = _c.gold, ink = _c.ink;
     let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px" xmlns="http://www.w3.org/2000/svg">`;
     const stepX = niceStep(minX, maxX), stepY = niceStep(minY, maxY);
     for (let x = Math.ceil(minX / stepX) * stepX; x <= maxX; x += stepX)
@@ -786,8 +833,8 @@
   // A question can carry  diagram: { type, ... }.  One SVG per type, theme colors baked in (dark app).
   function mathDiagram(spec) {
     const W = 300, H = 240;
-    const blue = "#3987e5", gold = "#fab219", ink = "#c3c2b7", ink2 = "#898781",
-          grid = "#2c2c2a", axis = "#52514e", good = "#0ca30c", surf = "#1a1a19", aqua = "#1baf7a";
+    const _c = vizColors(), blue = _c.blue, gold = _c.gold, ink = _c.ink, ink2 = _c.ink2,
+          grid = _c.grid, axis = _c.axis, good = _c.good, surf = _c.surf, aqua = _c.aqua;
     const T = (x, y, t, fill, size, anchor, weight) =>
       `<text x="${x}" y="${y}" fill="${fill || ink}" font-size="${size || 12}" text-anchor="${anchor || 'start'}"${weight ? ` font-weight="${weight}"` : ''}>${t}</text>`;
     let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px" xmlns="http://www.w3.org/2000/svg">`;
@@ -945,10 +992,13 @@
   const hasBridge = () => !!(window.chrome && window.chrome.webview);
   let _ollama = { checked: false, ok: false, model: "", models: [] };
   const _pending = {};
+  let _aiProgressCb = null;
   if (hasBridge()) {
     window.chrome.webview.addEventListener("message", ev => {
       let d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch { return; }
-      if (d && d.kind === "ollamaReply" && _pending[d.id]) _pending[d.id](d);
+      if (!d) return;
+      if (d.kind === "ollamaReply" && _pending[d.id]) _pending[d.id](d);
+      else if (d.kind === "aiProgress" && _aiProgressCb) _aiProgressCb(d);
     });
   }
   function bridge(kind, payload, timeoutMs) {
@@ -1082,6 +1132,99 @@
     }
     nextBtn.onclick = reveal;
     nextBtn.focus();
+  }
+
+  // ---------- settings: theme + text size ----------
+  function openSettings() {
+    stopSpeech();
+    const ov = el("div", "chatoverlay");
+    const panel = el("div", "chatpanel");
+    const hd = el("div", "chd");
+    hd.append(el("h3", null, "⚙ Settings"));
+    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    hd.append(x); panel.append(hd);
+    const body = el("div", "cbody");
+
+    // Theme
+    const tg = el("div", "setgroup");
+    tg.append(el("div", "setlabel", "Appearance"));
+    const topts = el("div", "setopts");
+    [["dark", "🌙 Dark"], ["light", "☀ Light"]].forEach(([val, label]) => {
+      const b = el("button", "setbtn" + (S.theme === val ? " on" : ""), label);
+      b.onclick = () => {
+        S.theme = val; save(); applyTheme();
+        topts.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        b.classList.add("on");
+      };
+      topts.append(b);
+    });
+    tg.append(topts);
+    body.append(tg);
+
+    // Text size
+    const sg = el("div", "setgroup");
+    sg.append(el("div", "setlabel", "Text size"));
+    const sopts = el("div", "setopts");
+    [["Small", 0.9], ["Normal", 1], ["Large", 1.2], ["Extra large", 1.45]].forEach(([label, val]) => {
+      const b = el("button", "setbtn" + (Math.abs((S.fontScale || 1) - val) < 0.001 ? " on" : ""), label);
+      b.style.fontSize = (13 + (val - 0.9) * 14) + "px"; // preview the size on the button
+      b.onclick = () => {
+        S.fontScale = val; save(); applyFontScale();
+        sopts.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        b.classList.add("on");
+      };
+      sopts.append(b);
+    });
+    sg.append(sopts);
+    sg.append(el("div", "setnote", "Makes everything — including the Reference formulas — bigger or smaller. Your choice is remembered."));
+    body.append(sg);
+
+    // AI tutor (optional) — status + one-click install with progress
+    const ag = el("div", "setgroup");
+    ag.append(el("div", "setlabel", "AI tutor — the 'Why this?' chat (optional)"));
+    const stat = el("div", "aistat", "Checking…");
+    ag.append(stat);
+    const setupBtn = el("button", "setbtn", "Set up the AI tutor");
+    const progWrap = el("div", "aiprogwrap hidden");
+    const progBar = el("i");
+    const progInner = el("div", "aiprog"); progInner.append(progBar);
+    const progLabel = el("div", "aiproglabel", "");
+    progWrap.append(progInner, progLabel);
+    ag.append(setupBtn, progWrap);
+    ag.append(el("div", "setnote", "One click downloads Ollama + a ~2 GB tutor model and shows progress. Everything then runs on THIS computer — no account, no internet, no cost. The app works fully without it; this only powers the live chat."));
+    body.append(ag);
+
+    (async () => {
+      if (!hasBridge()) { stat.innerHTML = "Live AI runs in the installed desktop app (it's off in this browser preview). The written reasoning guide works everywhere."; setupBtn.classList.add("hidden"); return; }
+      const oll = await ollamaCheck();
+      if (oll.ok) { stat.innerHTML = "<span class='aiok'>✓ Ready</span> — model <b>" + esc(oll.model) + "</b>. Open <b>🤔 Why this?</b> on any question."; setupBtn.textContent = "Add the smaller/faster model"; }
+      else if (oll.running) stat.innerHTML = "Ollama is installed and running, but <b>no model</b> yet. Click below to download one.";
+      else stat.innerHTML = "Not set up yet. The app works fully without it — this just turns on the live chat.";
+    })();
+
+    setupBtn.onclick = () => {
+      if (!hasBridge()) return;
+      setupBtn.disabled = true;
+      progWrap.classList.remove("hidden");
+      progBar.style.width = "2%";
+      progLabel.textContent = "Starting…";
+      _ollama.checked = false; // re-detect after we're done
+      _aiProgressCb = (d) => {
+        if (typeof d.pct === "number") progBar.style.width = Math.max(2, Math.min(100, d.pct)) + "%";
+        if (d.label) progLabel.textContent = d.label;
+        if (d.done) {
+          _aiProgressCb = null;
+          setupBtn.disabled = false;
+          if (d.ok) { progBar.style.width = "100%"; progLabel.innerHTML = "<span class='aiok'>✓ Done — the AI tutor is ready. Try 'Why this?'</span>"; stat.innerHTML = "<span class='aiok'>✓ Ready</span>"; }
+          else { progLabel.innerHTML = "<span class='aibad'>Couldn't finish: " + esc(d.error || "unknown error") + ". You can retry, or install Ollama manually from ollama.com.</span>"; }
+        }
+      };
+      window.chrome.webview.postMessage(JSON.stringify({ kind: "aiSetup" }));
+    };
+
+    panel.append(body);
+    ov.append(panel);
+    document.body.append(ov);
   }
 
   // ---------- drill view ----------
@@ -1770,6 +1913,9 @@
   };
 
   // ---------- boot ----------
+  applyTheme();
+  applyFontScale();
+  document.getElementById("gearbtn").onclick = openSettings;
   renderChips();
   if (S.introSeen) nextQuestion(); else showIntro();
 })();

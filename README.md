@@ -74,15 +74,22 @@ overwritten by the app.)
 
 ### Turning on the live "Why?" AI (optional)
 
-The reasoning guide works with zero setup. For live follow-up questions:
-1. Install/run **Ollama** (https://ollama.com) — already installed here.
-2. Pull a model once: `ollama pull qwen3:8b` (or any `qwen`/chat model).
-3. Make sure Ollama is running (it serves on `localhost:11434`).
-4. Open **🤔 Why this?** on any question — the status turns green when it connects.
+The reasoning guide works with zero setup. To turn on the live follow-up chat, the
+easy way is built in:
 
-If Ollama is off, the panel simply shows the hand-written reasoning and says so.
-**Quick test:** with Ollama running + a model pulled, open Why this? → the status
-line should read "🟢 Local AI ready (model)" and you can type a question.
+**Open ⚙ Settings → "Set up the AI tutor" → one click.** It downloads Ollama (if
+you don't have it) and a small tutor model (~2 GB) with a **progress bar**, then
+verifies it — everything stays on your computer. When it finishes, the status shows
+**✓ Ready** and 🤔 Why this? will answer follow-ups.
+
+Manual alternative (portable/zip users): run `installer/setup-ai.ps1`, or install
+[Ollama](https://ollama.com) yourself and `ollama pull qwen2.5:3b`.
+
+### ⚙ Settings — theme & text size
+
+The gear button (top-right) opens Settings: **Dark / Light** theme, and a **text
+size** control (Small → Extra large) that enlarges everything, including the
+Reference formulas. Choices are remembered.
 
 **Speed:** the app disables the model's "thinking" phase and pre-warms it on open,
 so answers land in a second or two (the very first one after launch can take longer

@@ -110,6 +110,7 @@ class MainForm : Form
         if (kind == "updateBank") { await UpdateBankAsync(); return; }
         if (kind == "ollamaPing") { await OllamaPingAsync(id); return; }
         if (kind == "ollamaChat") { await OllamaChatAsync(id, m); return; }
+        if (kind == "aiSetup") { await AiSetupAsync(); return; }
     }
 
     void Reply(object payload) => _web.CoreWebView2.PostWebMessageAsString(JsonSerializer.Serialize(payload));
@@ -193,6 +194,114 @@ class MainForm : Form
         catch (Exception ex)
         {
             Reply(new { kind = "ollamaReply", id, ok = false, error = ex.Message });
+        }
+    }
+
+    const string SetupModel = "qwen2.5:3b";   // small + fast; good for the tutor role
+    const string OllamaSetupUrl = "https://ollama.com/download/OllamaSetup.exe";
+
+    static string FindOllamaExe()
+    {
+        var local = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                 "Programs", "Ollama", "ollama.exe");
+        if (File.Exists(local)) return local;
+        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
+            try { var q = Path.Combine(dir.Trim(), "ollama.exe"); if (File.Exists(q)) return q; } catch { }
+        return null;
+    }
+
+    async Task<bool> OllamaUp()
+    {
+        try { using var h = new HttpClient { Timeout = TimeSpan.FromSeconds(3) }; await h.GetStringAsync(OllamaBase + "/api/tags"); return true; }
+        catch { return false; }
+    }
+
+    // One-click: install Ollama if needed, start it, pull the model — reporting progress the whole way.
+    async Task AiSetupAsync()
+    {
+        void P(int pct, string label, bool done = false, bool ok = false, string error = null)
+            => Reply(new { kind = "aiProgress", pct, label, done, ok, error });
+        try
+        {
+            P(2, "Checking for Ollama…");
+            var exe = FindOllamaExe();
+            if (exe == null)
+            {
+                // download the official Ollama installer with progress
+                var tmp = Path.Combine(Path.GetTempPath(), "OllamaSetup.exe");
+                using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(20) })
+                using (var resp = await http.GetAsync(OllamaSetupUrl, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    resp.EnsureSuccessStatusCode();
+                    var total = resp.Content.Headers.ContentLength ?? 0;
+                    using var src = await resp.Content.ReadAsStreamAsync();
+                    using var dst = File.Create(tmp);
+                    var buf = new byte[81920]; long read = 0; int last = -1, n;
+                    while ((n = await src.ReadAsync(buf)) > 0)
+                    {
+                        await dst.WriteAsync(buf.AsMemory(0, n));
+                        read += n;
+                        int pct = total > 0 ? 3 + (int)(read * 42 / total) : 20;
+                        if (pct != last) { last = pct; P(pct, $"Downloading Ollama…  {read / 1048576} MB" + (total > 0 ? $" / {total / 1048576} MB" : "")); }
+                    }
+                }
+                P(46, "Installing Ollama… (a moment)");
+                var pi = new ProcessStartInfo(tmp, "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES") { UseShellExecute = true };
+                var proc = Process.Start(pi);
+                if (proc != null) await proc.WaitForExitAsync();
+                exe = FindOllamaExe();
+                if (exe == null) { P(46, "", true, false, "Ollama installed but couldn't be located. Try launching it once from the Start menu, then retry."); return; }
+            }
+
+            // make sure the server is up
+            P(50, "Starting Ollama…");
+            if (!await OllamaUp())
+            {
+                try { Process.Start(new ProcessStartInfo(exe, "serve") { UseShellExecute = false, CreateNoWindow = true }); } catch { }
+                for (int i = 0; i < 30 && !await OllamaUp(); i++) await Task.Delay(1000);
+            }
+            if (!await OllamaUp()) { P(50, "", true, false, "Ollama wouldn't start. Open the Ollama app once, then retry."); return; }
+
+            // pull the model, streaming progress
+            P(52, "Downloading the tutor model (~2 GB)…");
+            var body = new { name = SetupModel, stream = true };
+            using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(60) })
+            using (var req = new HttpRequestMessage(HttpMethod.Post, OllamaBase + "/api/pull")
+            { Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json") })
+            using (var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead))
+            using (var stream = await resp.Content.ReadAsStreamAsync())
+            using (var reader = new StreamReader(stream))
+            {
+                string line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    try
+                    {
+                        var el = JsonDocument.Parse(line).RootElement;
+                        var status = el.TryGetProperty("status", out var st) ? st.GetString() : "";
+                        long tot = el.TryGetProperty("total", out var t) ? t.GetInt64() : 0;
+                        long comp = el.TryGetProperty("completed", out var c) ? c.GetInt64() : 0;
+                        int pct = tot > 0 ? 52 + (int)(comp * 45 / tot) : 55;
+                        P(pct, "Model: " + status + (tot > 0 ? $"  {comp / 1048576}/{tot / 1048576} MB" : ""));
+                        if (el.TryGetProperty("error", out var er)) { P(pct, "", true, false, er.GetString()); return; }
+                    }
+                    catch { }
+                }
+            }
+
+            // verify
+            P(98, "Verifying…");
+            using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
+            {
+                var tags = await http.GetStringAsync(OllamaBase + "/api/tags");
+                if (tags.Contains(SetupModel.Split(':')[0])) P(100, "Ready", true, true);
+                else P(100, "", true, false, "Model didn't verify. Try retrying the setup.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Reply(new { kind = "aiProgress", pct = 0, label = "", done = true, ok = false, error = ex.Message });
         }
     }
 
