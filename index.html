@@ -342,6 +342,7 @@
 
   .intro p { color: var(--ink2); font-size: 15px; }
   .intro b { color: var(--ink); }
+  .intro .introquiet { color: var(--muted); font-size: 13.5px; }
 
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
 
@@ -390,7 +391,8 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const DAILY_GOAL = 10;
+  const DEFAULT_GOAL = 10;
+  const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
   const LEVELS = [
     { xp: 0,    name: "Walk-on" },
@@ -409,8 +411,8 @@
   function blankState() {
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
-             audio: { on: true, rate: 0.9, autoRead: true }, coach: "auto",
-             theme: "dark", fontScale: 1 };
+             audio: { on: true, rate: 0.9, autoRead: true, volume: 1 }, coach: "auto",
+             theme: "dark", fontScale: 1, dailyGoal: 10 };
   }
   function load() {
     try {
@@ -701,6 +703,7 @@
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.rate = S.audio.rate; u.pitch = 1;
+    u.volume = (S.audio.volume == null ? 1 : S.audio.volume);
     if (_voice) u.voice = _voice;
     if (onDone) { u.onend = onDone; u.onerror = onDone; }
     speechSynthesis.speak(u);
@@ -1179,6 +1182,50 @@
     sg.append(el("div", "setnote", "Makes everything — including the Reference formulas — bigger or smaller. Your choice is remembered."));
     body.append(sg);
 
+    // Read-aloud volume (+ on/off)
+    const vg = el("div", "setgroup");
+    vg.append(el("div", "setlabel", "Read-aloud voice"));
+    const vrow = el("div", "setopts");
+    const voiceToggle = el("button", "setbtn" + (S.audio.on ? " on" : ""), S.audio.on ? "🔊 On" : "🔇 Off");
+    voiceToggle.onclick = () => {
+      S.audio.on = !S.audio.on; if (!S.audio.on) stopSpeech(); save();
+      voiceToggle.className = "setbtn" + (S.audio.on ? " on" : "");
+      voiceToggle.textContent = S.audio.on ? "🔊 On" : "🔇 Off";
+    };
+    vrow.append(voiceToggle);
+    vg.append(vrow);
+    vg.append(el("div", "setlabel", "Volume"));
+    const volrow = el("div", "setopts");
+    [["Quiet", 0.3], ["Medium", 0.65], ["Full", 1]].forEach(([label, val]) => {
+      const b = el("button", "setbtn" + (Math.abs((S.audio.volume == null ? 1 : S.audio.volume) - val) < 0.001 ? " on" : ""), label);
+      b.onclick = () => {
+        S.audio.volume = val; save();
+        volrow.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        b.classList.add("on");
+        if (S.audio.on) speak("Volume set."); // hear the change immediately
+      };
+      volrow.append(b);
+    });
+    vg.append(volrow);
+    body.append(vg);
+
+    // Daily goal — small is allowed; the point is to START
+    const gg = el("div", "setgroup");
+    gg.append(el("div", "setlabel", "Daily goal"));
+    const grow = el("div", "setopts");
+    [3, 5, 10, 15].forEach(n => {
+      const b = el("button", "setbtn" + (goal() === n ? " on" : ""), n + " a day");
+      b.onclick = () => {
+        S.dailyGoal = n; save(); renderChips();
+        grow.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        b.classList.add("on");
+      };
+      grow.append(b);
+    });
+    gg.append(grow);
+    gg.append(el("div", "setnote", "Rough day? Set it to 3. Doing even ONE question still counts as a win — starting is the whole battle."));
+    body.append(gg);
+
     // AI tutor (optional) — status + one-click install with progress
     const ag = el("div", "setgroup");
     ag.append(el("div", "setlabel", "AI tutor — the 'Why this?' chat (optional)"));
@@ -1235,17 +1282,13 @@
     viewDrill.innerHTML = "";
     const c = el("div", "card intro");
     c.append(
-      el("div", "pill", "How this works"),
-      el("p", null, "The ACT isn't a knowledge test. Each scored section — <b>English, Math, Reading</b> — recycles the same small set of patterns forever. Once you can name the pattern in five seconds, the answer is usually free."),
-      el("p", null, "So: <b>one question at a time.</b> Answer it, read <i>why</i> every wrong choice is wrong, move on. The app quietly serves you more of whatever you miss — that's the whole error log, automated."),
-      el("p", null, "Right answers earn XP. Streaks of right answers earn more. <b>Ten a day is a full workout.</b> Keys <b>1–4</b> answer, <b>Enter</b> is next. That's everything."),
-      el("p", null, "One more thing: the app calls <b>breaks</b> — about every 20 minutes — and pays XP for taking them. Rest is part of the training. Hyperfocus burnout is how good streaks die."),
-      el("p", null, "Prefer to <b>hear</b> it? A <b>🔊 Voice</b> bar sits above each question — read the problem aloud, and have the explanation read to you automatically. Adjust the speed to whatever helps you follow. The <b>Reference</b> tab holds every ACT formula plus a look at where each subject leads in college."),
-      el("p", null, "Still wondering <i>why</i> — why this formula and not another one? Hit <b>🤔 Why this?</b> after any answer. You'll get a plain-English reason, and if <b>Ollama</b> is running you can ask it follow-ups — a private tutor that lives on this computer, no internet needed."),
-      el("p", null, "New to a topic? <b>🎓 Coaching</b> shows a 'before you answer' hint — what the question is really asking, and which formula to reach for. On <b>Auto-fade</b> it helps until you master a pattern, then quietly steps back so you're ready for the real test. Flip it to Full or Off anytime.")
+      el("div", "pill", "Hey"),
+      el("p", null, "This isn't homework and it isn't a test. It's a game where the ACT is the boss — and you're learning its moves one at a time. It repeats the same handful of tricks forever; once you see them, they're basically free points."),
+      el("p", null, "<b>Here's the whole deal: you only have to do ONE.</b> Do a single question and you've won today — no joke. Most days you'll keep going because it's kind of satisfying. But the bar is one."),
+      el("p", "introquiet", "Stuck on any question? Every one has a <b>🪜 Break it down</b> (one step at a time) and a <b>🤔 Why this?</b>. Rather listen than read? There's a voice. Want it bigger, or light mode? <b>⚙ Settings</b>, top-right. That's it — poke around, nothing here can break.")
     );
     const a = el("div", "actions");
-    const b = el("button", "btn", "Start");
+    const b = el("button", "btn", "Start — just one question");
     b.onclick = () => { S.introSeen = true; save(); nextQuestion(); };
     a.append(b);
     c.append(a);
@@ -1309,7 +1352,7 @@
     viewDrill.append(audioBar());
 
     const card = el("div", "card");
-    let pillHtml = esc(ACT_PATTERNS[q.pattern].subject) + " · today " + todayCount() + " / " + DAILY_GOAL;
+    let pillHtml = esc(ACT_PATTERNS[q.pattern].subject) + " · today " + todayCount() + " / " + goal();
     if (S.combo >= 2) pillHtml += " · <span class='combo'>combo ×" + S.combo + "</span>";
     card.append(el("div", "pill", pillHtml));
     if (q.context) card.append(el("p", "context", esc(q.context)));
@@ -1378,7 +1421,7 @@
     const newLevel = levelIndex(S.xp);
     S.sinceNote++;
 
-    const goalJustHit = d.n === DAILY_GOAL;
+    const goalJustHit = d.n === goal();
     const leveledUp = newLevel > prevLevel;
     let note = null;
     if ((goalJustHit || leveledUp || (right && Math.random() < 0.08)) && S.sinceNote >= 8) {
@@ -1425,7 +1468,7 @@
 
     if (goalJustHit) {
       card.append(el("div", "milestone",
-        "<b>That's a full day — " + DAILY_GOAL + " focused reps.</b> That beats three hours of zoning out at a video. Keep going or stop here; both count as a win."));
+        "<b>That's a full day — " + goal() + " focused reps.</b> That beats three hours of zoning out at a video. Keep going or stop here; both count as a win."));
       confetti();
     }
 
@@ -1562,7 +1605,7 @@
     tiles.append(
       tile(String(li + 1) + " <small>" + esc(LEVELS[li].name) + "</small>", S.xp + " XP · level", true),
       tile(streak(), "day streak"),
-      tile(todayCount() + "<small> / " + DAILY_GOAL + "</small>", "today"),
+      tile(todayCount() + "<small> / " + goal() + "</small>", "today"),
       tile(total, "total reps"),
       tile(total ? Math.round(100 * right / total) + "%" : "—", "accuracy"),
       tile(S.bestCombo, "best combo"),
@@ -1590,7 +1633,7 @@
     const days = [];
     for (let i = 13; i >= 0; i--) days.push(dayKeyOffset(i));
     const counts = days.map(k => (S.daily[k] || { n: 0 }).n);
-    const max = Math.max(DAILY_GOAL, ...counts);
+    const max = Math.max(goal(), ...counts);
     const bars = el("div", "bars");
     days.forEach((k, i) => {
       const col = el("div", "barcol" + (counts[i] === 0 ? " empty" : ""));
@@ -1881,7 +1924,7 @@
     lvl.innerHTML = "<b>Lv " + (li + 1) + "</b> " + esc(LEVELS[li].name) +
       " <span class='mini'><i style='width:" + Math.round(levelProgress(S.xp) * 100) + "%'></i></span>";
     document.getElementById("chip-streak").innerHTML = "🔥 <b>" + s + "</b> day" + (s === 1 ? "" : "s");
-    document.getElementById("chip-today").innerHTML = "today <b>" + todayCount() + "</b> / " + DAILY_GOAL;
+    document.getElementById("chip-today").innerHTML = "today <b>" + todayCount() + "</b> / " + goal();
   }
 
   document.getElementById("tabs").addEventListener("click", (e) => {
