@@ -1,0 +1,48 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Content and release tests
+        run: node --test tests
+
+      - name: Build desktop host
+        run: dotnet build desktop/ACTDrill.Desktop.csproj -c Release
+
+      - name: Run security verification
+        run: dotnet run --project desktop/ACTDrill.Verification/ACTDrill.Verification.csproj -c Release
+
+      - name: Parse PowerShell helper
+        shell: pwsh
+        run: |
+          $errors = $null
+          $helper = Get-ChildItem 'installer/actdrill_Setup-AiTutor_v*.ps1' | Select-Object -First 1
+          if (-not $helper) { throw 'No installer helper script found.' }
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            $helper.FullName,
+            [ref]$null,
+            [ref]$errors
+          )
+          if ($errors.Count) {
+            $errors | Format-List
+            exit 1
+          }

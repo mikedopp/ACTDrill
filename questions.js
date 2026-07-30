@@ -1,5 +1,5 @@
 // ============================================================
-// ACT Pattern Drill — question bank
+// ACTDrill — question bank
 // ------------------------------------------------------------
 // Original practice questions written in ACT English style.
 // (Real ACT questions are copyrighted — use the official PDFs
@@ -648,7 +648,7 @@ Object.assign(ACT_PATTERNS, {
     subject: "Math",
     name: "Geometry staples",
     rule: "Five formulas cover most ACT geometry: rectangle A = lw, triangle A = ½bh, circle A = πr² and C = 2πr, Pythagorean a² + b² = c².",
-    cue: "Circle problem? FIRST ask: did they give the radius or the DIAMETER? Half the wrong answers come from mixing those up.",
+    cue: "Name the shape, sketch what is given, then choose the matching formula. For circles, check radius vs. diameter before calculating.",
     example: "Diameter 10 → r = 5 → area 25π, not 100π."
   },
   m_ratio: {
@@ -3493,7 +3493,7 @@ ACT_QUESTIONS.push(
   }
 );
 
-const BANK_VERSION = "v9 · 2026-07-25";
+const BANK_VERSION = "v10 · 2026-07-29";
 
 // original 12 patterns are the English section
 Object.values(ACT_PATTERNS).forEach(p => { if (!p.subject) p.subject = "English"; });

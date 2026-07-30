@@ -4,25 +4,46 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ACTDrill</AssemblyName>
     <RootNamespace>ACTDrill.Desktop</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <AssemblyTitle>ACT Pattern Drill</AssemblyTitle>
-    <Product>ACT Pattern Drill</Product>
-    <Version>1.0.0</Version>
+    <AssemblyTitle>ACTDrill</AssemblyTitle>
+    <Product>ACTDrill</Product>
+    <Version>1.13.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
+    <PackageReference Include="Esprima" Version="3.0.6" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44" />
+    <PackageReference Include="System.Speech" Version="8.0.0" />
   </ItemGroup>
 
   <!-- Web app is embedded into the exe and extracted at first run -->
   <ItemGroup>
-    <EmbeddedResource Include="..\index.html" Link="web\index.html" />
+    <EmbeddedResource Include="..\wwwroot\**\*" Link="web\%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\questions.js" Link="web\questions.js" />
     <EmbeddedResource Include="..\notes.js" Link="web\notes.js" />
+    <Content Include="..\wwwroot\**\*" Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\questions.js" Link="wwwroot\questions.js"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\notes.js" Link="wwwroot\notes.js"
+             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ACTDrill.Verification\**\*.cs" />
+  </ItemGroup>
+
+  <!-- The WebView2 package adds its WPF assembly to WinForms projects; remove that
+       unused reference to avoid a WindowsBase version conflict. -->
+  <Target Name="RemoveUnusedWebView2WpfReference" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)"
+                 Condition="'%(Reference.Filename)%(Reference.Extension)' == 'Microsoft.Web.WebView2.Wpf.dll'" />
+    </ItemGroup>
+  </Target>
 
 </Project>

@@ -1,396 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ACT Pattern Drill</title>
-<style>
-  :root, :root[data-theme="dark"] {
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --raised: #222221;
-    --ink: #ffffff;
-    --ink2: #c3c2b7;
-    --muted: #898781;
-    --grid: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255,255,255,0.10);
-    --accent: #3987e5;
-    --accent-dim: #1c5cab;
-    --good: #0ca30c;
-    --bad: #d03b3b;
-    --gold: #fab219;
-  }
-  :root[data-theme="light"] {
-    --page: #f4f4f1;
-    --surface: #ffffff;
-    --raised: #f0efeb;
-    --ink: #0b0b0b;
-    --ink2: #3f3e3b;
-    --muted: #6b6a66;
-    --grid: #e4e3dc;
-    --baseline: #c3c2b7;
-    --border: rgba(0,0,0,0.14);
-    --accent: #2a78d6;
-    --accent-dim: #1c5cab;
-    --good: #006300;
-    --bad: #c62f2f;
-    --gold: #8a5a00;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--page);
-    color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    line-height: 1.5;
-    min-height: 100vh;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
-
-  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  header h1 { font-size: 20px; margin: 0; letter-spacing: 0.2px; }
-  header h1 span { color: var(--accent); }
-  .chips { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .chip {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-    padding: 4px 12px; font-size: 13px; color: var(--ink2);
-    font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 8px;
-  }
-  .chip b { color: var(--ink); font-weight: 600; }
-  .chip .mini { width: 52px; height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
-  .chip .mini i { display: block; height: 100%; background: var(--gold); border-radius: 3px; }
-
-  nav { display: flex; gap: 4px; margin: 18px 0 20px; border-bottom: 1px solid var(--grid); }
-  nav button {
-    background: none; border: none; color: var(--muted); font: inherit; font-size: 14px;
-    padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
-  }
-  nav button:hover { color: var(--ink2); }
-  nav button.active { color: var(--ink); border-bottom-color: var(--accent); }
-  nav button:focus-visible, .choice:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 22px; margin-bottom: 14px;
-  }
-
-  .pill { display: inline-block; font-size: 12px; color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 10px; }
-  .pill .combo { color: var(--gold); font-weight: 700; }
-
-  .subjbar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .subjbar button {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-    color: var(--muted); font: inherit; font-size: 13px; padding: 4px 14px; cursor: pointer;
-  }
-  .subjbar button:hover { color: var(--ink2); border-color: var(--accent); }
-  .subjbar button.active { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
-
-  .subhead { margin: 22px 0 10px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
-
-  /* Formula reference */
-  .frow { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--grid); align-items: baseline; flex-wrap: wrap; }
-  .frow:last-child { border-bottom: none; }
-  .frow .fname { flex: 0 0 180px; font-size: 16px; color: var(--ink2); font-weight: 600; }
-  .frow .fform { flex: 1 1 260px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 17px; color: var(--ink); }
-  .frow .fex { flex: 1 1 200px; font-size: 15px; color: var(--muted); }
-
-  /* Reference notes (writing/reading/science prose) */
-  .rnote { padding: 9px 0; border-bottom: 1px solid var(--grid); font-size: 15.5px; line-height: 1.55; color: var(--ink2); }
-  .rnote:last-child { border-bottom: none; }
-  .rnote b { color: var(--ink); font-weight: 600; }
-  .card .blurb { color: var(--ink2); font-size: 14.5px; margin: 0 0 10px; }
-
-  /* Audio / read-aloud */
-  .audiobar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-  .audiobar button {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-    color: var(--muted); font: inherit; font-size: 13px; padding: 4px 12px; cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .audiobar button:hover { color: var(--ink2); border-color: var(--accent); }
-  .audiobar button.on { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
-  .speakbtn {
-    background: var(--raised); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--ink2); font: inherit; font-size: 13px; padding: 4px 10px; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; vertical-align: middle;
-  }
-  .speakbtn:hover { color: var(--ink); border-color: var(--accent); }
-  .speakbtn.speaking { color: var(--accent); border-color: var(--accent); }
-  .readrow { margin: 2px 0 10px; }
-  .readrow .speakbtn { margin-left: 0; }
-
-  /* Formula "key" box + coordinate plot */
-  .fbox { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--gold); background: var(--raised); border-radius: 0 10px 10px 0; }
-  .fbox .fkey { font-size: 12px; letter-spacing: 0.3px; color: var(--gold); font-weight: 700; }
-  .fbox .fexpr { font-family: Consolas, "Cascadia Mono", monospace; font-size: 15px; color: var(--ink); margin-top: 5px; }
-  .fbox .fstep { font-size: 13.5px; color: var(--ink2); margin-top: 4px; }
-  .fbox .fstep b { color: var(--ink); font-weight: 600; }
-  .plotwrap { margin-top: 12px; text-align: center; }
-  .plotwrap svg { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-
-  /* "See it work 3 times" worked-example family */
-  .worktoggle { margin-top: 14px; background: none; border: 1px solid var(--border); color: var(--ink2); font: inherit; font-size: 13px; padding: 6px 13px; border-radius: 8px; cursor: pointer; }
-  .worktoggle:hover { border-color: var(--accent); color: var(--ink); }
-  .workwrap { margin-top: 12px; }
-  .workbanner { font-size: 13.5px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
-  .worked { border-top: 1px solid var(--grid); padding: 12px 0 2px; }
-  .worked .wctx { font-size: 13px; color: var(--ink2); font-style: italic; margin-bottom: 4px; }
-  .worked .wq { font-size: 15px; color: var(--ink); }
-  .worked .wq .u { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
-  .worked .wans { font-size: 14px; color: var(--good); font-weight: 600; margin-top: 6px; }
-  .worked .wwhy { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
-
-  /* "Why this?" reasoning chat */
-  .chatoverlay { position: fixed; inset: 0; background: rgba(13,13,13,0.82); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 14px; }
-  .chatpanel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: min(560px, 100%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
-  .chatpanel .chd { padding: 15px 18px; border-bottom: 1px solid var(--grid); display: flex; justify-content: space-between; align-items: center; }
-  .chatpanel .chd h3 { margin: 0; font-size: 16px; }
-  .chatpanel .cbody { padding: 16px 18px; overflow-y: auto; }
-  .chatreason { border-left: 3px solid var(--accent); background: var(--raised); border-radius: 0 10px 10px 0; padding: 12px 14px; margin-bottom: 12px; }
-  .chatreason .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--gold); font-weight: 700; margin-top: 10px; }
-  .chatreason .lbl:first-child { margin-top: 0; }
-  .chatreason p { margin: 3px 0 0; font-size: 14px; color: var(--ink2); }
-  .chatlog { display: flex; flex-direction: column; gap: 8px; }
-  .chatmsg { padding: 9px 12px; border-radius: 10px; font-size: 14px; max-width: 92%; line-height: 1.45; }
-  .chatmsg.user { align-self: flex-end; background: var(--accent-dim); color: #fff; }
-  .chatmsg.ai { align-self: flex-start; background: var(--raised); color: var(--ink); border: 1px solid var(--border); white-space: pre-wrap; }
-  .chatmsg.sys { align-self: center; color: var(--muted); font-size: 12.5px; text-align: center; }
-  .chatstatus { font-size: 12px; color: var(--muted); padding: 2px 18px 8px; }
-  .chatft { padding: 12px 14px; border-top: 1px solid var(--grid); display: flex; gap: 8px; }
-  .chatft input { flex: 1; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; font-size: 14px; padding: 9px 12px; }
-  .chatft input:disabled { opacity: 0.5; }
-
-  /* Settings */
-  .gearbtn { cursor: pointer; font: inherit; }
-  .gearbtn:hover { color: var(--ink); border-color: var(--accent); }
-  .setgroup { margin-bottom: 20px; }
-  .setgroup .setlabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
-  .setgroup .setnote { font-size: 13px; color: var(--muted); margin-top: 8px; }
-  .setopts { display: flex; gap: 8px; flex-wrap: wrap; }
-  .setbtn { background: var(--raised); border: 1px solid var(--border); border-radius: 10px; color: var(--ink2); font: inherit; font-size: 15px; padding: 10px 16px; cursor: pointer; }
-  .setbtn:hover { border-color: var(--accent); color: var(--ink); }
-  .setbtn.on { border-color: var(--accent); background: rgba(57,135,229,0.14); color: var(--ink); font-weight: 600; }
-  .aistat { font-size: 14.5px; color: var(--ink2); margin-bottom: 8px; }
-  .aistat b { color: var(--ink); }
-  .aiprogwrap { margin-top: 12px; }
-  .aiprog { height: 12px; background: var(--grid); border-radius: 6px; overflow: hidden; }
-  .aiprog > i { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 6px; transition: width 0.3s ease; }
-  .aiproglabel { font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
-  .aiok { color: var(--good); font-weight: 600; }
-  .aibad { color: var(--bad); }
-
-  /* Coaching control + "before you answer" scaffold */
-  .coachbar { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-  .coachbar button { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font: inherit; font-size: 13px; padding: 4px 14px; cursor: pointer; }
-  .coachbar button:hover { color: var(--ink2); border-color: var(--accent); }
-  .coachbar button.on { color: var(--ink); border-color: var(--accent); background: rgba(57,135,229,0.12); }
-  .scaffold { margin-bottom: 14px; padding: 12px 14px; border-left: 3px solid var(--aqua, #1baf7a); background: var(--raised); border-radius: 0 10px 10px 0; }
-  .scaffold .slabel { font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; color: #1baf7a; font-weight: 700; }
-  .scaffold .srow { font-size: 14px; color: var(--ink2); margin-top: 7px; }
-  .scaffold .srow b { color: var(--ink); font-weight: 600; }
-  .scaffold .sform { font-family: Consolas, "Cascadia Mono", monospace; color: var(--ink); }
-
-  /* Step-by-step "break it down" walkthrough */
-  .stepq { font-size: 15px; color: var(--ink); background: var(--raised); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
-  .steplist { display: flex; flex-direction: column; gap: 10px; }
-  .stepitem { border-left: 3px solid var(--accent); background: var(--raised); border-radius: 0 10px 10px 0; padding: 10px 13px; animation: stepin 0.25s ease; }
-  @keyframes stepin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .stepitem .stepnum { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--accent); font-weight: 700; }
-  .stepitem .stepdo { font-size: 15px; color: var(--ink); margin-top: 4px; }
-  .stepitem .stepwhy { font-size: 13px; color: var(--ink2); margin-top: 5px; }
-  .stepdone { text-align: center; color: var(--good); font-size: 14px; font-weight: 600; margin-top: 12px; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
-  .speakbtn.speaking .ic { animation: pulse 0.9s ease-in-out infinite; }
-
-  /* College benchmarks */
-  .bench { width: 100%; border-collapse: collapse; margin: 8px 0 4px; }
-  .bench th, .bench td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); font-size: 14px; }
-  .bench th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
-  .bench td:first-child { color: var(--ink2); }
-  .bench td.score { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .bench td:last-child { color: var(--muted); font-size: 13.5px; }
-
-  .context { color: var(--ink2); font-style: italic; margin: 0 0 12px; }
-  .passage { font-size: 19px; margin: 0 0 6px; }
-  .passage .u {
-    text-decoration: underline; text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px; text-underline-offset: 4px;
-  }
-  .prompt { color: var(--ink2); font-size: 15px; margin: 10px 0 0; }
-
-  .choices { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
-  .choice {
-    display: flex; gap: 12px; align-items: flex-start; width: 100%;
-    background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
-    color: var(--ink); font: inherit; font-size: 16px; text-align: left;
-    padding: 12px 14px; cursor: pointer; transition: border-color 120ms, background 120ms;
-  }
-  .choice:hover:not(:disabled) { border-color: var(--accent); }
-  .choice:disabled { cursor: default; }
-  .choice .letter {
-    flex: none; width: 26px; height: 26px; border-radius: 7px; margin-top: 1px;
-    background: var(--grid); color: var(--ink2); font-size: 13px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .choice .body { flex: 1; }
-  .choice .why { display: none; font-size: 13.5px; color: var(--muted); margin-top: 5px; }
-  .answered .choice .why { display: block; }
-  .choice.right { border-color: var(--good); background: rgba(12,163,12,0.08); }
-  .choice.right .letter { background: var(--good); color: #fff; }
-  .choice.wrong-picked { border-color: var(--bad); background: rgba(208,59,59,0.08); }
-  .choice.wrong-picked .letter { background: var(--bad); color: #fff; }
-  .choice .mark { flex: none; font-size: 15px; font-weight: 700; margin-top: 2px; visibility: hidden; }
-  .choice.right .mark { visibility: visible; color: var(--good); }
-  .choice.wrong-picked .mark { visibility: visible; color: var(--bad); }
-
-  .verdict { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; font-size: 15px; flex-wrap: wrap; }
-  .verdict .word { font-weight: 700; }
-  .verdict.good .word { color: var(--good); }
-  .verdict.bad .word { color: var(--bad); }
-  .verdict .quip { color: var(--ink2); }
-  .verdict .xp { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .verdict .crit { color: var(--gold); font-style: italic; }
-
-  .patternbox {
-    margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent);
-    background: var(--raised); border-radius: 0 10px 10px 0;
-  }
-  .patternbox .pname { font-weight: 600; font-size: 14px; }
-  .patternbox .pcue { color: var(--ink2); font-size: 13.5px; margin-top: 3px; }
-
-  .cornernote {
-    margin-top: 14px; padding: 14px 16px; border-left: 3px solid var(--gold);
-    background: rgba(250,178,25,0.06); border-radius: 0 10px 10px 0;
-  }
-  .cornernote .clabel { font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
-  .cornernote .ctext { margin-top: 6px; font-size: 15.5px; color: var(--ink); }
-  .cornernote .cfrom { margin-top: 6px; font-size: 13.5px; color: var(--ink2); font-style: italic; }
-
-  .actions { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
-  .btn {
-    background: var(--accent); border: none; color: #fff; font: inherit; font-weight: 600;
-    font-size: 15px; padding: 10px 22px; border-radius: 10px; cursor: pointer;
-  }
-  .btn:hover { background: var(--accent-dim); }
-  .btn.ghost { background: none; border: 1px solid var(--border); color: var(--ink2); font-weight: 400; }
-  .btn.ghost:hover { border-color: var(--bad); color: var(--bad); background: none; }
-  .hint { color: var(--muted); font-size: 13px; }
-
-  .milestone {
-    margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 14.5px;
-    background: rgba(57,135,229,0.10); border: 1px solid var(--accent-dim); color: var(--ink2);
-  }
-  .milestone b { color: var(--ink); }
-
-  /* Level-up overlay */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(13,13,13,0.82); z-index: 50;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .overlay .panel {
-    background: var(--surface); border: 1px solid var(--gold); border-radius: 16px;
-    padding: 34px 38px; max-width: 460px; text-align: center;
-  }
-  .overlay .lvlabel { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
-  .overlay .lvname { font-size: 34px; font-weight: 800; margin: 8px 0 2px; }
-  .overlay .lvnum { color: var(--ink2); font-size: 15px; margin-bottom: 14px; }
-  .overlay .cornernote { text-align: left; }
-  .overlay .btn { margin-top: 18px; }
-
-  /* Rulebook */
-  .rule-card h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-  .rule-card p { margin: 4px 0; font-size: 14.5px; color: var(--ink2); }
-  .rule-card .lbl { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 10px; }
-  .rule-card .ex { color: var(--muted); font-size: 13.5px; }
-  .mastered-badge { color: var(--gold); font-size: 13px; font-weight: 700; }
-
-  /* Meters */
-  .meter-row { display: flex; align-items: center; gap: 12px; margin: 9px 0; }
-  .meter-row .mlabel { flex: 0 0 210px; font-size: 14px; color: var(--ink2); }
-  .meter { flex: 1; height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
-  .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
-  .meter.gold > i { background: var(--gold); }
-  .meter-row .mval { flex: 0 0 130px; font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
-  .rule-card .meter-row { margin-top: 12px; }
-  .rule-card .meter-row .mlabel { display: none; }
-
-  /* Stat tiles */
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
-  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
-  .tile .tv { font-size: 28px; font-weight: 700; }
-  .tile .tv small { font-size: 15px; color: var(--muted); font-weight: 400; }
-  .tile .tl { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .tile.gold .tv { color: var(--gold); }
-
-  /* Daily bar chart */
-  .chart { padding-bottom: 14px; }
-  .chart h3, .card h3.sect { margin: 0 0 14px; font-size: 15px; color: var(--ink2); font-weight: 600; }
-  .bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; border-bottom: 1px solid var(--baseline); padding: 0 2px; }
-  .barcol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
-  .barcol .bar { width: 100%; max-width: 34px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
-  .barcol.empty .bar { background: var(--grid); height: 2px; border-radius: 0; }
-  .barcol .blab { position: absolute; top: -20px; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
-  .daylabels { display: flex; gap: 6px; padding: 6px 2px 0; }
-  .daylabels span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); }
-
-  /* Links */
-  .linklist a { color: var(--accent); text-decoration: none; font-weight: 600; }
-  .linklist a:hover { text-decoration: underline; }
-  .linklist li { margin-bottom: 12px; color: var(--ink2); font-size: 14.5px; }
-  .note { color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--grid); padding-top: 12px; margin-top: 16px; }
-
-  .intro p { color: var(--ink2); font-size: 15px; }
-  .intro b { color: var(--ink); }
-  .intro .introquiet { color: var(--muted); font-size: 13.5px; }
-
-  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
-
-  .bigclock { font-size: 46px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 12px 0 4px; color: var(--accent); }
-
-  footer { color: var(--muted); font-size: 12.5px; text-align: center; margin-top: 30px; }
-  .hidden { display: none !important; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <h1>ACT <span>Pattern Drill</span></h1>
-    <div class="chips">
-      <div class="chip" id="chip-level"></div>
-      <div class="chip" id="chip-streak"></div>
-      <div class="chip" id="chip-today"></div>
-      <button class="chip gearbtn" id="gearbtn" title="Settings — theme &amp; text size">⚙ Settings</button>
-    </div>
-  </header>
-
-  <nav id="tabs">
-    <button data-view="drill" class="active">Drill</button>
-    <button data-view="rulebook">Rulebook</button>
-    <button data-view="formulas">Reference</button>
-    <button data-view="progress">Progress</button>
-    <button data-view="links">Real practice</button>
-  </nav>
-
-  <main>
-    <section id="view-drill"></section>
-    <section id="view-rulebook" class="hidden"></section>
-    <section id="view-formulas" class="hidden"></section>
-    <section id="view-progress" class="hidden"></section>
-    <section id="view-links" class="hidden"></section>
-  </main>
-
-  <footer>Original practice questions in ACT style · for real retired tests use the Real practice tab</footer>
-</div>
-
-<script src="questions.js"></script>
-<script src="notes.js"></script>
-<script>
 (() => {
   "use strict";
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
+  const APP_VERSION = "1.13.1";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -411,27 +24,86 @@
   function blankState() {
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
-             audio: { on: true, rate: 0.9, autoRead: true, volume: 1 }, coach: "auto",
+             audio: { on: true, rate: 0.9, autoRead: true, volume: 1, voiceId: "" }, coach: "auto",
              theme: "dark", fontScale: 1, dailyGoal: 10 };
+  }
+  const isRecord = value => value && typeof value === "object" && !Array.isArray(value);
+  const finite = (value, fallback, min, max) =>
+    Number.isFinite(Number(value)) ? Math.max(min, Math.min(max, Number(value))) : fallback;
+  function statMap(value) {
+    if (!isRecord(value)) return {};
+    const clean = {};
+    Object.entries(value).slice(0, 5000).forEach(([key, item]) => {
+      if (!/^[A-Za-z0-9_-]{1,80}$/.test(key) || !isRecord(item)) return;
+      const seen = Math.round(finite(item.seen, 0, 0, 1000000));
+      const right = Math.round(finite(item.right, 0, 0, seen));
+      clean[key] = { seen, right };
+    });
+    return clean;
+  }
+  function normalizeState(value) {
+    const base = blankState();
+    if (!isRecord(value)) return base;
+    base.patt = statMap(value.patt);
+    base.q = statMap(value.q);
+    if (isRecord(value.daily)) {
+      Object.entries(value.daily).slice(-730).forEach(([date, item]) => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && isRecord(item))
+          base.daily[date] = { n: Math.round(finite(item.n, 0, 0, 10000)) };
+      });
+    }
+    base.recent = Array.isArray(value.recent)
+      ? value.recent.filter(x => typeof x === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(x)).slice(-50)
+      : [];
+    base.introSeen = value.introSeen === true;
+    base.xp = Math.round(finite(value.xp, 0, 0, 10000000));
+    base.combo = Math.round(finite(value.combo, 0, 0, 100000));
+    base.bestCombo = Math.round(finite(value.bestCombo, 0, 0, 100000));
+    base.sinceNote = Math.round(finite(value.sinceNote, 99, 0, 100000));
+    base.lastNote = Math.round(finite(value.lastNote, -1, -1, 100000));
+    base.subj = ["All", "English", "Math", "Reading"].includes(value.subj) ? value.subj : "All";
+    base.coach = ["auto", "on", "off"].includes(value.coach) ? value.coach : "auto";
+    base.theme = value.theme === "light" ? "light" : "dark";
+    base.fontScale = [0.9, 1, 1.2, 1.45].includes(Number(value.fontScale))
+      ? Number(value.fontScale)
+      : 1;
+    base.dailyGoal = [3, 5, 10, 15].includes(Number(value.dailyGoal))
+      ? Number(value.dailyGoal)
+      : DEFAULT_GOAL;
+    if (isRecord(value.audio)) {
+      base.audio.on = value.audio.on !== false;
+      base.audio.autoRead = value.audio.autoRead !== false;
+      base.audio.rate = finite(value.audio.rate, 0.9, 0.5, 2);
+      base.audio.volume = finite(value.audio.volume, 1, 0, 1);
+      base.audio.voiceId = typeof value.audio.voiceId === "string"
+        ? value.audio.voiceId.slice(0, 300)
+        : "";
+    }
+    return base;
   }
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) return Object.assign(blankState(), JSON.parse(raw));
+      if (raw) return normalizeState(JSON.parse(raw));
     } catch (e) { /* corrupted store — start fresh */ }
     return blankState();
   }
-  function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(normalizeState(S))); }
+    catch { announce("Progress could not be saved on this device."); }
+  }
   let S = load();
 
   // ---------- appearance: theme + text size ----------
   function applyTheme() { document.documentElement.setAttribute("data-theme", S.theme === "light" ? "light" : "dark"); }
-  function applyFontScale() { document.body.style.zoom = String(S.fontScale || 1); }
+  function applyFontScale() {
+    document.documentElement.style.fontSize = (16 * finite(S.fontScale, 1, 0.9, 1.45)) + "px";
+  }
   // diagram/plot colors that follow the current theme (SVGs are rebuilt each render)
   function vizColors() {
     return S.theme === "light"
-      ? { blue: "#2a78d6", gold: "#b06f00", ink: "#3f3e3b", ink2: "#6b6a66", grid: "#e4e3dc", axis: "#b8b7ae", good: "#006300", surf: "#ffffff", aqua: "#188a63" }
-      : { blue: "#3987e5", gold: "#fab219", ink: "#c3c2b7", ink2: "#898781", grid: "#2c2c2a", axis: "#52514e", good: "#0ca30c", surf: "#1a1a19", aqua: "#1baf7a" };
+      ? { blue: "#2269a5", gold: "#805100", ink: "#242a31", ink2: "#4f5964", grid: "#d8dee5", axis: "#8b96a2", good: "#146b2e", surf: "#ffffff", aqua: "#16674f" }
+      : { blue: "#5ba4d9", gold: "#ffc857", ink: "#f3f7fb", ink2: "#c6d0da", grid: "#27313d", axis: "#657383", good: "#57d879", surf: "#121821", aqua: "#66d9b3" };
   }
 
   const todayKey = () => new Date().toLocaleDateString("sv");
@@ -505,6 +177,57 @@
     if (html !== undefined) e.innerHTML = html;
     return e;
   };
+  function announce(message) {
+    const region = document.getElementById("app-status");
+    if (!region) return;
+    region.textContent = "";
+    requestAnimationFrame(() => { region.textContent = message; });
+  }
+  function mountModal(overlay, panel, titleElement, initialFocus) {
+    const priorFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const titleId = "dialog-" + Math.random().toString(36).slice(2);
+    titleElement.id = titleId;
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-labelledby", titleId);
+    panel.tabIndex = -1;
+    const app = document.querySelector(".wrap");
+    if (app) app.inert = true;
+    document.body.append(overlay);
+
+    const close = () => {
+      overlay.removeEventListener("keydown", trap);
+      overlay.remove();
+      if (app) app.inert = false;
+      if (priorFocus?.isConnected) priorFocus.focus();
+    };
+    const focusable = () => [...panel.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    )].filter(node => node instanceof HTMLElement && node.offsetParent !== null);
+    function trap(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    }
+    overlay.addEventListener("keydown", trap);
+    requestAnimationFrame(() => (initialFocus || focusable()[0] || panel).focus());
+    return close;
+  }
   function renderPassage(p) {
     return esc(p).replace(/\|([^|]+)\|/g, '<span class="u">$1</span>');
   }
@@ -558,6 +281,7 @@
 
   // ---------- confetti ----------
   function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const colors = ["#3987e5", "#fab219", "#0ca30c", "#9085e9", "#e66767"];
     const cv = el("canvas"); cv.id = "confetti";
     document.body.append(cv);
@@ -590,19 +314,19 @@
   function showLevelUp(li, note) {
     const ov = el("div", "overlay");
     const panel = el("div", "panel");
+    const title = el("div", "lvname", esc(LEVELS[li].name));
     panel.append(
       el("div", "lvlabel", "Level up"),
-      el("div", "lvname", esc(LEVELS[li].name)),
+      title,
       el("div", "lvnum", "Level " + (li + 1) + " of " + LEVELS.length + " · " + S.xp + " XP")
     );
     if (note) panel.append(noteCard(note));
     const b = el("button", "btn", "Back to work");
-    b.onclick = () => ov.remove();
     panel.append(b);
     ov.append(panel);
-    document.body.append(ov);
+    const close = mountModal(ov, panel, title, b);
+    b.onclick = close;
     confetti();
-    b.focus();
   }
 
   // ---------- break guard (hyperfocus protection) ----------
@@ -678,36 +402,17 @@
     }, 1000);
   }
 
-  // ---------- read-aloud (built-in Windows speech — no external AI, no internet) ----------
-  const speechOK = () => "speechSynthesis" in window;
-  let _voice = null;
-  function pickVoice() {
-    if (!speechOK()) return null;
-    const voices = speechSynthesis.getVoices();
-    if (!voices.length) return null;
-    const score = v => {
-      let s = 0;
-      if (/en[-_]US/i.test(v.lang)) s += 4; else if (/^en/i.test(v.lang)) s += 2;
-      if (/natural|online|aria|jenny|guy|zira/i.test(v.name)) s += 3; // prefer newer natural voices
-      return s;
-    };
-    return voices.slice().sort((a, b) => score(b) - score(a))[0] || voices[0];
-  }
-  if (speechOK()) {
-    _voice = pickVoice();
-    speechSynthesis.onvoiceschanged = () => { _voice = pickVoice(); };
-  }
-  function stopSpeech() { if (speechOK()) speechSynthesis.cancel(); }
-  function speak(text, onDone) {
-    if (!speechOK() || !S.audio.on || !text) { if (onDone) onDone(); return; }
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = S.audio.rate; u.pitch = 1;
-    u.volume = (S.audio.volume == null ? 1 : S.audio.volume);
-    if (_voice) u.voice = _voice;
-    if (onDone) { u.onend = onDone; u.onerror = onDone; }
-    speechSynthesis.speak(u);
-  }
+  // ---------- read-aloud (installed Windows speech — no API key) ----------
+  const speech = new ACTDrillSpeechController(
+    () => S.audio,
+    (method, params, timeoutMs) => bridge(method, params, timeoutMs)
+  );
+  window.addEventListener("actdrill:speech-error", event => {
+    announce("Voice error: " + event.detail);
+  });
+  const speechOK = () => speech.available;
+  const stopSpeech = () => speech.stop();
+  const speak = (text, onDone) => speech.speak(text, onDone);
   const spokenPassage = p => p.replace(/\|([^|]+)\|/g, ", $1, ");
   function questionSpeech(q, choices) {
     const parts = [];
@@ -999,24 +704,49 @@
   if (hasBridge()) {
     window.chrome.webview.addEventListener("message", ev => {
       let d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch { return; }
-      if (!d) return;
-      if (d.kind === "ollamaReply" && _pending[d.id]) _pending[d.id](d);
-      else if (d.kind === "aiProgress" && _aiProgressCb) _aiProgressCb(d);
+      if (!d || typeof d !== "object") return;
+      if (d.type === "micdrop-response" && _pending[d.id]) _pending[d.id](d);
+      else if (d.type === "micdrop-event" && d.method === "aiSetupProgress" && _aiProgressCb)
+        _aiProgressCb(d.payload || {});
     });
   }
-  function bridge(kind, payload, timeoutMs) {
+  function bridge(method, params = {}, timeoutMs = 120000) {
     return new Promise(resolve => {
       if (!hasBridge()) { resolve({ ok: false, error: "nobridge" }); return; }
       const id = "b" + Math.random().toString(36).slice(2);
-      const t = setTimeout(() => { if (_pending[id]) { delete _pending[id]; resolve({ ok: false, error: "timeout" }); } }, timeoutMs || 120000);
-      _pending[id] = d => { clearTimeout(t); delete _pending[id]; resolve(d); };
-      window.chrome.webview.postMessage(JSON.stringify(Object.assign({ kind, id }, payload)));
+      const timer = setTimeout(() => {
+        if (_pending[id]) {
+          delete _pending[id];
+          resolve({ ok: false, error: "Desktop request timed out." });
+        }
+      }, timeoutMs);
+      _pending[id] = response => {
+        clearTimeout(timer);
+        delete _pending[id];
+        resolve(response.ok
+          ? { ok: true, ...(response.result || {}) }
+          : { ok: false, error: response.error || "Desktop request failed." });
+      };
+      window.chrome.webview.postMessage(JSON.stringify({
+        type: "micdrop-message",
+        id,
+        method,
+        params
+      }));
     });
   }
+  speech.refreshVoices();
+
   async function ollamaCheck() {
     if (_ollama.checked) return _ollama;
     const r = await bridge("ollamaPing", {}, 6000);
-    _ollama = { checked: true, ok: !!r.ok, running: !!r.running, model: r.model || "", models: r.models || [] };
+    _ollama = {
+      checked: true,
+      ok: !!(r.ok && r.ready),
+      running: !!r.running,
+      model: r.model || "",
+      models: Array.isArray(r.models) ? r.models : []
+    };
     return _ollama;
   }
   const ollamaAsk = (system, prompt) => bridge("ollamaChat", { model: _ollama.model, system, prompt }, 120000);
@@ -1045,8 +775,9 @@
     const ov = el("div", "chatoverlay");
     const panel = el("div", "chatpanel");
     const hd = el("div", "chd");
-    hd.append(el("h3", null, "Why this answer?"));
-    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    const title = el("h3", null, "Why this answer?");
+    hd.append(title);
+    const x = el("button", "btn ghost", "Close");
     hd.append(x);
     panel.append(hd);
 
@@ -1061,14 +792,18 @@
     panel.append(body);
 
     const status = el("div", "chatstatus", "Checking for your local AI…");
+    status.setAttribute("aria-live", "polite");
     panel.append(status);
     const ft = el("div", "chatft");
     const input = el("input"); input.type = "text";
+    input.setAttribute("aria-label", "Ask the local tutor a follow-up question");
     input.placeholder = "Ask a follow-up — e.g. why not use the other formula?";
     input.disabled = true;
     const send = el("button", "btn", "Ask"); send.disabled = true;
     ft.append(input, send); panel.append(ft);
-    ov.append(panel); document.body.append(ov);
+    ov.append(panel);
+    const close = mountModal(ov, panel, title, x);
+    x.onclick = close;
 
     const addMsg = (cls, text) => { const d = el("div", "chatmsg " + cls, esc(text)); log.append(d); body.scrollTop = body.scrollHeight; return d; };
     const ctx = buildChatContext(q, correct, pat);
@@ -1104,8 +839,9 @@
     const ov = el("div", "chatoverlay");
     const panel = el("div", "chatpanel");
     const hd = el("div", "chd");
-    hd.append(el("h3", null, "Break it down — one step at a time"));
-    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    const title = el("h3", null, "Break it down — one step at a time");
+    hd.append(title);
+    const x = el("button", "btn ghost", "Close");
     hd.append(x); panel.append(hd);
     const body = el("div", "cbody");
     const qline = q.passage ? q.passage.replace(/\|/g, "") : (q.prompt || "");
@@ -1115,12 +851,14 @@
     const ft = el("div", "chatft");
     const nextBtn = el("button", "btn", "Show first step ▶");
     ft.append(nextBtn); panel.append(ft);
-    ov.append(panel); document.body.append(ov);
+    ov.append(panel);
+    const close = mountModal(ov, panel, title, nextBtn);
+    x.onclick = close;
 
-    const steps = q.steps || [];
+    const steps = guidedMathSteps(q);
     let i = 0;
     function reveal() {
-      if (i >= steps.length) { ov.remove(); return; }
+      if (i >= steps.length) { close(); return; }
       const s = steps[i]; i++;
       const it = el("div", "stepitem");
       it.append(el("div", "stepnum", "Step " + i + " of " + steps.length));
@@ -1143,8 +881,9 @@
     const ov = el("div", "chatoverlay");
     const panel = el("div", "chatpanel");
     const hd = el("div", "chd");
-    hd.append(el("h3", null, "⚙ Settings"));
-    const x = el("button", "btn ghost", "Close"); x.onclick = () => ov.remove();
+    const title = el("h3", null, "Settings");
+    hd.append(title);
+    const x = el("button", "btn ghost", "Close");
     hd.append(x); panel.append(hd);
     const body = el("div", "cbody");
 
@@ -1154,10 +893,14 @@
     const topts = el("div", "setopts");
     [["dark", "🌙 Dark"], ["light", "☀ Light"]].forEach(([val, label]) => {
       const b = el("button", "setbtn" + (S.theme === val ? " on" : ""), label);
+      b.setAttribute("aria-pressed", String(S.theme === val));
       b.onclick = () => {
         S.theme = val; save(); applyTheme();
-        topts.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        topts.querySelectorAll(".setbtn").forEach(x => {
+          x.classList.remove("on"); x.setAttribute("aria-pressed", "false");
+        });
         b.classList.add("on");
+        b.setAttribute("aria-pressed", "true");
       };
       topts.append(b);
     });
@@ -1170,11 +913,14 @@
     const sopts = el("div", "setopts");
     [["Small", 0.9], ["Normal", 1], ["Large", 1.2], ["Extra large", 1.45]].forEach(([label, val]) => {
       const b = el("button", "setbtn" + (Math.abs((S.fontScale || 1) - val) < 0.001 ? " on" : ""), label);
-      b.style.fontSize = (13 + (val - 0.9) * 14) + "px"; // preview the size on the button
+      b.setAttribute("aria-pressed", String(Math.abs((S.fontScale || 1) - val) < 0.001));
       b.onclick = () => {
         S.fontScale = val; save(); applyFontScale();
-        sopts.querySelectorAll(".setbtn").forEach(x => x.classList.remove("on"));
+        sopts.querySelectorAll(".setbtn").forEach(x => {
+          x.classList.remove("on"); x.setAttribute("aria-pressed", "false");
+        });
         b.classList.add("on");
+        b.setAttribute("aria-pressed", "true");
       };
       sopts.append(b);
     });
@@ -1187,13 +933,72 @@
     vg.append(el("div", "setlabel", "Read-aloud voice"));
     const vrow = el("div", "setopts");
     const voiceToggle = el("button", "setbtn" + (S.audio.on ? " on" : ""), S.audio.on ? "🔊 On" : "🔇 Off");
+    voiceToggle.setAttribute("aria-pressed", String(S.audio.on));
     voiceToggle.onclick = () => {
       S.audio.on = !S.audio.on; if (!S.audio.on) stopSpeech(); save();
       voiceToggle.className = "setbtn" + (S.audio.on ? " on" : "");
       voiceToggle.textContent = S.audio.on ? "🔊 On" : "🔇 Off";
+      voiceToggle.setAttribute("aria-pressed", String(S.audio.on));
     };
     vrow.append(voiceToggle);
     vg.append(vrow);
+
+    const voiceLabel = el("label", "setlabel", "Windows voice");
+    const voiceSelect = el("select", "voicesel");
+    const voiceSelectId = "voice-" + Math.random().toString(36).slice(2);
+    voiceSelect.id = voiceSelectId;
+    voiceLabel.htmlFor = voiceSelectId;
+    const previewVoice = el("button", "setbtn", "Preview voice");
+    const voiceRow = el("div", "voiceopts");
+    voiceRow.append(voiceSelect, previewVoice);
+    vg.append(voiceLabel, voiceRow);
+
+    const populateVoiceOptions = () => {
+      const voices = speech.voices();
+      voiceSelect.innerHTML = "";
+      if (!voices.length) {
+        const option = el("option", null, "Windows is still loading its installed voices…");
+        option.value = "";
+        voiceSelect.append(option);
+        voiceSelect.disabled = true;
+        previewVoice.disabled = true;
+        return;
+      }
+
+      const chosen = speech.selectedVoice();
+      voices.forEach(voice => {
+        const option = el("option", null, esc(voice.name + " (" + voice.lang + ")"));
+        option.value = speech.voiceId(voice);
+        option.selected = chosen && option.value === speech.voiceId(chosen);
+        voiceSelect.append(option);
+      });
+      voiceSelect.disabled = false;
+      previewVoice.disabled = false;
+    };
+    populateVoiceOptions();
+    window.addEventListener("actdrill:voices-changed", populateVoiceOptions, { once: true });
+    voiceSelect.onchange = () => {
+      S.audio.voiceId = voiceSelect.value;
+      S.audio.on = true;
+      save();
+      voiceToggle.className = "setbtn on";
+      voiceToggle.textContent = "🔊 On";
+      voiceToggle.setAttribute("aria-pressed", "true");
+      speak("This is your ACTDrill voice. I will read the whole question without dropping out.");
+    };
+    previewVoice.onclick = () => {
+      if (voiceSelect.value) S.audio.voiceId = voiceSelect.value;
+      S.audio.on = true;
+      save();
+      speak("Start with one small move. We can work the rest together.");
+    };
+    vg.append(el(
+      "div",
+      "setnote",
+      "The desktop app renders one complete Windows audio file before playback. " +
+      "Math symbols are translated into spoken language first."
+    ));
+
     vg.append(el("div", "setlabel", "Volume"));
     const volrow = el("div", "setopts");
     [["Quiet", 0.3], ["Medium", 0.65], ["Full", 1]].forEach(([label, val]) => {
@@ -1235,7 +1040,13 @@
     const progWrap = el("div", "aiprogwrap hidden");
     const progBar = el("i");
     const progInner = el("div", "aiprog"); progInner.append(progBar);
+    progInner.setAttribute("role", "progressbar");
+    progInner.setAttribute("aria-label", "AI tutor setup");
+    progInner.setAttribute("aria-valuemin", "0");
+    progInner.setAttribute("aria-valuemax", "100");
+    progInner.setAttribute("aria-valuenow", "0");
     const progLabel = el("div", "aiproglabel", "");
+    progLabel.setAttribute("aria-live", "polite");
     progWrap.append(progInner, progLabel);
     ag.append(setupBtn, progWrap);
     ag.append(el("div", "setnote", "One click downloads Ollama + a ~2 GB tutor model and shows progress. Everything then runs on THIS computer — no account, no internet, no cost. The app works fully without it; this only powers the live chat."));
@@ -1249,7 +1060,7 @@
       else stat.innerHTML = "Not set up yet. The app works fully without it — this just turns on the live chat.";
     })();
 
-    setupBtn.onclick = () => {
+    setupBtn.onclick = async () => {
       if (!hasBridge()) return;
       setupBtn.disabled = true;
       progWrap.classList.remove("hidden");
@@ -1257,21 +1068,59 @@
       progLabel.textContent = "Starting…";
       _ollama.checked = false; // re-detect after we're done
       _aiProgressCb = (d) => {
-        if (typeof d.pct === "number") progBar.style.width = Math.max(2, Math.min(100, d.pct)) + "%";
-        if (d.label) progLabel.textContent = d.label;
-        if (d.done) {
-          _aiProgressCb = null;
-          setupBtn.disabled = false;
-          if (d.ok) { progBar.style.width = "100%"; progLabel.innerHTML = "<span class='aiok'>✓ Done — the AI tutor is ready. Try 'Why this?'</span>"; stat.innerHTML = "<span class='aiok'>✓ Ready</span>"; }
-          else { progLabel.innerHTML = "<span class='aibad'>Couldn't finish: " + esc(d.error || "unknown error") + ". You can retry, or install Ollama manually from ollama.com.</span>"; }
+        if (typeof d.percent === "number") {
+          const percent = Math.max(2, Math.min(100, d.percent));
+          progBar.style.width = percent + "%";
+          progInner.setAttribute("aria-valuenow", String(percent));
         }
+        if (d.label) progLabel.textContent = d.label;
       };
-      window.chrome.webview.postMessage(JSON.stringify({ kind: "aiSetup" }));
+      const result = await bridge("aiSetup", {}, 60 * 60 * 1000);
+      _aiProgressCb = null;
+      setupBtn.disabled = false;
+      if (result.ok) {
+        progBar.style.width = "100%";
+        progInner.setAttribute("aria-valuenow", "100");
+        progLabel.innerHTML = "<span class='aiok'>✓ Done — the AI tutor is ready. Try 'Why this?'</span>";
+        stat.innerHTML = "<span class='aiok'>✓ Ready</span>";
+      } else {
+        progLabel.innerHTML = "<span class='aibad'>Couldn't finish: " +
+          esc(result.error || "unknown error") +
+          ". You can retry, or install Ollama manually from ollama.com.</span>";
+      }
     };
+
+    const dg = el("div", "setgroup");
+    dg.append(el("div", "setlabel", "Diagnostics"));
+    const diagnosticText = [
+      "ACTDrill " + APP_VERSION,
+      "Bank " + (typeof BANK_VERSION !== "undefined" ? BANK_VERSION : "unknown"),
+      ACT_QUESTIONS.length + " questions / " + Object.keys(ACT_PATTERNS).length + " patterns",
+      "Host: " + (hasBridge() ? "Windows desktop" : "browser preview"),
+      "Storage: local device only",
+      "Credentials: none",
+      "Voice: " + speech.selectedVoiceName(),
+      "Voice renderer: " + speech.rendererName(),
+      "Optional dependency: Ollama on localhost:11434"
+    ].join("\n");
+    const diagnosticBlock = el("pre", "diagnostics", esc(diagnosticText));
+    const copyDiagnostics = el("button", "setbtn", "Copy diagnostics");
+    copyDiagnostics.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(diagnosticText);
+        copyDiagnostics.textContent = "Copied";
+        announce("Diagnostics copied.");
+      } catch {
+        announce("Diagnostics could not be copied.");
+      }
+    };
+    dg.append(diagnosticBlock, copyDiagnostics);
+    body.append(dg);
 
     panel.append(body);
     ov.append(panel);
-    document.body.append(ov);
+    const close = mountModal(ov, panel, title, x);
+    x.onclick = close;
   }
 
   // ---------- drill view ----------
@@ -1327,6 +1176,52 @@
     if (S.coach === "full") return true;
     return !isMastered(q.pattern); // auto: help until this pattern is mastered, then fade
   }
+  function guidedMathSteps(q) {
+    const pattern = ACT_PATTERNS[q.pattern];
+    const formula = questionFormula(q);
+    return ACTDrillCoaching.guidedMathSteps(q, pattern, formula);
+  }
+
+  function guidedMathWork(q) {
+    const steps = guidedMathSteps(q);
+    if (!steps.length) return null;
+    const work = el("div", "coachwork");
+    work.append(el("div", "coachwork-title", "Start here: one small move"));
+    const list = el("div", "coachwork-list");
+    list.setAttribute("aria-live", "polite");
+    const next = el("button", "setbtn coach-next", "Show next small step");
+    let index = 0;
+
+    const reveal = () => {
+      if (index >= steps.length) {
+        document.querySelector(".choice")?.focus();
+        document.querySelector(".choices")?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      const step = steps[index++];
+      const item = el("div", "coachstep");
+      const heading = el("div", "coachstep-num", "Step " + index + " of " + steps.length);
+      const action = el("div", "coachstep-do", esc(step.do));
+      item.append(heading, action);
+      if (step.why) item.append(el("div", "coachstep-why", esc(step.why)));
+      item.append(speakerButton("Hear this step", () =>
+        "Step " + index + ". " + step.do + ". " + (step.why || "")));
+      list.append(item);
+      item.scrollIntoView({ block: "nearest" });
+
+      if (index >= steps.length) {
+        next.textContent = "Go to answer choices";
+        announce("The worked start is complete. Choose the matching answer.");
+      } else {
+        next.textContent = "Show next small step";
+      }
+    };
+    next.onclick = reveal;
+    work.append(list, next);
+    reveal();
+    return work;
+  }
+
   function scaffoldBox(q) {
     const pat = ACT_PATTERNS[q.pattern];
     const f = questionFormula(q);
@@ -1335,6 +1230,8 @@
     if (q.decode) box.append(el("div", "srow", "<b>What they're asking:</b> " + esc(q.decode)));
     box.append(el("div", "srow", "<b>The move:</b> " + esc(pat.cue)));
     if (f) box.append(el("div", "srow", "<b>Reach for:</b> <span class='sform'>" + esc(f.key + " — " + f.expr) + "</span>"));
+    const workedStart = guidedMathWork(q);
+    if (workedStart) box.append(workedStart);
     return box;
   }
 
@@ -1441,6 +1338,8 @@
     });
 
     const verdict = el("div", "verdict " + (right ? "good" : "bad"));
+    verdict.setAttribute("role", "status");
+    verdict.setAttribute("aria-live", "polite");
     verdict.append(
       el("span", "word", right ? "✓ Right." : "✗ Not this one."),
       el("span", "xp", "+" + gained + " XP")
@@ -1480,7 +1379,11 @@
     const whyBtn = el("button", "btn ghost", "🤔 Why this?");
     whyBtn.onclick = () => openWhyChat(q);
     a.append(nextBtn, whyBtn);
-    if (q.steps) { const sb = el("button", "btn ghost", "🪜 Break it down"); sb.onclick = () => stepPanel(q); a.append(sb); }
+    if (ACT_PATTERNS[q.pattern].subject === "Math") {
+      const sb = el("button", "btn ghost", "🪜 Work it step by step");
+      sb.onclick = () => stepPanel(q);
+      a.append(sb);
+    }
     a.append(el("span", "hint", "Enter for next"));
     card.append(a);
 
@@ -1490,13 +1393,8 @@
 
   // keyboard
   document.addEventListener("keydown", (e) => {
-    // chat is open: let the user type freely; Escape closes it, everything else is ignored by the drill
-    const chat = document.querySelector(".chatoverlay");
-    if (chat) { if (e.key === "Escape") chat.remove(); return; }
-    if (document.querySelector(".overlay")) {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.querySelector(".overlay").remove(); }
-      return;
-    }
+    // Modal dialogs own their keyboard events, including Escape and focus trapping.
+    if (document.querySelector('[role="dialog"]')) return;
     if (!document.getElementById("view-drill").classList.contains("hidden")) {
       if (current && !current.answered) {
         const k = e.key.toLowerCase();
@@ -1668,7 +1566,13 @@
       rows.forEach(r => {
         const row = el("div", "meter-row");
         const meter = el("div", "meter" + (isMastered(r.pid) ? " gold" : "")); meter.append(el("i", null));
-        meter.firstChild.style.width = (r.m === null ? 0 : Math.round(r.m * 100)) + "%";
+        const percent = r.m === null ? 0 : Math.round(r.m * 100);
+        meter.firstChild.style.width = percent + "%";
+        meter.setAttribute("role", "progressbar");
+        meter.setAttribute("aria-label", r.name + " mastery");
+        meter.setAttribute("aria-valuemin", "0");
+        meter.setAttribute("aria-valuemax", "100");
+        meter.setAttribute("aria-valuenow", String(percent));
         row.append(
           el("span", "mlabel", esc(r.name) + (isMastered(r.pid) ? " <span class='mastered-badge'>★</span>" : "")),
           meter,
@@ -1684,10 +1588,18 @@
     if (window.chrome && window.chrome.webview) {
       // running inside the desktop shell — it handles the download and reloads on success
       const ub = el("button", "btn", "Update question bank");
-      ub.onclick = () => {
+      ub.onclick = async () => {
         ub.disabled = true; ub.textContent = "Updating…";
-        window.chrome.webview.postMessage("updateBank");
-        setTimeout(() => { ub.disabled = false; ub.textContent = "Update question bank"; }, 10000);
+        const result = await bridge("updateBank", {}, 45000);
+        if (result.ok) {
+          ub.textContent = "Updated — reloading…";
+          announce("Question bank updated and verified.");
+          location.reload();
+          return;
+        }
+        ub.disabled = false;
+        ub.textContent = "Update question bank";
+        announce(result.error || "Question bank update failed.");
       };
       actions.append(ub);
     }
@@ -1898,7 +1810,7 @@
       </div>
       <div class="card">
         <h3 class="sect">What college actually expects</h3>
-        <p style="color:var(--ink2);font-size:14.5px;margin:0 0 4px">
+        <p style="color:var(--ink2);font-size:0.9063rem;margin:0 0 4px">
           ACT publishes official <b style="color:var(--ink)">college readiness benchmarks</b> — the section score where
           students have about a <b style="color:var(--ink)">75% chance of a C or better</b> (and ~50% chance of a B or better)
           in the matching first-year college course:</p>
@@ -1930,14 +1842,33 @@
   document.getElementById("tabs").addEventListener("click", (e) => {
     const btn = e.target.closest("button"); if (!btn) return;
     stopSpeech();
-    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll("#tabs button").forEach(b => {
+      const selected = b === btn;
+      b.classList.toggle("active", selected);
+      b.setAttribute("aria-selected", String(selected));
+      b.tabIndex = selected ? 0 : -1;
+    });
     ["drill", "rulebook", "formulas", "progress", "links"].forEach(name => {
-      document.getElementById("view-" + name).classList.toggle("hidden", name !== btn.dataset.view);
+      const panel = document.getElementById("view-" + name);
+      const hidden = name !== btn.dataset.view;
+      panel.classList.toggle("hidden", hidden);
+      panel.hidden = hidden;
     });
     if (btn.dataset.view === "rulebook") renderRulebook();
     if (btn.dataset.view === "formulas") renderFormulas();
     if (btn.dataset.view === "progress") renderProgress();
     if (btn.dataset.view === "links") renderLinks();
+  });
+  document.getElementById("tabs").addEventListener("keydown", event => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const tabs = [...document.querySelectorAll("#tabs button")];
+    let index = tabs.indexOf(document.activeElement);
+    if (event.key === "Home") index = 0;
+    else if (event.key === "End") index = tabs.length - 1;
+    else index = (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    event.preventDefault();
+    tabs[index].focus();
+    tabs[index].click();
   });
 
   // dev/test hook — harmless in normal use
@@ -1952,7 +1883,12 @@
       }
       return "answered " + n;
     },
-    state: () => JSON.parse(JSON.stringify(S))
+    state: () => JSON.parse(JSON.stringify(S)),
+    speechChunks: text => speech.split(text),
+    guideFor: id => {
+      const question = ACT_QUESTIONS.find(item => item.id === id);
+      return question ? guidedMathSteps(question) : [];
+    }
   };
 
   // ---------- boot ----------
@@ -1962,6 +1898,3 @@
   renderChips();
   if (S.introSeen) nextQuestion(); else showIntro();
 })();
-</script>
-</body>
-</html>

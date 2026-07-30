@@ -11,347 +11,801 @@ namespace ACTDrill.Desktop;
 static class Program
 {
     [STAThread]
-    static void Main()
+    static int Main(string[] args)
     {
+        if (args.Contains("--smoke", StringComparer.OrdinalIgnoreCase))
+        {
+            return RunSmokeCheck();
+        }
+
         ApplicationConfiguration.Initialize();
         Application.Run(new MainForm());
+        return 0;
+    }
+
+    private static int RunSmokeCheck()
+    {
+        try
+        {
+            var names = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+            foreach (var required in new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" })
+            {
+                if (!names.Any(name => name.EndsWith(required, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new InvalidDataException($"Missing embedded asset: {required}");
+                }
+            }
+
+            var bankResource = names.Single(name =>
+                name.EndsWith("questions.js", StringComparison.OrdinalIgnoreCase));
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(bankResource)
+                ?? throw new InvalidDataException("Question bank resource could not be opened.");
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var bank = QuestionBankCompiler.Compile(reader.ReadToEnd());
+            var voice = NativeSpeechService.GetVoices().FirstOrDefault()
+                ?? throw new InvalidDataException("No enabled Windows speech voice was found.");
+            var speech = NativeSpeechService.Synthesize(
+                "ACTDrill native speech check.",
+                voice.Name,
+                0);
+            Console.WriteLine(
+                $"ACTDrill smoke PASS: {bank.Version}, {bank.PatternCount} patterns, " +
+                $"{bank.QuestionCount} questions, native voice {speech.VoiceName}, " +
+                $"{speech.WaveBytes.Length} WAV bytes.");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("ACTDrill smoke FAIL: " + ex.Message);
+            return 1;
+        }
     }
 }
 
-class MainForm : Form
+internal sealed class MainForm : Form
 {
-    // public repo holding ONLY the question bank (original content — no real ACT items, no personal notes)
-    const string BankUrl = "https://raw.githubusercontent.com/mikedopp/actdrill-bank/main/questions.js";
-    // local, offline AI — the student's own Ollama. Nothing leaves the machine.
-    const string OllamaBase = "http://localhost:11434";
+    private const string BankUrl =
+        "https://raw.githubusercontent.com/mikedopp/actdrill-bank/main/questions.js";
+    private const string OllamaBase = "http://localhost:11434";
+    private const string OllamaSetupUrl = "https://ollama.com/download/OllamaSetup.exe";
+    private const string SetupModel = "qwen2.5:3b";
+    private const long MaxBankBytes = 2 * 1024 * 1024;
 
-    readonly WebView2 _web = new();
-    string _webDir = "";
+    private readonly WebView2 _web = new();
+    private readonly SemaphoreSlim _aiSetupGate = new(1, 1);
+    private string _webDir = string.Empty;
+    private string _model = string.Empty;
 
-    public MainForm()
+    internal MainForm()
     {
-        Text = "ACT Pattern Drill";
+        Text = "ACTDrill";
         Width = 1000;
         Height = 800;
         MinimumSize = new Size(720, 560);
         StartPosition = FormStartPosition.CenterScreen;
-        BackColor = Color.FromArgb(13, 13, 13);
+        BackColor = Color.FromArgb(11, 14, 20);
 
         _web.Dock = DockStyle.Fill;
-        _web.DefaultBackgroundColor = Color.FromArgb(13, 13, 13);
+        _web.DefaultBackgroundColor = Color.FromArgb(11, 14, 20);
         Controls.Add(_web);
 
         Load += async (_, _) => await InitAsync();
     }
 
-    async Task InitAsync()
+    private async Task InitAsync()
     {
         try
         {
             var dataDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ACTDrill");
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ACTDrill");
             Directory.CreateDirectory(dataDir);
-
             _webDir = ResolveWebDir(dataDir);
 
-            // fixed user-data folder so localStorage (XP, streaks, mastery) persists across runs
             var env = await CoreWebView2Environment.CreateAsync(null, dataDir);
             await _web.EnsureCoreWebView2Async(env);
 
-            _web.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-            _web.CoreWebView2.Settings.IsStatusBarEnabled = false;
-            _web.CoreWebView2.Settings.IsZoomControlEnabled = true;
-
-            // links in the Real practice tab open in the default browser, not inside the app
-            _web.CoreWebView2.NewWindowRequested += (_, e) =>
-            {
-                e.Handled = true;
-                Process.Start(new ProcessStartInfo(e.Uri) { UseShellExecute = true });
-            };
-
-            _web.CoreWebView2.WebMessageReceived += OnWebMessage;
-
-            _web.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                "actdrill.local", _webDir, CoreWebView2HostResourceAccessKind.Allow);
-            _web.CoreWebView2.Navigate("https://actdrill.local/index.html");
+            var core = _web.CoreWebView2;
+            core.Settings.AreDefaultContextMenusEnabled = false;
+            core.Settings.AreDevToolsEnabled = false;
+            core.Settings.IsStatusBarEnabled = false;
+            core.Settings.IsZoomControlEnabled = true;
+            core.NewWindowRequested += OnNewWindowRequested;
+            core.NavigationStarting += OnNavigationStarting;
+            core.WebMessageReceived += OnWebMessage;
+            core.SetVirtualHostNameToFolderMapping(
+                "actdrill.local",
+                _webDir,
+                CoreWebView2HostResourceAccessKind.DenyCors);
+            core.Navigate("https://actdrill.local/index.html");
         }
         catch (WebView2RuntimeNotFoundException)
         {
             MessageBox.Show(
                 "This app needs the Microsoft WebView2 Runtime, which is usually preinstalled with Windows.\n\n" +
-                "Free download: https://developer.microsoft.com/microsoft-edge/webview2/",
-                "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "Download it from Microsoft Edge WebView2.",
+                "ACTDrill",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, "ACTDrill", MessageBoxButtons.OK, MessageBoxIcon.Error);
             Close();
         }
     }
 
-    async void OnWebMessage(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+    private void OnNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
     {
-        string msg;
-        try { msg = e.TryGetWebMessageAsString(); } catch { return; }
-        if (msg is null) return;
-
-        // legacy plain-string trigger still supported
-        if (msg == "updateBank") { await UpdateBankAsync(); return; }
-
-        // everything else is JSON: { kind, id, ... }
-        JsonElement m;
-        try { m = JsonDocument.Parse(msg).RootElement; }
-        catch { return; }
-        if (!m.TryGetProperty("kind", out var kindEl)) return;
-        var kind = kindEl.GetString();
-        var id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : "";
-
-        if (kind == "updateBank") { await UpdateBankAsync(); return; }
-        if (kind == "ollamaPing") { await OllamaPingAsync(id); return; }
-        if (kind == "ollamaChat") { await OllamaChatAsync(id, m); return; }
-        if (kind == "aiSetup") { await AiSetupAsync(); return; }
+        e.Handled = true;
+        OpenApprovedExternalLink(e.Uri);
     }
 
-    void Reply(object payload) => _web.CoreWebView2.PostWebMessageAsString(JsonSerializer.Serialize(payload));
-
-    async Task UpdateBankAsync()
+    private void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
     {
-        try
+        if (Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) &&
+            uri.Scheme == Uri.UriSchemeHttps &&
+            uri.Host.Equals("actdrill.local", StringComparison.OrdinalIgnoreCase))
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-            var js = await http.GetStringAsync(BankUrl);
-            if (!js.Contains("const ACT_QUESTIONS") || !js.Contains("const ACT_PATTERNS"))
-                throw new InvalidDataException("Downloaded file doesn't look like a question bank.");
-            File.WriteAllText(Path.Combine(_webDir, "questions.js"), js);
-            _web.CoreWebView2.Reload();
+            return;
         }
-        catch (Exception ex)
+
+        e.Cancel = true;
+        OpenApprovedExternalLink(e.Uri);
+    }
+
+    private static void OpenApprovedExternalLink(string? value)
+    {
+        if (!ExternalNavigationPolicy.TryAllow(value, out var uri) || uri is null)
         {
             MessageBox.Show(
-                "Couldn't update the question bank:\n" + ex.Message +
-                "\n\nCheck the internet connection and try again — the current bank is untouched.",
-                "ACT Pattern Drill", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "That link was blocked because it is not an approved ACTDrill resource.",
+                "ACTDrill",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+    }
+
+    private async void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+    {
+        if (!Uri.TryCreate(e.Source, UriKind.Absolute, out var source) ||
+            source.Scheme != Uri.UriSchemeHttps ||
+            !source.Host.Equals("actdrill.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        string json;
+        try
+        {
+            json = e.TryGetWebMessageAsString();
+        }
+        catch
+        {
+            return;
+        }
+
+        BridgeRequest? request;
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            request = new BridgeRequest(
+                root.GetProperty("type").GetString() ?? string.Empty,
+                root.GetProperty("id").GetString() ?? string.Empty,
+                root.GetProperty("method").GetString() ?? string.Empty,
+                root.TryGetProperty("params", out var parameters)
+                    ? parameters.Clone()
+                    : JsonDocument.Parse("{}").RootElement.Clone());
+        }
+        catch
+        {
+            return;
+        }
+
+        if (request.Type != BridgeProtocol.RequestType ||
+            string.IsNullOrWhiteSpace(request.Id) ||
+            string.IsNullOrWhiteSpace(request.Method))
+        {
+            return;
+        }
+
+        try
+        {
+            switch (request.Method)
+            {
+                case "updateBank":
+                    await UpdateBankAsync(request.Id);
+                    break;
+                case "ollamaPing":
+                    await OllamaPingAsync(request.Id);
+                    break;
+                case "ollamaChat":
+                    await OllamaChatAsync(request.Id, request.Params);
+                    break;
+                case "aiSetup":
+                    await AiSetupAsync(request.Id);
+                    break;
+                case "speechVoices":
+                    SpeechVoices(request.Id);
+                    break;
+                case "speechSynthesize":
+                    await SpeechSynthesizeAsync(request.Id, request.Params);
+                    break;
+                default:
+                    ReplyResponse(request.Id, false, error: "Unsupported desktop request.");
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            ReplyResponse(request.Id, false, error: ex.Message);
         }
     }
 
-    string _model = "";
+    private void ReplyResponse(string id, bool ok, object? result = null, string? error = null) =>
+        PostMessage(new
+        {
+            type = BridgeProtocol.ResponseType,
+            id,
+            ok,
+            result,
+            error
+        });
 
-    // Is the student's Ollama running, and which chat model should we use?
-    async Task OllamaPingAsync(string id)
+    private void ReplyEvent(string method, object payload) =>
+        PostMessage(new
+        {
+            type = BridgeProtocol.EventType,
+            method,
+            payload
+        });
+
+    private void PostMessage(object payload)
+    {
+        if (!_web.IsDisposed && _web.CoreWebView2 is not null)
+        {
+            _web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(payload));
+        }
+    }
+
+    private void SpeechVoices(string id)
+    {
+        var voices = NativeSpeechService.GetVoices();
+        ReplyResponse(id, true, new
+        {
+            renderer = "native-wave",
+            voices
+        });
+    }
+
+    private async Task SpeechSynthesizeAsync(string id, JsonElement parameters)
+    {
+        var text = parameters.TryGetProperty("text", out var textElement) &&
+                   textElement.ValueKind == JsonValueKind.String
+            ? textElement.GetString() ?? string.Empty
+            : string.Empty;
+        var voice = parameters.TryGetProperty("voice", out var voiceElement) &&
+                    voiceElement.ValueKind == JsonValueKind.String
+            ? voiceElement.GetString()
+            : null;
+        var rate = parameters.TryGetProperty("rate", out var rateElement) &&
+                   rateElement.ValueKind == JsonValueKind.Number &&
+                   rateElement.TryGetInt32(out var parsedRate)
+            ? parsedRate
+            : 0;
+
+        var speech = await NativeSpeechService.SynthesizeAsync(text, voice, rate);
+        ReplyResponse(id, true, new
+        {
+            renderer = "native-wave",
+            voice = speech.VoiceName,
+            mimeType = "audio/wav",
+            audioBase64 = Convert.ToBase64String(speech.WaveBytes)
+        });
+    }
+
+    private async Task UpdateBankAsync(string id)
+    {
+        var destination = Path.Combine(_webDir, "questions.js");
+        var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            using var response = await http.GetAsync(
+                BankUrl,
+                HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+            if (response.Content.Headers.ContentLength > MaxBankBytes)
+            {
+                throw new InvalidDataException("Question bank exceeds the 2 MB safety limit.");
+            }
+
+            await using var source = await response.Content.ReadAsStreamAsync();
+            using var memory = new MemoryStream();
+            var buffer = new byte[64 * 1024];
+            int count;
+            while ((count = await source.ReadAsync(buffer)) > 0)
+            {
+                if (memory.Length + count > MaxBankBytes)
+                {
+                    throw new InvalidDataException("Question bank exceeds the 2 MB safety limit.");
+                }
+                await memory.WriteAsync(buffer.AsMemory(0, count));
+            }
+
+            var downloaded = Encoding.UTF8.GetString(memory.ToArray());
+            var compiled = QuestionBankCompiler.Compile(downloaded);
+            if (File.Exists(destination))
+            {
+                var current = QuestionBankCompiler.Compile(
+                    await File.ReadAllTextAsync(destination, Encoding.UTF8));
+                var currentDate = BankDate(current.Version);
+                var downloadedDate = BankDate(compiled.Version);
+                if (currentDate is not null &&
+                    downloadedDate is not null &&
+                    downloadedDate < currentDate)
+                {
+                    throw new InvalidDataException(
+                        $"Downloaded bank {compiled.Version} is older than installed bank {current.Version}.");
+                }
+            }
+            await File.WriteAllTextAsync(
+                temporary,
+                compiled.JavaScript,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+            if (File.Exists(destination))
+            {
+                File.Copy(destination, destination + ".previous", overwrite: true);
+            }
+            File.Move(temporary, destination, overwrite: true);
+
+            ReplyResponse(id, true, new
+            {
+                version = compiled.Version,
+                patterns = compiled.PatternCount,
+                questions = compiled.QuestionCount
+            });
+        }
+        catch (Exception ex)
+        {
+            ReplyResponse(
+                id,
+                false,
+                error: "The update was rejected; the current bank is unchanged. " + ex.Message);
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+            {
+                File.Delete(temporary);
+            }
+        }
+    }
+
+    private async Task OllamaPingAsync(string id)
     {
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
             var json = await http.GetStringAsync(OllamaBase + "/api/tags");
-            var names = new List<string>();
-            foreach (var mdl in JsonDocument.Parse(json).RootElement.GetProperty("models").EnumerateArray())
-                if (mdl.TryGetProperty("name", out var n)) names.Add(n.GetString() ?? "");
-            string Pick() =>
-                names.FirstOrDefault(x => x.Contains("qwen3", StringComparison.OrdinalIgnoreCase))
-                ?? names.FirstOrDefault(x => x.Contains("qwen", StringComparison.OrdinalIgnoreCase))
-                ?? names.FirstOrDefault(x => !x.Contains("embed", StringComparison.OrdinalIgnoreCase) && !x.Contains("vl", StringComparison.OrdinalIgnoreCase))
-                ?? names.FirstOrDefault() ?? "";
-            _model = Pick();
-            // server answered → it's running. ok means we also have a usable model.
-            Reply(new { kind = "ollamaReply", id, ok = !string.IsNullOrEmpty(_model), running = true, model = _model, models = names });
-            if (!string.IsNullOrEmpty(_model)) _ = WarmAsync(_model); // load into memory so the first real question is fast
+            using var document = JsonDocument.Parse(json);
+            var names = document.RootElement.GetProperty("models")
+                .EnumerateArray()
+                .Select(model => model.TryGetProperty("name", out var name)
+                    ? name.GetString() ?? string.Empty
+                    : string.Empty)
+                .Where(name => name.Length > 0)
+                .ToList();
+
+            _model =
+                names.FirstOrDefault(name => name.Contains("qwen3", StringComparison.OrdinalIgnoreCase)) ??
+                names.FirstOrDefault(name => name.Contains("qwen", StringComparison.OrdinalIgnoreCase)) ??
+                names.FirstOrDefault(name =>
+                    !name.Contains("embed", StringComparison.OrdinalIgnoreCase) &&
+                    !name.Contains("vl", StringComparison.OrdinalIgnoreCase)) ??
+                names.FirstOrDefault() ??
+                string.Empty;
+
+            ReplyResponse(id, true, new
+            {
+                running = true,
+                ready = _model.Length > 0,
+                model = _model,
+                models = names
+            });
+            if (_model.Length > 0)
+            {
+                _ = WarmAsync(_model);
+            }
         }
         catch
         {
-            Reply(new { kind = "ollamaReply", id, ok = false, running = false, model = "", error = "offline" });
+            ReplyResponse(id, true, new
+            {
+                running = false,
+                ready = false,
+                model = string.Empty,
+                models = Array.Empty<string>()
+            });
         }
     }
 
-    // Fire-and-forget: get the model resident in RAM (cold load is the slow part).
-    async Task WarmAsync(string model)
+    private static async Task WarmAsync(string model)
     {
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
-            var body = new { model, stream = false, think = false, keep_alive = "30m",
-                             messages = new object[] { new { role = "user", content = "hi" } } };
-            await http.PostAsync(OllamaBase + "/api/chat",
+            var body = new
+            {
+                model,
+                stream = false,
+                think = false,
+                keep_alive = "30m",
+                messages = new object[] { new { role = "user", content = "hi" } }
+            };
+            await http.PostAsync(
+                OllamaBase + "/api/chat",
                 new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
         }
-        catch { /* best effort */ }
+        catch
+        {
+            // Best-effort warmup only.
+        }
     }
 
-    // Ask the local model to EXPLAIN already-known-correct content (grounded → won't invent math).
-    async Task OllamaChatAsync(string id, JsonElement m)
+    private async Task OllamaChatAsync(string id, JsonElement parameters)
     {
         try
         {
-            var model = m.GetProperty("model").GetString();
-            var system = m.TryGetProperty("system", out var s) ? s.GetString() : "";
-            var prompt = m.GetProperty("prompt").GetString();
+            var model = parameters.GetProperty("model").GetString() ?? _model;
+            var system = parameters.TryGetProperty("system", out var systemElement)
+                ? systemElement.GetString() ?? string.Empty
+                : string.Empty;
+            var prompt = parameters.GetProperty("prompt").GetString() ?? string.Empty;
+            if (model.Length == 0 || prompt.Length == 0 || prompt.Length > 20_000)
+            {
+                throw new InvalidDataException("Tutor request is missing a model or valid prompt.");
+            }
+
             string content;
-            try { content = await ChatOnce(model, system, prompt, noThink: true); }   // fast path (qwen3 etc.)
-            catch { content = await ChatOnce(model, system, prompt, noThink: false); } // model may reject the 'think' field
-            content = Regex.Replace(content, "(?s)<think>.*?</think>", "").Trim();       // strip any reasoning block
-            Reply(new { kind = "ollamaReply", id, ok = true, text = content });
+            try
+            {
+                content = await ChatOnce(model, system, prompt, noThink: true);
+            }
+            catch
+            {
+                content = await ChatOnce(model, system, prompt, noThink: false);
+            }
+            content = Regex.Replace(content, "(?s)<think>.*?</think>", string.Empty).Trim();
+            ReplyResponse(id, true, new { text = content });
         }
         catch (Exception ex)
         {
-            Reply(new { kind = "ollamaReply", id, ok = false, error = ex.Message });
+            ReplyResponse(id, false, error: ex.Message);
         }
     }
 
-    const string SetupModel = "qwen2.5:3b";   // small + fast; good for the tutor role
-    const string OllamaSetupUrl = "https://ollama.com/download/OllamaSetup.exe";
-
-    static string FindOllamaExe()
+    private async Task AiSetupAsync(string id)
     {
-        var local = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                 "Programs", "Ollama", "ollama.exe");
-        if (File.Exists(local)) return local;
-        foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
-            try { var q = Path.Combine(dir.Trim(), "ollama.exe"); if (File.Exists(q)) return q; } catch { }
+        if (!await _aiSetupGate.WaitAsync(0))
+        {
+            ReplyResponse(id, false, error: "AI setup is already running.");
+            return;
+        }
+
+        var temporaryInstaller = Path.Combine(
+            Path.GetTempPath(),
+            "ACTDrill-" + Guid.NewGuid().ToString("N") + "-OllamaSetup.exe");
+
+        void Progress(int percent, string label) =>
+            ReplyEvent("aiSetupProgress", new { percent, label });
+
+        try
+        {
+            Progress(2, "Checking for Ollama…");
+            var executable = FindOllamaExe();
+            if (executable is null)
+            {
+                await DownloadWithProgressAsync(
+                    OllamaSetupUrl,
+                    temporaryInstaller,
+                    (read, total) =>
+                    {
+                        var percent = total > 0 ? 3 + (int)(read * 40 / total) : 20;
+                        Progress(
+                            percent,
+                            "Downloading Ollama… " + read / 1_048_576 +
+                            (total > 0 ? $" / {total / 1_048_576} MB" : " MB"));
+                    });
+
+                Progress(44, "Verifying Ollama publisher…");
+                AuthenticodeVerifier.VerifyTrustedPublisher(temporaryInstaller, "Ollama");
+
+                Progress(47, "Installing Ollama…");
+                using var installer = Process.Start(new ProcessStartInfo(
+                    temporaryInstaller,
+                    "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES")
+                {
+                    UseShellExecute = true
+                });
+                if (installer is null)
+                {
+                    throw new InvalidOperationException("Ollama installer could not be started.");
+                }
+                await installer.WaitForExitAsync();
+                if (installer.ExitCode != 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Ollama installer returned exit code {installer.ExitCode}.");
+                }
+
+                executable = FindOllamaExe()
+                    ?? throw new InvalidOperationException(
+                        "Ollama installed but could not be located. Launch it once, then retry.");
+            }
+
+            Progress(50, "Starting Ollama…");
+            if (!await OllamaUpAsync())
+            {
+                Process.Start(new ProcessStartInfo(executable, "serve")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                for (var attempt = 0; attempt < 30 && !await OllamaUpAsync(); attempt++)
+                {
+                    await Task.Delay(1000);
+                }
+            }
+            if (!await OllamaUpAsync())
+            {
+                throw new InvalidOperationException(
+                    "Ollama did not start. Open the Ollama app once, then retry.");
+            }
+
+            Progress(52, "Downloading the tutor model (~2 GB)…");
+            await PullModelAsync(Progress);
+
+            Progress(98, "Verifying the tutor model…");
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            var tags = await http.GetStringAsync(OllamaBase + "/api/tags");
+            if (!tags.Contains(SetupModel.Split(':')[0], StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("The tutor model did not verify.");
+            }
+
+            Progress(100, "Tutor ready");
+            ReplyResponse(id, true, new { model = SetupModel });
+        }
+        catch (Exception ex)
+        {
+            ReplyResponse(id, false, error: ex.Message);
+        }
+        finally
+        {
+            if (File.Exists(temporaryInstaller))
+            {
+                File.Delete(temporaryInstaller);
+            }
+            _aiSetupGate.Release();
+        }
+    }
+
+    private static async Task DownloadWithProgressAsync(
+        string url,
+        string destination,
+        Action<long, long> report)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(20) };
+        using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+        var total = response.Content.Headers.ContentLength ?? 0;
+        await using var source = await response.Content.ReadAsStreamAsync();
+        await using var output = File.Create(destination);
+        var buffer = new byte[80 * 1024];
+        long read = 0;
+        int count;
+        while ((count = await source.ReadAsync(buffer)) > 0)
+        {
+            await output.WriteAsync(buffer.AsMemory(0, count));
+            read += count;
+            report(read, total);
+        }
+    }
+
+    private static async Task PullModelAsync(Action<int, string> progress)
+    {
+        var body = new { name = SetupModel, stream = true };
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(60) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, OllamaBase + "/api/pull")
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(body),
+                Encoding.UTF8,
+                "application/json")
+        };
+        using var response = await http.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+        string? line;
+        while ((line = await reader.ReadLineAsync()) is not null)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            using var document = JsonDocument.Parse(line);
+            var element = document.RootElement;
+            if (element.TryGetProperty("error", out var error))
+            {
+                throw new InvalidOperationException(error.GetString());
+            }
+            var status = element.TryGetProperty("status", out var statusElement)
+                ? statusElement.GetString() ?? "working"
+                : "working";
+            var total = element.TryGetProperty("total", out var totalElement)
+                ? totalElement.GetInt64()
+                : 0;
+            var completed = element.TryGetProperty("completed", out var completedElement)
+                ? completedElement.GetInt64()
+                : 0;
+            var percent = total > 0 ? 52 + (int)(completed * 45 / total) : 55;
+            progress(
+                percent,
+                "Model: " + status +
+                (total > 0 ? $" {completed / 1_048_576}/{total / 1_048_576} MB" : string.Empty));
+        }
+    }
+
+    private static string? FindOllamaExe()
+    {
+        var local = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Programs",
+            "Ollama",
+            "ollama.exe");
+        if (File.Exists(local))
+        {
+            return local;
+        }
+
+        foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? string.Empty)
+                     .Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            try
+            {
+                var candidate = Path.Combine(directory.Trim(), "ollama.exe");
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+            catch
+            {
+                // Ignore malformed PATH entries.
+            }
+        }
         return null;
     }
 
-    async Task<bool> OllamaUp()
+    private static async Task<bool> OllamaUpAsync()
     {
-        try { using var h = new HttpClient { Timeout = TimeSpan.FromSeconds(3) }; await h.GetStringAsync(OllamaBase + "/api/tags"); return true; }
-        catch { return false; }
-    }
-
-    // One-click: install Ollama if needed, start it, pull the model — reporting progress the whole way.
-    async Task AiSetupAsync()
-    {
-        void P(int pct, string label, bool done = false, bool ok = false, string error = null)
-            => Reply(new { kind = "aiProgress", pct, label, done, ok, error });
         try
         {
-            P(2, "Checking for Ollama…");
-            var exe = FindOllamaExe();
-            if (exe == null)
-            {
-                // download the official Ollama installer with progress
-                var tmp = Path.Combine(Path.GetTempPath(), "OllamaSetup.exe");
-                using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(20) })
-                using (var resp = await http.GetAsync(OllamaSetupUrl, HttpCompletionOption.ResponseHeadersRead))
-                {
-                    resp.EnsureSuccessStatusCode();
-                    var total = resp.Content.Headers.ContentLength ?? 0;
-                    using var src = await resp.Content.ReadAsStreamAsync();
-                    using var dst = File.Create(tmp);
-                    var buf = new byte[81920]; long read = 0; int last = -1, n;
-                    while ((n = await src.ReadAsync(buf)) > 0)
-                    {
-                        await dst.WriteAsync(buf.AsMemory(0, n));
-                        read += n;
-                        int pct = total > 0 ? 3 + (int)(read * 42 / total) : 20;
-                        if (pct != last) { last = pct; P(pct, $"Downloading Ollama…  {read / 1048576} MB" + (total > 0 ? $" / {total / 1048576} MB" : "")); }
-                    }
-                }
-                P(46, "Installing Ollama… (a moment)");
-                var pi = new ProcessStartInfo(tmp, "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES") { UseShellExecute = true };
-                var proc = Process.Start(pi);
-                if (proc != null) await proc.WaitForExitAsync();
-                exe = FindOllamaExe();
-                if (exe == null) { P(46, "", true, false, "Ollama installed but couldn't be located. Try launching it once from the Start menu, then retry."); return; }
-            }
-
-            // make sure the server is up
-            P(50, "Starting Ollama…");
-            if (!await OllamaUp())
-            {
-                try { Process.Start(new ProcessStartInfo(exe, "serve") { UseShellExecute = false, CreateNoWindow = true }); } catch { }
-                for (int i = 0; i < 30 && !await OllamaUp(); i++) await Task.Delay(1000);
-            }
-            if (!await OllamaUp()) { P(50, "", true, false, "Ollama wouldn't start. Open the Ollama app once, then retry."); return; }
-
-            // pull the model, streaming progress
-            P(52, "Downloading the tutor model (~2 GB)…");
-            var body = new { name = SetupModel, stream = true };
-            using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(60) })
-            using (var req = new HttpRequestMessage(HttpMethod.Post, OllamaBase + "/api/pull")
-            { Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json") })
-            using (var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead))
-            using (var stream = await resp.Content.ReadAsStreamAsync())
-            using (var reader = new StreamReader(stream))
-            {
-                string line;
-                while ((line = await reader.ReadLineAsync()) != null)
-                {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    try
-                    {
-                        var el = JsonDocument.Parse(line).RootElement;
-                        var status = el.TryGetProperty("status", out var st) ? st.GetString() : "";
-                        long tot = el.TryGetProperty("total", out var t) ? t.GetInt64() : 0;
-                        long comp = el.TryGetProperty("completed", out var c) ? c.GetInt64() : 0;
-                        int pct = tot > 0 ? 52 + (int)(comp * 45 / tot) : 55;
-                        P(pct, "Model: " + status + (tot > 0 ? $"  {comp / 1048576}/{tot / 1048576} MB" : ""));
-                        if (el.TryGetProperty("error", out var er)) { P(pct, "", true, false, er.GetString()); return; }
-                    }
-                    catch { }
-                }
-            }
-
-            // verify
-            P(98, "Verifying…");
-            using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
-            {
-                var tags = await http.GetStringAsync(OllamaBase + "/api/tags");
-                if (tags.Contains(SetupModel.Split(':')[0])) P(100, "Ready", true, true);
-                else P(100, "", true, false, "Model didn't verify. Try retrying the setup.");
-            }
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+            await http.GetStringAsync(OllamaBase + "/api/tags");
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            Reply(new { kind = "aiProgress", pct = 0, label = "", done = true, ok = false, error = ex.Message });
+            return false;
         }
     }
 
-    async Task<string> ChatOnce(string model, string system, string prompt, bool noThink)
+    private static async Task<string> ChatOnce(
+        string model,
+        string system,
+        string prompt,
+        bool noThink)
     {
         object body = noThink
-            ? new { model, stream = false, think = false, keep_alive = "30m",
-                    messages = new object[] { new { role = "system", content = system }, new { role = "user", content = prompt } } }
-            : new { model, stream = false, keep_alive = "30m",
-                    messages = new object[] { new { role = "system", content = system }, new { role = "user", content = prompt } } };
+            ? new
+            {
+                model,
+                stream = false,
+                think = false,
+                keep_alive = "30m",
+                messages = new object[]
+                {
+                    new { role = "system", content = system },
+                    new { role = "user", content = prompt }
+                }
+            }
+            : new
+            {
+                model,
+                stream = false,
+                keep_alive = "30m",
+                messages = new object[]
+                {
+                    new { role = "system", content = system },
+                    new { role = "user", content = prompt }
+                }
+            };
+
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
-        var resp = await http.PostAsync(OllamaBase + "/api/chat",
+        using var response = await http.PostAsync(
+            OllamaBase + "/api/chat",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
-        var txt = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode) throw new Exception("ollama " + (int)resp.StatusCode);
-        return JsonDocument.Parse(txt).RootElement.GetProperty("message").GetProperty("content").GetString() ?? "";
+        var text = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException("Ollama returned HTTP " + (int)response.StatusCode + ".");
+        }
+        return JsonDocument.Parse(text)
+            .RootElement.GetProperty("message")
+            .GetProperty("content")
+            .GetString() ?? string.Empty;
     }
 
-    /// <summary>
-    /// A "web" folder sitting next to the exe wins (easy editing of notes.js/questions.js).
-    /// Otherwise the embedded assets are extracted to %LOCALAPPDATA%\ACTDrill\web —
-    /// index.html and questions.js are refreshed every run so app updates take effect,
-    /// but notes.js is only written if missing, so personalized notes survive updates.
-    /// </summary>
-    static string ResolveWebDir(string dataDir)
+    internal static string ResolveWebDir(string dataDir)
     {
         var beside = Path.Combine(AppContext.BaseDirectory, "web");
-        if (File.Exists(Path.Combine(beside, "index.html")))
+        if (HasRequiredAssets(beside))
+        {
             return beside;
+        }
 
         var target = Path.Combine(dataDir, "web");
         Directory.CreateDirectory(target);
 
-        var asm = Assembly.GetExecutingAssembly();
-        foreach (var res in asm.GetManifestResourceNames())
+        var assembly = Assembly.GetExecutingAssembly();
+        foreach (var resource in assembly.GetManifestResourceNames())
         {
-            string file =
-                res.EndsWith("index.html", StringComparison.OrdinalIgnoreCase) ? "index.html" :
-                res.EndsWith("questions.js", StringComparison.OrdinalIgnoreCase) ? "questions.js" :
-                res.EndsWith("notes.js", StringComparison.OrdinalIgnoreCase) ? "notes.js" : null;
-            if (file is null) continue;
+            var file = new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" }
+                .FirstOrDefault(name =>
+                    resource.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+            if (file is null)
+            {
+                continue;
+            }
 
-            var dest = Path.Combine(target, file);
-            var overwrite = file != "notes.js";
-            if (!overwrite && File.Exists(dest)) continue;
+            var destination = Path.Combine(target, file);
+            if (file == "notes.js" && File.Exists(destination))
+            {
+                continue;
+            }
 
-            using var src = asm.GetManifestResourceStream(res)!;
-            using var dst = File.Create(dest);
-            src.CopyTo(dst);
+            using var source = assembly.GetManifestResourceStream(resource)
+                ?? throw new InvalidDataException($"Embedded asset '{file}' could not be opened.");
+            using var output = File.Create(destination);
+            source.CopyTo(output);
+        }
+
+        if (!HasRequiredAssets(target))
+        {
+            throw new InvalidDataException("The embedded web application is incomplete.");
         }
         return target;
+    }
+
+    private static bool HasRequiredAssets(string directory) =>
+        new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" }
+            .All(file => File.Exists(Path.Combine(directory, file)));
+
+    private static DateOnly? BankDate(string version)
+    {
+        var match = Regex.Match(version, @"\b\d{4}-\d{2}-\d{2}\b");
+        return match.Success && DateOnly.TryParse(match.Value, out var date) ? date : null;
     }
 }

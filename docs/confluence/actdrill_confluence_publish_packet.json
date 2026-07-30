@@ -1,0 +1,21 @@
+{
+  "status": "draft",
+  "title": "ACTDrill 1.13.1",
+  "source": {
+    "github": "https://github.com/mikedopp/ACTDrill",
+    "azure-repos": "not used for this public repository",
+    "canonicalOwner": "mikedopp",
+    "legacyValidationAlias": "doppmike is not the canonical GitHub owner"
+  },
+  "pageBody": "actdrill_confluence_draft.md",
+  "workflow": "actdrill_confluence_page_workflow.md",
+  "gifAttachmentPlan": {
+    "status": "pending visual QA",
+    "directory": "../media/gifs",
+    "required": [
+      "drill-answer-feedback",
+      "large-text-settings",
+      "question-bank-update"
+    ]
+  }
+}

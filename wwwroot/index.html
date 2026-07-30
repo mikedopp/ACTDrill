@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>ACTDrill</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ACT<span>Drill</span></h1>
+    <div class="chips">
+      <div class="chip" id="chip-level"></div>
+      <div class="chip" id="chip-streak"></div>
+      <div class="chip" id="chip-today"></div>
+      <button class="chip gearbtn" id="gearbtn" title="Settings — theme &amp; text size">⚙ Settings</button>
+    </div>
+  </header>
+
+  <nav id="tabs" aria-label="ACTDrill sections" role="tablist">
+    <button id="tab-drill" data-view="drill" class="active" role="tab" aria-selected="true" aria-controls="view-drill">Drill</button>
+    <button id="tab-rulebook" data-view="rulebook" role="tab" aria-selected="false" aria-controls="view-rulebook" tabindex="-1">Rulebook</button>
+    <button id="tab-formulas" data-view="formulas" role="tab" aria-selected="false" aria-controls="view-formulas" tabindex="-1">Reference</button>
+    <button id="tab-progress" data-view="progress" role="tab" aria-selected="false" aria-controls="view-progress" tabindex="-1">Progress</button>
+    <button id="tab-links" data-view="links" role="tab" aria-selected="false" aria-controls="view-links" tabindex="-1">Real practice</button>
+  </nav>
+
+  <main>
+    <section id="view-drill" role="tabpanel" aria-labelledby="tab-drill"></section>
+    <section id="view-rulebook" class="hidden" role="tabpanel" aria-labelledby="tab-rulebook"></section>
+    <section id="view-formulas" class="hidden" role="tabpanel" aria-labelledby="tab-formulas"></section>
+    <section id="view-progress" class="hidden" role="tabpanel" aria-labelledby="tab-progress"></section>
+    <section id="view-links" class="hidden" role="tabpanel" aria-labelledby="tab-links"></section>
+  </main>
+
+  <footer>ACTDrill 1.13.1 · original ACT-style practice · real retired tests are in Real practice</footer>
+  <p class="sr-only">Diagnostics list local storage, credentials, and optional dependencies in Settings.</p>
+</div>
+<div id="app-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<script src="questions.js"></script>
+<script src="notes.js"></script>
+<script src="coaching.js"></script>
+<script src="speech.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

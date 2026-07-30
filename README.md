@@ -1,165 +1,115 @@
-# ACT Pattern Drill
+# ACTDrill
 
-A free, offline Windows app for ACT prep — English, Math, and Reading — built for
-brains that do better with one question at a time than with hour-long video
-lessons. Made with ADHD and processing differences in mind: short reps, instant
-feedback, read-aloud, visual "why it works" diagrams, step-by-step breakdowns, and
-an optional private AI tutor. No account, no internet, no cost.
+ACTDrill is a free, offline Windows study app for English, Math, and
+Reading. It is designed for students who work better with one short problem at
+a time, immediate explanations, read-aloud support, and optional step-by-step
+coaching.
 
-> The practice questions are **original**, written in ACT style — not real ACT
-> items. "ACT" is a trademark of ACT, Inc., which is not affiliated with this project.
+The bank contains **280 original ACT-style questions across 35 patterns**. It
+does not contain copied ACT questions. ACT is a trademark of ACT, Inc.; ACT,
+Inc. is not affiliated with this project.
 
-## Run it (Windows)
+## Install
 
-**`ACTDrill.exe` is the whole thing** — self-contained, ~155 MB, no .NET or install
-needed. Download it from [Releases](https://github.com/mikedopp/ACTDrill/releases),
-unzip, and run. Progress (XP, levels, streaks, mastery) saves to
-`%LOCALAPPDATA%\ACTDrill` automatically.
+Download `ACTDrill.exe` or `ACTDrill-Setup.exe` from
+[GitHub Releases](https://github.com/mikedopp/ACTDrill/releases).
 
-- First run: Windows SmartScreen may warn because the exe is unsigned →
-  **More info → Run anyway**. (It's unsigned because code-signing certificates cost
-  money; the source is here if you'd rather build it yourself.)
-- Needs the Microsoft WebView2 Runtime (preinstalled on updated Windows 10/11).
-  If it's somehow missing the app shows the download link.
+- Windows 10 or 11, x64
+- Microsoft WebView2 Runtime (normally already installed)
+- No account, API key, or internet connection for normal drills
+- Progress is stored locally under `%LOCALAPPDATA%\ACTDrill`
 
-### Make it personal: edit `notes.js`
+The executable is not commercially code-signed, so Windows SmartScreen may
+show an unrecognized-app warning. Release hashes should be checked against the
+release notes.
 
-`notes.js` is **The Corner** — short encouraging notes "from the student's corner,"
-shown at level-ups, daily-goal moments, and occasionally after a strong answer.
-The shipped file is a generic template. **Rewrite the notes in your own words** (a
-parent, a mentor, a friend — real names, specific praise), then rebuild:
+## What it does
+
+- Presents one English, Math, or Reading question at a time
+- Explains every choice and adapts repetition toward weaker patterns
+- Supports keyboard answers, single-stream native Windows read-aloud, selectable
+  installed voices, spoken Math notation, adjustable type, dark/light themes, and
+  screen readers
+- Starts coached Math with the first small move, then works the setup,
+  substitution, calculation, and answer match one visible step at a time
+- Tracks local XP, mastery, streaks, and daily goals
+- Links to approved official or educational practice resources
+- Optionally uses a local Ollama model for follow-up explanations
+
+The Ollama feature is optional. Prompts go only to `localhost:11434`, and the
+app does not use credentials. Before the app runs a downloaded Ollama
+installer, Windows must report a valid Authenticode signature from an Ollama
+publisher.
+
+## Build and verify
+
+Requirements: .NET 8 SDK, Node.js 20+, and PowerShell 7.
 
 ```powershell
-dotnet publish desktop/ACTDrill.Desktop.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
+dotnet restore desktop/ACTDrill.Desktop.csproj
+dotnet build desktop/ACTDrill.Desktop.csproj -c Release
+dotnet run --project desktop/ACTDrill.Verification/ACTDrill.Verification.csproj -c Release
+node --test tests
+dotnet publish desktop/ACTDrill.Desktop.csproj -c Release -r win-x64 --self-contained `
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
+.\dist\ACTDrill.exe --smoke
 ```
 
-**Updating notes without rebuilding:** put a `web` folder next to `ACTDrill.exe`
-containing `index.html`, `questions.js`, `notes.js` — a beside-the-exe folder
-always wins over the embedded copies, and edits apply on next launch. (Or edit
-`%LOCALAPPDATA%\ACTDrill\web\notes.js` on his laptop — that copy is never
-overwritten by the app.)
+The smoke command checks that all embedded web assets exist and recompiles the
+embedded bank through the same strict data-only parser used by bank updates.
 
-## What's inside
+Compile `installer\ACTDrill.iss` with Inno Setup after publishing `dist\ACTDrill.exe`.
+The optional manual AI helper is
+`installer\actdrill_Setup-AiTutor_v1.13.1.ps1`.
 
-- **One question at a time** — 240 original ACT-style questions: English (96,
-  12 patterns), Math (112, 14 patterns), Reading (32, 4 patterns) — the three
-  sections that make up the composite score. Subject picker on the Drill tab
-  (All / English / Math / Reading). Keys 1–4 answer, Enter advances.
-- **Visual "why it works" (math)** — questions draw a diagram of the actual math:
-  xy-plane for coordinate geometry, right triangles for Pythagorean/trig, a 2×2
-  area model for FOIL, circles with the radius drawn, bar models for ratios and
-  percents, a number line for absolute value and averages, a function machine for
-  f(x), a shaded outcome grid for probability, and two crossing lines for systems.
-  Every content-math question also shows a 🔑 formula box: the formula (the key),
-  the numbers plugged in (the data), and the answer.
-- **"See it work on 3 questions"** — every pattern in the Rulebook expands to show
-  the same formula/pattern solving three differently-worded questions side by side.
-  The point: don't get thrown by the wording — the key is always the same.
-- **"Break it down" step walkthrough** — on multi-step questions, reveals the
-  solution **one small step at a time** (click for the next), each with what you
-  do and *why*. Built for the moment the brain panics at a whole equation — you
-  only ever look at one move. Fades nothing; always available where steps exist.
-- **Coaching / scaffold mode** — a "before you answer" box that decodes what the
-  question is really asking, names the move, and points at the formula to reach
-  for. Three levels (cycle the 🎓 button): **Full** (always), **Auto-fade**
-  (default — shows until you master a pattern, then steps back for test-realism),
-  **Off** (test mode). Works in every section; math also gets the formula hint.
-- **"Why this?" reasoning chat** — after any answer, a button opens a panel that
-  explains *why this approach and not another* (the "why not the circle in the
-  square hole" reasoning), hand-written per pattern so it's always available. If
-  **Ollama** is running, you can also ask free-form follow-ups: it uses the
-  student's own local model (auto-detected, prefers a `qwen` model), grounded in
-  the app's known-correct answer + formula so it explains rather than invents.
-  **Private and offline — nothing leaves the computer, no API key, no cost.**
+## Repository map
 
-### Turning on the live "Why?" AI (optional)
-
-The reasoning guide works with zero setup. To turn on the live follow-up chat, the
-easy way is built in:
-
-**Open ⚙ Settings → "Set up the AI tutor" → one click.** It downloads Ollama (if
-you don't have it) and a small tutor model (~2 GB) with a **progress bar**, then
-verifies it — everything stays on your computer. When it finishes, the status shows
-**✓ Ready** and 🤔 Why this? will answer follow-ups.
-
-Manual alternative (portable/zip users): run `installer/setup-ai.ps1`, or install
-[Ollama](https://ollama.com) yourself and `ollama pull qwen2.5:3b`.
-
-### ⚙ Settings — theme & text size
-
-The gear button (top-right) opens Settings: **Dark / Light** theme, and a **text
-size** control (Small → Extra large) that enlarges everything, including the
-Reference formulas. Choices are remembered.
-
-**Speed:** the app disables the model's "thinking" phase and pre-warms it on open,
-so answers land in a second or two (the very first one after launch can take longer
-while the model loads into memory). A smaller model like `qwen2.5:3b` feels snappiest.
-If Ollama's status shows "running but no model," its model folder isn't being read —
-restart the Ollama app. (If you relocate models with the `OLLAMA_MODELS` env var,
-Ollama must be restarted after any update to pick the folder back up.)
-- **One-click bank updates** — the Progress tab's "Update question bank" button
-  (desktop app only) pulls the latest `questions.js` from the public
-  [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo and reloads.
-  To publish new questions: edit `questions.js` here, copy it to the bank repo,
-  commit, push. Progress and `notes.js` are never touched by updates.
-- **Science & Writing**: intentionally absent. Since 2025 the science section is
-  optional and NOT part of the composite; the essay is optional and rarely
-  required. Verify the target scholarship's requirements before spending any
-  energy there.
-- **Every wrong answer explains itself** — the traps are the curriculum.
-- **Adaptive** — missed patterns quietly come back more often.
-- **Rewards** — XP per question (showing up earns some, right answers more, combo
-  streaks stack, 7% chance of a ×2 "sharp-eye" crit), 10 levels from Walk-on to
-  The Standard, confetti + level-up moments, pattern mastery stars (80%+ over
-  10+ reps), streaks and personal bests.
-- **The Corner** — notes from `notes.js`, delivered at wins. The point of the app.
-- **Break guard** — after ~20 minutes or ~25 straight questions the app calls a
-  5-minute break (+5 XP for taking it — rest is part of the training). Two
-  "one more set" snoozes allowed, then it stops offering that button. Stepping
-  away on your own for 5+ minutes resets the counters quietly. Hyperfocus is
-  fuel, but it burns the driver.
-- **Rulebook tab** — the entire finite pattern list with 5-second spot cues.
-- **Read-aloud (built-in)** — a Voice bar over every question reads the problem
-  aloud and auto-reads the explanation. Uses Windows' own text-to-speech (Web
-  Speech API in WebView2) — no external voice service, no API key, no internet,
-  no extra cost. On/off, speed (Slow/Normal/Fast), and auto-read toggles persist.
-- **Reference tab** — the complete ACT math formula list (~60 entries, no
-  formula sheet is given on the test) with a worked micro-example each, plus a
-  "where each subject leads in college" bridge for math, science, writing, and
-  reading.
-- **Real practice tab** — official free ACT tests + accommodations links, plus
-  ACT's college readiness benchmarks (English 18 / Reading 22 / Math 22 /
-  Science 23) mapped to the freshman courses they predict success in.
-
-## On the audio: no Voice AI model needed
-
-Read-aloud uses the **Web Speech API** built into WebView2 (Chromium + Windows
-SAPI voices — David/Zira/etc.). It is free, offline, and adds zero dependencies.
-A cloud Voice AI (ElevenLabs, OpenAI TTS, etc.) would sound more natural but costs
-money, needs an API key and internet, and would send study text to a third party —
-not worth it to read short explanations. If you ever want premium voices, it's a
-drop-in swap of the `speak()` function; the built-in path stays as the default.
-
-## Files
-
-| Path | What it is |
+| Path | Purpose |
 |---|---|
-| `index.html` | The whole web app (UI + logic, no dependencies; double-clickable in a browser too) |
-| `questions.js` | Question bank (192 questions, 24 patterns across English/Math/Reading) — documented format at the top; mirrored to the public actdrill-bank repo for in-app updates |
-| `notes.js` | The Corner — **edit this** |
-| `desktop\` | WinForms + WebView2 shell (net8.0-windows) |
-| `dist\ACTDrill.exe` | The shippable executable |
+| `wwwroot\index.html` | Accessible application shell |
+| `wwwroot\styles.css` | Responsive Arctic Steel presentation |
+| `wwwroot\app.js` | Drill, coaching, accessibility, and local state logic |
+| `wwwroot\coaching.js` | Universal Math worked-start step generation |
+| `wwwroot\speech.js` | Native WAV playback, spoken Math normalization, and voice selection |
+| `desktop\NativeSpeechService.cs` | Windows speech-to-WAV renderer used by the desktop host |
+| `questions.js` | Canonical question bank; 280 questions / 35 patterns |
+| `notes.js` | Optional personal encouragement notes |
+| `desktop\` | .NET 8 WinForms/WebView2 host and security boundary |
+| `desktop\ACTDrill.Verification\` | Executable security/content checks |
+| `tests\` | Node content and release-consistency tests |
+| `installer\` | Inno Setup definition and signed-download AI helper |
 
-## Adding questions
+The desktop build embeds `wwwroot`, `questions.js`, and `notes.js`. For local
+editing, a complete `web` folder beside `ACTDrill.exe` can override the embedded
+assets; it must contain `index.html`, `styles.css`, `coaching.js`, `speech.js`,
+`app.js`, `questions.js`, and `notes.js`. The extracted `notes.js` is preserved
+across app upgrades.
 
-Copy any object in `questions.js`, unique `id`, one choice `correct: true`, a
-one-line `why` for every choice. `|pipes|` mark the underlined portion. Questions
-are original, ACT-style — real ACT items are copyrighted; official PDFs are in
-the Real practice tab. Math patterns (backsolving, plug-in numbers, formula
-drills) would slot straight in as new `ACT_PATTERNS` entries.
+## Question-bank updates
 
-## Roadmap ideas
+The Progress tab can download the public
+[actdrill-bank](https://github.com/mikedopp/actdrill-bank) copy. The desktop
+host does not execute that source directly. It:
 
-- Math pattern bank
-- Timed mode (only after accuracy is solid — pace is the last skill, not the first)
-- Export progress to JSON
+1. limits the download to 2 MB;
+2. parses it as JavaScript syntax;
+3. accepts only the specific data declarations/appends used by the bank;
+4. validates IDs, subjects, choices, correct-answer counts, and size limits;
+5. regenerates trusted JavaScript; and
+6. replaces the live file atomically while retaining `.previous`.
+
+Executable expressions, computed properties, prototype keys, duplicate IDs,
+unknown patterns, malformed choices, and oversized content are rejected. The
+current bank remains untouched when validation fails.
+
+## Personal notes
+
+Edit `notes.js` before publishing to tailor “The Corner” messages. Do not put
+private data, credentials, or copyrighted ACT items in public builds.
+
+## Design and product decisions
+
+- [PRODUCT.md](PRODUCT.md) defines the user, purpose, voice, and constraints.
+- [DESIGN.md](DESIGN.md) defines interaction and accessibility rules.
+- [REPO_NOTES.md](REPO_NOTES.md) records dependencies, data flow, and release
+  gates.
