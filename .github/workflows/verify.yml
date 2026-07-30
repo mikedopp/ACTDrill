@@ -1,8 +1,9 @@
-name: verify
+name: verify-and-release
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -35,14 +36,133 @@ jobs:
         shell: pwsh
         run: |
           $errors = $null
-          $helper = Get-ChildItem 'installer/actdrill_Setup-AiTutor_v*.ps1' | Select-Object -First 1
-          if (-not $helper) { throw 'No installer helper script found.' }
+          $helpers = @(Get-ChildItem 'installer/actdrill_Setup-AiTutor_v*.ps1')
+          if ($helpers.Count -ne 1) {
+            throw "Expected one versioned installer helper, found $($helpers.Count)."
+          }
           [void][System.Management.Automation.Language.Parser]::ParseFile(
-            $helper.FullName,
+            $helpers[0].FullName,
             [ref]$null,
             [ref]$errors
           )
           if ($errors.Count) {
             $errors | Format-List
             exit 1
+          }
+
+      - name: Publish single-file desktop app
+        run: >
+          dotnet publish desktop/ACTDrill.Desktop.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o dist
+
+      - name: Smoke-test packaged executable
+        shell: pwsh
+        run: |
+          $process = Start-Process `
+            -FilePath (Resolve-Path 'dist/ACTDrill.exe') `
+            -ArgumentList '--smoke' `
+            -Wait `
+            -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Packaged smoke failed with exit code $($process.ExitCode)."
+          }
+
+      - name: Preserve release executable
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ACTDrill-publish
+          path: dist/ACTDrill.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate tag matches project version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content 'desktop/ACTDrill.Desktop.csproj'
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ("v$version" -ne '${{ github.ref_name }}') {
+            throw "Tag ${{ github.ref_name }} does not match project version v$version."
+          }
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ACTDrill-publish
+          path: dist
+
+      - name: Build portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts | Out-Null
+          Compress-Archive `
+            -LiteralPath 'dist/ACTDrill.exe', 'README.md' `
+            -DestinationPath 'artifacts/ACTDrill-win-x64.zip'
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+          if (-not (Test-Path -LiteralPath $compiler)) {
+            throw 'Inno Setup compiler was not installed.'
+          }
+          & $compiler 'installer/ACTDrill.iss'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE."
+          }
+          Copy-Item `
+            -LiteralPath 'installer/Output/ACTDrill-Setup.exe' `
+            -Destination 'artifacts/ACTDrill-Setup.exe'
+
+      - name: Write SHA-256 manifest
+        shell: pwsh
+        run: |
+          $lines = Get-ChildItem artifacts -File |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash
+              "$hash  $($_.Name)"
+            }
+          Set-Content -LiteralPath 'artifacts/SHA256SUMS.txt' -Value $lines -Encoding ascii
+          Get-Content 'artifacts/SHA256SUMS.txt'
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $assets = @(
+            'artifacts/ACTDrill-Setup.exe'
+            'artifacts/ACTDrill-win-x64.zip'
+            'artifacts/SHA256SUMS.txt'
+          )
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @assets --clobber
+          }
+          else {
+            gh release create $tag @assets `
+              --verify-tag `
+              --title "ACTDrill $tag" `
+              --generate-notes
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub release publication failed with exit code $LASTEXITCODE."
           }
