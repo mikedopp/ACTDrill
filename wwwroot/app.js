@@ -1969,6 +1969,134 @@
       </div>`;
   }
 
+  // ---------- Arcade: games you earn by studying ----------
+  let activeGame = null;
+  function stopActiveGame() { if (activeGame && activeGame.stop) { try { activeGame.stop(); } catch (e) { /* ignore */ } } activeGame = null; }
+
+  const ARCADE = [
+    { id: "runner", name: "Blaster Run", tag: "run-and-gun", unlock: 1,
+      blurb: "A side-scrolling run-and-gun. Move, jump, and blast the shapes rushing you down. Earned by studying, not handed over.",
+      start: startRunner },
+    { id: "corridor", name: "Corridor", tag: "first-person maze", unlock: 3, comingSoon: true,
+      blurb: "A first-person maze crawl — Doom-style. Landing in the next update. Keep leveling up." }
+  ];
+
+  function renderArcade() {
+    stopActiveGame();
+    const v = document.getElementById("view-arcade");
+    v.innerHTML = "";
+    const lvl = levelIndex(S.xp);
+    const head = el("div", "card");
+    head.append(
+      el("h3", "sect", "Arcade — you earned this"),
+      el("p", "note", "Not a distraction from studying — the payoff FOR it. Each game unlocks when your XP hits a level, and only moves once you press play.")
+    );
+    v.append(head);
+    ARCADE.forEach(g => {
+      const c = el("div", "card");
+      c.append(el("h3", "sect", g.name + "  ·  " + g.tag));
+      c.append(el("p", "note", g.blurb));
+      if (g.comingSoon) {
+        c.append(el("p", "gamelock", "Coming soon · unlocks at Level " + (g.unlock + 1) + " (" + LEVELS[g.unlock].name + ")"));
+      } else if (lvl >= g.unlock) {
+        const play = el("button", "btn", "▶ Play " + g.name);
+        const mount = el("div", "gamemount");
+        play.onclick = () => { stopActiveGame(); activeGame = g.start(mount); };
+        const row = el("div", "actions"); row.append(play);
+        c.append(row, mount);
+      } else {
+        c.append(el("p", "gamelock", "🔒 Unlocks at Level " + (g.unlock + 1) + " — " + LEVELS[g.unlock].name + ", " + LEVELS[g.unlock].xp + " XP. Keep drilling."));
+      }
+      v.append(c);
+    });
+  }
+
+  // Game 1 — original run-and-gun. Returns { stop } for cleanup on tab change.
+  function startRunner(mount) {
+    mount.innerHTML = "";
+    const W = 640, H = 360;
+    const canvas = el("canvas");
+    canvas.width = W; canvas.height = H;
+    canvas.className = "gamecanvas";
+    canvas.tabIndex = 0;
+    canvas.setAttribute("role", "application");
+    canvas.setAttribute("aria-label", "Blaster Run game. Arrow keys move and jump, space shoots, P pauses.");
+    mount.append(canvas);
+    mount.append(el("p", "gamehelp", "← → move · ↑ jump · Space shoot · P pause"));
+    const ctx = canvas.getContext("2d");
+    const C = vizColors();
+    const RED = "#e0555f";
+    const ground = H - 40;
+    const player = { x: 90, y: ground - 28, w: 18, h: 28, vy: 0, onGround: true, facing: 1 };
+    let bullets = [], enemies = [], parts = [], score = 0, lives = 3, over = false, paused = false, t = 0, spawnT = 60, speed = 2.2;
+    const keys = {};
+
+    function shoot() { if (!over && !paused) bullets.push({ x: player.x + player.w, y: player.y + 9, vx: 8 }); }
+    function reset() { bullets = []; enemies = []; parts = []; score = 0; lives = 3; over = false; paused = false; t = 0; spawnT = 60; speed = 2.2; player.x = 90; player.y = ground - 28; player.vy = 0; player.onGround = true; }
+    function onKey(e) {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) e.preventDefault();
+      if (e.type === "keydown") {
+        keys[e.key] = true;
+        if (e.key === " ") { over ? reset() : shoot(); }
+        if (e.key === "p" || e.key === "P") paused = !paused;
+      } else { keys[e.key] = false; }
+    }
+    function spawn() {
+      const flyer = Math.random() < 0.35;
+      enemies.push({ x: W + 20, y: flyer ? ground - 74 - Math.random() * 26 : ground - 22, w: 22, h: 22, v: speed + Math.random() * 1.2, flyer });
+    }
+    function burst(x, y, col) { for (let i = 0; i < 10; i++) parts.push({ x, y, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 20, col }); }
+    function update() {
+      t++;
+      if (keys["ArrowLeft"]) { player.x -= 3; player.facing = -1; }
+      if (keys["ArrowRight"]) { player.x += 3; player.facing = 1; }
+      player.x = Math.max(10, Math.min(W * 0.6, player.x));
+      if (keys["ArrowUp"] && player.onGround) { player.vy = -8.6; player.onGround = false; }
+      player.vy += 0.5; player.y += player.vy;
+      if (player.y >= ground - player.h) { player.y = ground - player.h; player.vy = 0; player.onGround = true; }
+      bullets.forEach(b => b.x += b.vx);
+      bullets = bullets.filter(b => b.x < W + 10 && !b.hit);
+      if (--spawnT <= 0) { spawn(); spawnT = Math.max(22, 70 - t / 120); }
+      speed = 2.2 + t / 1400;
+      enemies.forEach(en => {
+        en.x -= en.v;
+        bullets.forEach(b => { if (!b.hit && b.x > en.x && b.x < en.x + en.w && b.y > en.y && b.y < en.y + en.h) { b.hit = true; en.dead = true; score += 10; burst(en.x + en.w / 2, en.y + en.h / 2, C.gold); } });
+        if (!en.dead && player.x < en.x + en.w && player.x + player.w > en.x && player.y < en.y + en.h && player.y + player.h > en.y) { en.dead = true; lives--; burst(player.x + player.w / 2, player.y, RED); if (lives <= 0) over = true; }
+      });
+      enemies = enemies.filter(en => !en.dead && en.x > -30);
+      parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
+      parts = parts.filter(p => p.life > 0);
+    }
+    function banner(text) {
+      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, H / 2 - 26, W, 52);
+      ctx.fillStyle = "#fff"; ctx.font = "18px monospace"; ctx.textAlign = "center";
+      ctx.fillText(text, W / 2, H / 2 + 6); ctx.textAlign = "left";
+    }
+    function draw() {
+      ctx.fillStyle = C.surf; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.grid;
+      for (let i = 0; i < 22; i++) { const x = ((i * 53 - t * 0.6) % W + W) % W; ctx.fillRect(x, 34 + ((i * 37) % (ground - 60)), 2, 2); }
+      ctx.strokeStyle = C.axis; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, ground); ctx.lineTo(W, ground); ctx.stroke();
+      ctx.fillStyle = C.blue; ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.fillStyle = C.surf; ctx.fillRect(player.x + (player.facing > 0 ? player.w - 5 : 1), player.y + 6, 4, 4);
+      ctx.fillStyle = C.gold; bullets.forEach(b => ctx.fillRect(b.x, b.y, 6, 3));
+      enemies.forEach(en => { ctx.fillStyle = en.flyer ? C.aqua : RED; ctx.fillRect(en.x, en.y, en.w, en.h); ctx.fillStyle = C.surf; ctx.fillRect(en.x + 4, en.y + 6, 3, 3); });
+      parts.forEach(p => { ctx.globalAlpha = Math.max(0, p.life / 20); ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, 3, 3); }); ctx.globalAlpha = 1;
+      ctx.fillStyle = C.ink; ctx.font = "14px monospace";
+      ctx.fillText("Score " + score, 12, 22);
+      ctx.fillText("Lives " + Math.max(0, lives), W - 92, 22);
+      if (paused) banner("Paused — press P");
+      else if (over) banner("Game over · " + score + " · press Space");
+    }
+    let raf = 0;
+    function loop() { if (!paused && !over) update(); draw(); raf = requestAnimationFrame(loop); }
+    canvas.addEventListener("keydown", onKey);
+    canvas.addEventListener("keyup", onKey);
+    canvas.focus();
+    loop();
+    return { stop() { cancelAnimationFrame(raf); canvas.removeEventListener("keydown", onKey); canvas.removeEventListener("keyup", onKey); mount.innerHTML = ""; } };
+  }
+
   // ---------- chrome ----------
   function renderChips() {
     const s = streak();
@@ -1983,13 +2111,14 @@
   document.getElementById("tabs").addEventListener("click", (e) => {
     const btn = e.target.closest("button"); if (!btn) return;
     stopSpeech();
+    stopActiveGame();
     document.querySelectorAll("#tabs button").forEach(b => {
       const selected = b === btn;
       b.classList.toggle("active", selected);
       b.setAttribute("aria-selected", String(selected));
       b.tabIndex = selected ? 0 : -1;
     });
-    ["drill", "rulebook", "formulas", "basics", "progress", "links"].forEach(name => {
+    ["drill", "rulebook", "formulas", "basics", "progress", "links", "arcade"].forEach(name => {
       const panel = document.getElementById("view-" + name);
       const hidden = name !== btn.dataset.view;
       panel.classList.toggle("hidden", hidden);
@@ -2000,6 +2129,7 @@
     if (btn.dataset.view === "basics") renderBasics();
     if (btn.dataset.view === "progress") renderProgress();
     if (btn.dataset.view === "links") renderLinks();
+    if (btn.dataset.view === "arcade") renderArcade();
   });
   document.getElementById("tabs").addEventListener("keydown", event => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
