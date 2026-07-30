@@ -1828,6 +1828,60 @@
       </div>`;
   }
 
+  function renderBasics() {
+    const v = document.getElementById("view-basics");
+    v.innerHTML = `
+      <div class="card">
+        <h3 class="sect">The bricks under the math</h3>
+        <p>This isn't dummy stuff. It's the handful of pieces the ACT quietly assumes you already have — the ones school moved past on a day you happened to miss. When a math question feels impossible, the missing piece is almost always one of these. Skim it once; come back to any brick when a question trips it.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Fractions — a fraction is just "out of"</h3>
+        <p>The bottom number says how many equal pieces the whole is cut into. The top says how many you have. <b>3/4</b> = the whole is cut in 4, you've got 3 of them.</p>
+        <p class="note">To compare or add fractions, the bottoms have to match first (same-size pieces). To turn a fraction into a decimal, just do top ÷ bottom: 3/4 = 3 ÷ 4 = 0.75.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Multiplying &amp; dividing fractions</h3>
+        <p><b>Multiply:</b> straight across — tops together, bottoms together. <b>½ × ½</b> → tops 1×1 = 1, bottoms 2×2 = 4 → <b>1/4</b>. It means "a part of a part": half of a half is a quarter.</p>
+        <p><b>Divide:</b> flip the second one and multiply. <b>½ ÷ ¼</b> → ½ × 4/1 = <b>2</b> (how many quarters fit in a half? two). "Keep, change, flip."</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Negative numbers — below zero</h3>
+        <p>Picture a number line: 0 in the middle, positives to the right, negatives to the left. <b>−5</b> is five steps left of zero (owing 5, not having 5).</p>
+        <p><b>The rule that saves you:</b> a negative times or divided by a negative turns <b>positive</b> (two "opposites" cancel). Negative times positive stays negative. So (−3)(−4) = <b>12</b>, but (−3)(4) = <b>−12</b>.</p>
+        <p class="note">Subtracting a negative is adding: 5 − (−2) = 5 + 2 = 7.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Percent — "per 100"</h3>
+        <p><b>Percent just means "out of 100."</b> 30% = 30/100 = 0.30. To take a percent <b>of</b> something, "of" means multiply: 30% of 60 = 0.30 × 60 = <b>18</b>.</p>
+        <p><b>Percent off:</b> you pay the rest. 30% off means you keep 70%, so a $60 jacket costs 0.70 × 60 = <b>$42</b>.</p>
+        <p class="note">Percent change is always change ÷ the <b>original</b>: 250 → 300 is 50 ÷ 250 = 20% up.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Exponents — repeated multiplying</h3>
+        <p>A little raised number means "multiply the base by itself that many times." <b>2³</b> = 2 × 2 × 2 = <b>8</b>. It is <em>not</em> 2 × 3.</p>
+        <p><b>Same base?</b> Multiplying → add the little numbers (2³ × 2⁴ = 2⁷). Dividing → subtract them. A power of a power → multiply them ((2³)² = 2⁶).</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Order of operations — what to do first</h3>
+        <p>Work in this order so everyone gets the same answer: <b>P</b>arentheses, <b>E</b>xponents, <b>M</b>ultiply/<b>D</b>ivide (left to right), <b>A</b>dd/<b>S</b>ubtract (left to right). "PEMDAS."</p>
+        <p class="note">2 + 3 × 4 is <b>14</b>, not 20 — the ×4 happens before the +2. Parentheses jump the line: (2 + 3) × 4 = 20.</p>
+      </div>
+
+      <div class="card">
+        <h3 class="sect">Solving for x — undo it, in reverse</h3>
+        <p>To get x alone, peel off whatever's attached, using the <b>opposite</b> operation, doing the same thing to both sides so it stays balanced.</p>
+        <p>Opposites: <b>+</b> ↔ <b>−</b>, <b>×</b> ↔ <b>÷</b>. So for <b>3x + 2 = 11</b>: undo the + 2 (subtract 2 → 3x = 9), then undo the × 3 (divide by 3 → <b>x = 3</b>). Note: 3x means 3 <em>times</em> x, so you divide by 3 — not 3 ÷ x.</p>
+        <p class="note">Check it by putting your answer back in: 3(3) + 2 = 11. ✓ If both sides match, you're right.</p>
+      </div>`;
+  }
+
   // ---------- chrome ----------
   function renderChips() {
     const s = streak();
@@ -1848,7 +1902,7 @@
       b.setAttribute("aria-selected", String(selected));
       b.tabIndex = selected ? 0 : -1;
     });
-    ["drill", "rulebook", "formulas", "progress", "links"].forEach(name => {
+    ["drill", "rulebook", "formulas", "basics", "progress", "links"].forEach(name => {
       const panel = document.getElementById("view-" + name);
       const hidden = name !== btn.dataset.view;
       panel.classList.toggle("hidden", hidden);
@@ -1856,6 +1910,7 @@
     });
     if (btn.dataset.view === "rulebook") renderRulebook();
     if (btn.dataset.view === "formulas") renderFormulas();
+    if (btn.dataset.view === "basics") renderBasics();
     if (btn.dataset.view === "progress") renderProgress();
     if (btn.dataset.view === "links") renderLinks();
   });
