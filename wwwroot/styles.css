@@ -224,6 +224,19 @@
   .scaffold .srow { font-size: 0.875rem; color: var(--ink2); margin-top: 7px; }
   .scaffold .srow b { color: var(--ink); font-weight: 600; }
   .scaffold .sform { font-family: Consolas, "Cascadia Mono", monospace; color: var(--ink); }
+
+  /* Per-question study notes ("memos") */
+  .memo { margin-top: 12px; padding: 10px 12px 10px 14px; border-left: 3px solid var(--gold); background: var(--raised); border-radius: 0 8px 8px 0; font-size: 0.9375rem; color: var(--ink2); }
+  .memo b { color: var(--ink); }
+  .memoedit { margin-top: 12px; }
+  .memoedit label { display: block; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .memoedit textarea { width: 100%; min-height: 74px; box-sizing: border-box; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font: inherit; font-size: 0.9375rem; padding: 8px 10px; resize: vertical; }
+  .memoedit .memoacts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .memolist { list-style: none; padding: 0; margin: 0; }
+  .memolist li { padding: 10px 0; border-top: 1px solid var(--grid); }
+  .memolist li:first-child { border-top: none; }
+  .memolist .memoq { color: var(--muted); font-size: 0.8125rem; margin-bottom: 3px; }
+  .memolist .memot { color: var(--ink); font-size: 0.9375rem; }
   .coachwork {
     margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--border);
   }

@@ -25,7 +25,7 @@
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
              audio: { on: true, rate: 0.9, autoRead: true, volume: 1, voiceId: "" }, coach: "auto",
-             theme: "dark", fontScale: 1, dailyGoal: 10 };
+             theme: "dark", fontScale: 1, dailyGoal: 10, memos: {} };
   }
   const isRecord = value => value && typeof value === "object" && !Array.isArray(value);
   const finite = (value, fallback, min, max) =>
@@ -78,6 +78,12 @@
       base.audio.voiceId = typeof value.audio.voiceId === "string"
         ? value.audio.voiceId.slice(0, 300)
         : "";
+    }
+    if (isRecord(value.memos)) {
+      Object.entries(value.memos).slice(0, 1000).forEach(([id, text]) => {
+        if (/^[A-Za-z0-9_-]{1,80}$/.test(id) && typeof text === "string" && text.trim())
+          base.memos[id] = text.slice(0, 600);
+      });
     }
     return base;
   }
@@ -1263,6 +1269,17 @@
     card.append(rqRow);
     // scaffold (coaching): decode the question + point at the formula, before answering
     if (shouldCoach(q)) card.append(scaffoldBox(q));
+    // a note you left yourself on this one — collapsed so it doesn't spoil the retrieval
+    if (S.memos[q.id]) {
+      const mrow = el("div", "readrow");
+      const rb = el("button", "speakbtn", "📝 Your note");
+      rb.setAttribute("aria-expanded", "false");
+      const mtext = el("div", "memo collapsible hidden");
+      mtext.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]);
+      rb.onclick = () => { const hidden = mtext.classList.toggle("hidden"); rb.setAttribute("aria-expanded", String(!hidden)); };
+      mrow.append(rb);
+      card.append(mrow, mtext);
+    }
 
     const list = el("div", "choices");
     current.choices.forEach((c, idx) => {
@@ -1282,6 +1299,49 @@
     foot.append(el("span", "hint", "Keys 1–4 to answer"));
     card.append(foot);
     viewDrill.append(card);
+  }
+
+  // ---------- per-question study notes ("your note for this one") ----------
+  function refreshMemoBox(card, q) {
+    let box = card.querySelector(".memo.answered-memo");
+    if (S.memos[q.id]) {
+      if (!box) { box = el("div", "memo answered-memo"); card.insertBefore(box, card.querySelector(".actions")); }
+      box.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]);
+    } else if (box) { box.remove(); }
+  }
+  function memoEditor(q, mountBtn, card) {
+    const existing = card.querySelector(".memoedit");
+    if (existing) { existing.remove(); mountBtn.focus(); return; }
+    const wrap = el("div", "memoedit");
+    wrap.append(el("label", null, "Your note — a reminder to yourself for this one"));
+    const ta = el("textarea");
+    ta.value = S.memos[q.id] || "";
+    ta.setAttribute("placeholder", "e.g. I keep forgetting to divide by 3 at the very end.");
+    ta.setAttribute("aria-label", "Your note for this question");
+    wrap.append(ta);
+    const acts = el("div", "memoacts");
+    const saveBtn = el("button", "btn", "Save note");
+    saveBtn.onclick = () => {
+      const t = ta.value.trim();
+      if (t) S.memos[q.id] = t; else delete S.memos[q.id];
+      save();
+      wrap.remove();
+      mountBtn.textContent = S.memos[q.id] ? "📝 Edit note" : "📝 Add a note";
+      refreshMemoBox(card, q);
+      announce(S.memos[q.id] ? "Note saved." : "Note removed.");
+      mountBtn.focus();
+    };
+    const cancelBtn = el("button", "btn ghost", "Cancel");
+    cancelBtn.onclick = () => { wrap.remove(); mountBtn.focus(); };
+    acts.append(saveBtn, cancelBtn);
+    if (S.memos[q.id]) {
+      const del = el("button", "btn ghost", "Delete note");
+      del.onclick = () => { delete S.memos[q.id]; save(); wrap.remove(); mountBtn.textContent = "📝 Add a note"; refreshMemoBox(card, q); announce("Note removed."); mountBtn.focus(); };
+      acts.append(del);
+    }
+    wrap.append(acts);
+    card.insertBefore(wrap, card.querySelector(".actions"));
+    ta.focus();
   }
 
   function answer(idx) {
@@ -1372,6 +1432,7 @@
     }
 
     if (note && !leveledUp) card.append(noteCard(note));
+    if (S.memos[q.id]) { const mb = el("div", "memo answered-memo"); mb.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]); card.append(mb); }
 
     const a = el("div", "actions");
     const nextBtn = el("button", "btn", "Next question");
@@ -1384,6 +1445,9 @@
       sb.onclick = () => stepPanel(q);
       a.append(sb);
     }
+    const noteBtn = el("button", "btn ghost", S.memos[q.id] ? "📝 Edit note" : "📝 Add a note");
+    noteBtn.onclick = () => memoEditor(q, noteBtn, card);
+    a.append(noteBtn);
     a.append(el("span", "hint", "Enter for next"));
     card.append(a);
 
@@ -1582,6 +1646,29 @@
       });
     });
     v.append(mcard);
+
+    // Your notes — a review list for memorization
+    const noteIds = Object.keys(S.memos || {}).filter(id => S.memos[id]);
+    if (noteIds.length) {
+      const ncard = el("div", "card");
+      ncard.append(el("h3", "sect", "Your notes (" + noteIds.length + ")"));
+      ncard.append(el("p", "note", "Reminders you left yourself, straight from the questions. Skim these before a session — that's memorization doing its job."));
+      const ul = el("ul", "memolist");
+      noteIds.forEach(id => {
+        const q = ACT_QUESTIONS.find(x => x.id === id);
+        const patName = q && ACT_PATTERNS[q.pattern] ? ACT_PATTERNS[q.pattern].name : "";
+        const raw = q ? (q.passage ? q.passage.replace(/\|/g, "") : (q.context || q.prompt || id)) : id;
+        const snippet = raw.length > 90 ? raw.slice(0, 90) + "…" : raw;
+        const li = el("li");
+        li.append(
+          el("div", "memoq", esc((patName ? patName + " — " : "") + snippet)),
+          el("div", "memot", esc(S.memos[id]))
+        );
+        ul.append(li);
+      });
+      ncard.append(ul);
+      v.append(ncard);
+    }
 
     const rcard = el("div", "card");
     const actions = el("div", "actions");
