@@ -25,6 +25,8 @@ depth. Color never carries meaning alone.
 - Desktop read-aloud renders one complete native Windows WAV before playback,
   translates Math notation into spoken language, and exposes installed voice
   selection and preview in Settings.
+- The WebView content policy explicitly permits `data:` audio through
+  `media-src`; removing that directive breaks native WAV playback.
 - Progress graphics expose numeric values to assistive technology.
 - Reduced-motion preference disables celebration animation.
 - Destructive local reset requires explicit confirmation.

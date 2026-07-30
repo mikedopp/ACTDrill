@@ -34,3 +34,5 @@ allowlist in `desktop\Security.cs`.
 7. Installer version, assembly version, UI version, and README agree.
 8. A human checks dark/light, 390px, 720×560, extra-large text, keyboard tabs,
    dialogs, and reduced motion before tagging.
+9. A version tag runs the GitHub release job, compiles the installer from the
+   tested EXE, and publishes a SHA-256 manifest with the release assets.

@@ -11,7 +11,7 @@ Inc. is not affiliated with this project.
 
 ## Install
 
-Download `ACTDrill.exe` or `ACTDrill-Setup.exe` from
+Download `ACTDrill-Setup.exe` or `ACTDrill-win-x64.zip` from
 [GitHub Releases](https://github.com/mikedopp/ACTDrill/releases).
 
 - Windows 10 or 11, x64
@@ -57,10 +57,12 @@ dotnet publish desktop/ACTDrill.Desktop.csproj -c Release -r win-x64 --self-cont
 
 The smoke command checks that all embedded web assets exist and recompiles the
 embedded bank through the same strict data-only parser used by bank updates.
+Tags matching the project version run the same gates, compile the installer,
+publish the portable ZIP, and attach `SHA256SUMS.txt` automatically.
 
 Compile `installer\ACTDrill.iss` with Inno Setup after publishing `dist\ACTDrill.exe`.
 The optional manual AI helper is
-`installer\actdrill_Setup-AiTutor_v1.13.1.ps1`.
+`installer\actdrill_Setup-AiTutor_v1.13.2.ps1`.
 
 ## Repository map
 
