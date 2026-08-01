@@ -219,6 +219,37 @@ test("installer helper is versioned and referenced consistently", () => {
     `ACTDrill.iss must reference ${helpers[0]}`);
 });
 
+test("drill shortcuts yield to text fields, so a space typed in a note stays a space", () => {
+  const app = read("wwwroot/app.js");
+  // Without this bail-out the global 1-4/Enter/space/n shortcuts fire while the student
+  // is writing a note: the space is swallowed and the question is skipped mid-sentence.
+  assert.match(app, /if \(isTyping\(e\.target\)\) return;/);
+
+  const helper = app.match(/const isTyping = node =>[\s\S]*?\);\r?\n/);
+  assert.ok(helper, "isTyping helper must exist");
+  const context = { HTMLElement: class HTMLElement {} };
+  vm.createContext(context);
+  new vm.Script(helper[0] + ";globalThis.__isTyping = isTyping;", { filename: "isTyping.js" })
+    .runInContext(context);
+  const isTyping = context.__isTyping;
+  const node = (tagName, isContentEditable = false) =>
+    Object.assign(new context.HTMLElement(), { tagName, isContentEditable });
+
+  for (const tag of ["TEXTAREA", "INPUT", "SELECT"]) {
+    assert.equal(isTyping(node(tag)), true, `${tag} owns its own keys`);
+  }
+  assert.equal(isTyping(node("DIV", true)), true, "contenteditable owns its own keys");
+  assert.equal(isTyping(node("DIV")), false);
+  assert.equal(isTyping(node("BUTTON")), false, "shortcuts must still work from buttons");
+  assert.equal(isTyping(null), false);
+});
+
+test("a day's correct count is persisted, so lifetime accuracy is a number", () => {
+  const app = read("wwwroot/app.js");
+  // dropping `right` here made renderProgress sum undefined and show "NaN%" after a reload
+  assert.match(app, /base\.daily\[date\] = \{ n, right:/);
+});
+
 test("frontend contains typed bridge and no page zoom", () => {
   const app = read("wwwroot/app.js");
   assert.match(app, /type:\s*"micdrop-message"/);

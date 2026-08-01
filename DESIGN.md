@@ -6,6 +6,11 @@ The default theme is Arctic Steel: `#5ba4d9` on `#0b0e14`, with IBM Plex Mono
 or an installed monospace fallback. Surfaces use full borders and restrained
 depth. Color never carries meaning alone.
 
+The student's own notes are the one decorated surface: the open note editor and
+the notes review card carry an animated gradient border in Google's four colors,
+and the reveal button for an existing note carries a static glow. Reduced motion
+holds the gradient still rather than removing it.
+
 ## Layout
 
 - The drill remains a single-column reading experience.

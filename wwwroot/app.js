@@ -48,8 +48,11 @@
     base.q = statMap(value.q);
     if (isRecord(value.daily)) {
       Object.entries(value.daily).slice(-730).forEach(([date, item]) => {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && isRecord(item))
-          base.daily[date] = { n: Math.round(finite(item.n, 0, 0, 10000)) };
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && isRecord(item)) {
+          // keep the day's correct count too — dropping it made lifetime accuracy NaN
+          const n = Math.round(finite(item.n, 0, 0, 10000));
+          base.daily[date] = { n, right: Math.round(finite(item.right, 0, 0, n)) };
+        }
       });
     }
     base.recent = Array.isArray(value.recent)
@@ -183,6 +186,10 @@
     if (html !== undefined) e.innerHTML = html;
     return e;
   };
+  // a field the student is typing into — it owns every key it receives
+  const isTyping = node =>
+    node instanceof HTMLElement &&
+    (node.isContentEditable || /^(input|textarea|select)$/i.test(node.tagName));
   function announce(message) {
     const region = document.getElementById("app-status");
     if (!region) return;
@@ -1285,7 +1292,7 @@
     // a note you left yourself on this one — collapsed so it doesn't spoil the retrieval
     if (S.memos[q.id]) {
       const mrow = el("div", "readrow");
-      const rb = el("button", "speakbtn", "📝 Your note");
+      const rb = el("button", "speakbtn noteglowbtn", "📝 Your note");
       rb.setAttribute("aria-expanded", "false");
       const mtext = el("div", "memo collapsible hidden");
       mtext.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]);
@@ -1331,6 +1338,10 @@
     ta.value = S.memos[q.id] || "";
     ta.setAttribute("placeholder", "e.g. I keep forgetting to divide by 3 at the very end.");
     ta.setAttribute("aria-label", "Your note for this question");
+    ta.setAttribute("maxlength", "600"); // matches the cap normalizeState() enforces on save
+    ta.addEventListener("keydown", e => {
+      if (e.key === "Escape") { e.preventDefault(); wrap.remove(); mountBtn.focus(); }
+    });
     wrap.append(ta);
     const acts = el("div", "memoacts");
     const saveBtn = el("button", "btn", "Save note");
@@ -1472,6 +1483,10 @@
   document.addEventListener("keydown", (e) => {
     // Modal dialogs own their keyboard events, including Escape and focus trapping.
     if (document.querySelector('[role="dialog"]')) return;
+    // Writing a note is not answering a question: a space stays a space, Enter stays
+    // a new line, and "n" stays a letter. Without this, the first space typed into a
+    // note swallowed the character and skipped to the next question.
+    if (isTyping(e.target)) return;
     if (!document.getElementById("view-drill").classList.contains("hidden")) {
       if (current && !current.answered) {
         const k = e.key.toLowerCase();
@@ -1567,8 +1582,12 @@
     const v = document.getElementById("view-progress");
     v.innerHTML = "";
 
-    let total = 0, right = 0, bestDay = 0;
-    Object.values(S.daily).forEach(dd => { total += dd.n; right += dd.right; if (dd.n > bestDay) bestDay = dd.n; });
+    let total = 0, bestDay = 0;
+    Object.values(S.daily).forEach(dd => { total += dd.n; if (dd.n > bestDay) bestDay = dd.n; });
+    // accuracy comes from the per-pattern tallies: they were always persisted intact,
+    // so the number stays right even for history saved while the day's count was dropped
+    let seenAll = 0, rightAll = 0;
+    Object.values(S.patt).forEach(p => { seenAll += p.seen; rightAll += p.right; });
     const li = levelIndex(S.xp);
 
     const tiles = el("div", "tiles");
@@ -1582,7 +1601,7 @@
       tile(streak(), "day streak"),
       tile(todayCount() + "<small> / " + goal() + "</small>", "today"),
       tile(total, "total reps"),
-      tile(total ? Math.round(100 * right / total) + "%" : "—", "accuracy"),
+      tile(seenAll ? Math.round(100 * rightAll / seenAll) + "%" : "—", "accuracy"),
       tile(S.bestCombo, "best combo"),
       tile(masteredCount() + "<small> / " + Object.keys(ACT_PATTERNS).length + "</small>", "patterns mastered", masteredCount() > 0)
     );
@@ -1615,7 +1634,7 @@
       const bar = el("div", "bar");
       bar.style.height = counts[i] === 0 ? "2px" : Math.max(4, Math.round(counts[i] / max * 100)) + "%";
       const dd = S.daily[k] || { n: 0, right: 0 };
-      col.title = k + " — " + dd.n + " questions" + (dd.n ? ", " + dd.right + " right" : "");
+      col.title = k + " — " + dd.n + " questions" + (dd.right ? ", " + dd.right + " right" : "");
       if (i === 13 && counts[i] > 0) col.append(el("span", "blab", String(counts[i])));
       col.append(bar);
       bars.append(col);
@@ -1663,7 +1682,7 @@
     // Your notes — a review list for memorization
     const noteIds = Object.keys(S.memos || {}).filter(id => S.memos[id]);
     if (noteIds.length) {
-      const ncard = el("div", "card");
+      const ncard = el("div", "card notecard");
       ncard.append(el("h3", "sect", "Your notes (" + noteIds.length + ")"));
       ncard.append(el("p", "note", "Reminders you left yourself, straight from the questions. Skim these before a session — that's memorization doing its job."));
       const ul = el("ul", "memolist");
