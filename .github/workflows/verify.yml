@@ -166,3 +166,52 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "GitHub release publication failed with exit code $LASTEXITCODE."
           }
+
+      # The app checks for updates against the PUBLIC bank repo, because this one is
+      # private and its assets need a login. Needs a BANK_TOKEN secret with contents
+      # write on mikedopp/actdrill-bank; without it this step simply does nothing.
+      - name: Publish the installer and update manifest to the public bank repo
+        shell: pwsh
+        env:
+          BANK_TOKEN: ${{ secrets.BANK_TOKEN }}
+        run: |
+          if (-not $env:BANK_TOKEN) {
+            Write-Host 'No BANK_TOKEN secret — skipping the public update manifest.'
+            exit 0
+          }
+
+          $tag = '${{ github.ref_name }}'
+          $version = $tag.TrimStart('v')
+          $installer = 'artifacts/ACTDrill-Setup.exe'
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installer).Hash.ToLower()
+          $env:GH_TOKEN = $env:BANK_TOKEN
+
+          gh release view $tag --repo mikedopp/actdrill-bank *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $installer --repo mikedopp/actdrill-bank --clobber
+          }
+          else {
+            gh release create $tag $installer --repo mikedopp/actdrill-bank `
+              --title "ACTDrill $tag" `
+              --notes "Installer for ACTDrill $version."
+          }
+          if ($LASTEXITCODE -ne 0) {
+            throw "Publishing the installer to the bank repo failed with exit code $LASTEXITCODE."
+          }
+
+          $manifest = [ordered]@{
+            version = $version
+            url = "https://github.com/mikedopp/actdrill-bank/releases/download/$tag/ACTDrill-Setup.exe"
+            sha256 = $hash
+            notes = "ACTDrill $version is available."
+          } | ConvertTo-Json
+
+          git clone "https://x-access-token:$env:BANK_TOKEN@github.com/mikedopp/actdrill-bank.git" bank-repo
+          Set-Content -LiteralPath 'bank-repo/latest.json' -Value $manifest -Encoding ascii
+          Push-Location bank-repo
+          git config user.name 'ACTDrill release'
+          git config user.email 'actions@users.noreply.github.com'
+          git add latest.json
+          git commit -m "ACTDrill $version"
+          git push
+          Pop-Location
