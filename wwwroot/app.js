@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.14.0";
+  const APP_VERSION = "1.15.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -721,6 +721,7 @@
   let _ollama = { checked: false, ok: false, model: "", models: [], warm: false };
   const _pending = {};
   let _aiProgressCb = null;
+  let _updateProgressCb = null;
   if (hasBridge()) {
     window.chrome.webview.addEventListener("message", ev => {
       let d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch { return; }
@@ -728,6 +729,8 @@
       if (d.type === "micdrop-response" && _pending[d.id]) _pending[d.id](d);
       else if (d.type === "micdrop-event" && d.method === "aiSetupProgress" && _aiProgressCb)
         _aiProgressCb(d.payload || {});
+      else if (d.type === "micdrop-event" && d.method === "appUpdateProgress" && _updateProgressCb)
+        _updateProgressCb(d.payload || {});
     });
   }
   function bridge(method, params = {}, timeoutMs = 120000) {
@@ -888,23 +891,82 @@
     const close = mountModal(ov, panel, title, nextBtn);
     x.onclick = close;
 
+    // the picture that goes with it, drawn in as the work starts
+    if (q.plot) { const p = coordPlot(q.plot); p.classList.add("workviz"); body.append(p); }
+    else if (q.diagram) { const d = mathDiagram(q.diagram); d.classList.add("workviz"); body.append(d); }
+
     const steps = guidedMathSteps(q);
-    let i = 0;
+    let i = 0, playing = false, timer = null;
+
+    // "2x + 7 = 19 → subtract 7 → 2x = 12" is the equation being worked. Split it on the
+    // arrows and let each state land one at a time — the move it took shown between them.
+    function equationReel(text) {
+      const parts = text.split("→").map(p => p.trim()).filter(Boolean);
+      if (parts.length < 2) return null;
+      const reel = el("div", "eqreel");
+      parts.forEach((part, idx) => {
+        // a piece with a relational operator is a state of the equation; the rest is the move
+        const isState = /[=<>≤≥]/.test(part) || /^[-+]?[\d(]/.test(part);
+        const delay = (idx * 0.42) + "s";
+        if (idx) {
+          const arrow = el("span", "eqarrow", "→");
+          arrow.style.animationDelay = delay; // the arrow arrives with the move it introduces
+          reel.append(arrow);
+        }
+        const seg = el("span", isState ? "eqstate" : "eqop", esc(part));
+        seg.style.animationDelay = delay;
+        reel.append(seg);
+      });
+      return reel;
+    }
+
     function reveal() {
-      if (i >= steps.length) { close(); return; }
+      if (i >= steps.length) { stopPlay(); close(); return; }
       const s = steps[i]; i++;
       const it = el("div", "stepitem");
       it.append(el("div", "stepnum", "Step " + i + " of " + steps.length));
-      it.append(el("div", "stepdo", esc(s.do)));
+      const reel = equationReel(s.do);
+      // the reel already carries the opening state, so don't print the line twice
+      if (reel) it.append(reel);
+      else it.append(el("div", "stepdo", esc(s.do)));
       if (s.why) it.append(el("div", "stepwhy", esc(s.why)));
       list.append(it); body.scrollTop = body.scrollHeight;
       if (i >= steps.length) {
         nextBtn.textContent = "Done ✓";
+        stopPlay();
         list.append(el("div", "stepdone", "That's the whole thing — " + steps.length + " small moves, no scary leap. None of them was the monster it looked like all together."));
       } else nextBtn.textContent = "Next step ▶";
-      nextBtn.focus();
+      if (!playing) nextBtn.focus();
     }
-    nextBtn.onclick = reveal;
+
+    // play it through: the whole solution works itself, at a pace you can read
+    function stopPlay() {
+      playing = false;
+      if (timer) { clearTimeout(timer); timer = null; }
+      playBtn.textContent = i >= steps.length ? "↻ Play again" : "▶ Play it through";
+      playBtn.setAttribute("aria-pressed", "false");
+    }
+    function tick() {
+      if (!playing) return;
+      if (i >= steps.length) { stopPlay(); return; }
+      reveal();
+      timer = setTimeout(tick, 2600);
+    }
+    const playBtn = el("button", "btn ghost", "▶ Play it through");
+    playBtn.setAttribute("aria-pressed", "false");
+    playBtn.onclick = () => {
+      if (playing) { stopPlay(); return; }
+      if (i >= steps.length) { i = 0; list.innerHTML = ""; nextBtn.textContent = "Show first step ▶"; }
+      playing = true;
+      playBtn.textContent = "⏸ Pause";
+      playBtn.setAttribute("aria-pressed", "true");
+      announce("Playing the worked solution.");
+      tick();
+    };
+    ft.append(playBtn);
+
+    nextBtn.onclick = () => { stopPlay(); reveal(); };
+    x.onclick = () => { stopPlay(); close(); };
     nextBtn.focus();
   }
 
@@ -1091,6 +1153,77 @@
       : "No notes yet. On any answered question, hit 📝 Add a note and write the thing you keep forgetting."));
     body.append(ng);
 
+    // App updates — check GitHub, verify the download, hand it to the installer
+    const ug = el("div", "setgroup");
+    ug.append(el("div", "setlabel", "App updates"));
+    const ustat = el("div", "aistat", hasBridge()
+      ? "You're running ACTDrill " + APP_VERSION + "."
+      : "Updates arrive with the desktop app — this is the browser preview.");
+    ug.append(ustat);
+    if (hasBridge()) {
+      const uprogWrap = el("div", "aiprogwrap hidden");
+      const ubar = el("i");
+      const uprog = el("div", "aiprog"); uprog.append(ubar);
+      uprog.setAttribute("role", "progressbar");
+      uprog.setAttribute("aria-label", "Update download");
+      uprog.setAttribute("aria-valuemin", "0");
+      uprog.setAttribute("aria-valuemax", "100");
+      uprog.setAttribute("aria-valuenow", "0");
+      const ulabel = el("div", "aiproglabel", "");
+      uprogWrap.append(uprog, ulabel);
+
+      const urow = el("div", "setopts");
+      const checkBtn = el("button", "setbtn", "Check for updates");
+      const installBtn = el("button", "setbtn hidden", "Download & install");
+      urow.append(checkBtn, installBtn);
+      ug.append(urow, uprogWrap);
+
+      checkBtn.onclick = async () => {
+        checkBtn.disabled = true; checkBtn.textContent = "Checking…";
+        const r = await bridge("appUpdateCheck", {}, 30000);
+        checkBtn.disabled = false; checkBtn.textContent = "Check for updates";
+        if (!r.ok) { ustat.textContent = r.error || "Could not check for updates."; return; }
+        const info = r.result || {};
+        if (!info.newer) {
+          ustat.textContent = "You're on the latest version (" + info.current + ").";
+          announce("ACTDrill is up to date.");
+          return;
+        }
+        ustat.innerHTML = "<b>Version " + esc(info.latest) + " is out</b> — you have " + esc(info.current) + "." +
+          (info.notes ? "<br>" + esc(info.notes) : "");
+        if (info.installable) {
+          installBtn.classList.remove("hidden");
+          ug.querySelector(".setnote").textContent =
+            "The download is checked against its published checksum before anything runs. ACTDrill closes so the installer can replace it — your progress and notes stay put.";
+        } else {
+          ustat.innerHTML += "<br>Grab it from the releases page — this one can't be installed automatically.";
+        }
+        announce("An update is available.");
+      };
+
+      installBtn.onclick = async () => {
+        installBtn.disabled = true; checkBtn.disabled = true;
+        uprogWrap.classList.remove("hidden");
+        _updateProgressCb = (d) => {
+          const percent = Math.max(0, Math.min(100, Number(d.percent) || 0));
+          ubar.style.width = percent + "%";
+          uprog.setAttribute("aria-valuenow", String(percent));
+          ulabel.textContent = d.label || "";
+        };
+        const r = await bridge("appUpdateInstall", {}, 1800000);
+        _updateProgressCb = null;
+        if (!r.ok) {
+          installBtn.disabled = false; checkBtn.disabled = false;
+          ulabel.textContent = r.error || "The update could not be installed.";
+          announce("The update did not install.");
+        }
+      };
+    }
+    ug.append(el("div", "setnote", hasBridge()
+      ? "Checks GitHub for a newer ACTDrill. Nothing is downloaded until you ask for it."
+      : "In the desktop app this checks GitHub for a newer version."));
+    body.append(ug);
+
     // Highlights — the moving gradient on note surfaces
     const hg = el("div", "setgroup");
     hg.append(el("div", "setlabel", "Note highlights"));
@@ -1207,6 +1340,7 @@
   // ---------- drill view ----------
   const viewDrill = document.getElementById("view-drill");
   let current = null;
+  let pinnedId = null; // set when a note sends you back to its question
 
   function showIntro() {
     viewDrill.innerHTML = "";
@@ -1322,7 +1456,10 @@
     if (brk.lastAnswerAt && Date.now() - brk.lastAnswerAt > IDLE_RESET_MIN * 60e3) resetBreak();
     if (breakDue()) { renderBreakCard(); return; }
 
-    const q = pickQuestion();
+    // jumped here from a note? show that exact question instead of a fresh draw
+    const pinned = pinnedId ? ACT_QUESTIONS.find(x => x.id === pinnedId) : null;
+    pinnedId = null;
+    const q = pinned || pickQuestion();
     current = { q, choices: orderedChoices(q), answered: false };
     viewDrill.innerHTML = "";
     viewDrill.append(subjectBar());
@@ -1332,6 +1469,7 @@
     const card = el("div", "card");
     let pillHtml = esc(ACT_PATTERNS[q.pattern].subject) + " · today " + todayCount() + " / " + goal();
     if (S.combo >= 2) pillHtml += " · <span class='combo'>combo ×" + S.combo + "</span>";
+    if (S.memos[q.id]) pillHtml += " · <span class='notetag'>📝 you left a note</span>";
     card.append(el("div", "pill", pillHtml));
     if (q.context) card.append(el("p", "context", esc(q.context)));
     if (q.passage) card.append(el("p", "passage", renderPassage(q.passage)));
@@ -1383,6 +1521,18 @@
       if (!box) { box = el("div", "memo answered-memo"); card.insertBefore(box, card.querySelector(".actions")); }
       box.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]);
     } else if (box) { box.remove(); }
+    // keep the card's "you left a note" tag honest while he adds or deletes one
+    const pill = card.querySelector(".pill");
+    if (pill) {
+      const tag = pill.querySelector(".notetag");
+      if (S.memos[q.id] && !tag) {
+        pill.append(document.createTextNode(" · "));
+        pill.append(el("span", "notetag", "📝 you left a note"));
+      } else if (!S.memos[q.id] && tag) {
+        if (tag.previousSibling && tag.previousSibling.nodeType === 3) tag.previousSibling.remove();
+        tag.remove();
+      }
+    }
   }
   // ---------- notes as Markdown: a study sheet in his own words ----------
   function noteEntries() {
@@ -1409,7 +1559,8 @@
     let subject = null;
     entries.forEach(entry => {
       if (entry.subject !== subject) { subject = entry.subject; lines.push("## " + subject, ""); }
-      if (entry.pattern) lines.push("### " + entry.pattern, "");
+      // the id is the link back: it's what "Open this question" uses inside the app
+      lines.push("### " + (entry.pattern || "Question") + " · `" + entry.id + "`", "");
       lines.push("> " + entry.question.replace(/\s+/g, " ").trim(), "", entry.note, "", "---", "");
     });
     if (!entries.length) lines.push("_No notes yet — write one on any question you want to remember._", "");
@@ -1463,8 +1614,19 @@
         el("blockquote", "npq", esc(snippet.length > 120 ? snippet.slice(0, 120) + "…" : snippet)),
         el("div", "npnote", esc(entry.note))
       );
+      // the note points back at the question that earned it
+      const jump = el("button", "btn ghost npjump", "Open this question →");
+      jump.onclick = () => openNoteQuestion(entry.id);
+      item.append(jump);
       body.append(item);
     });
+  }
+  function openNoteQuestion(id) {
+    if (!ACT_QUESTIONS.some(q => q.id === id)) { announce("That question isn't in this bank anymore."); return; }
+    pinnedId = id;
+    document.getElementById("tab-drill").click(); // the tab handler owns view switching
+    nextQuestion();
+    announce("Opened the question this note belongs to.");
   }
   function buildNotesPanel() {
     const panel = el("aside", "notespanel");
@@ -1516,6 +1678,20 @@
     });
     wrap.append(ta);
     const acts = el("div", "memoacts");
+    // the answer is the thing worth remembering — let him drop it in instead of retyping it
+    const correct = (q.choices || []).find(c => c.correct);
+    if (correct) {
+      const grab = el("button", "btn ghost", "➕ Add the answer");
+      grab.title = "Paste the correct answer, and why, into this note";
+      grab.onclick = () => {
+        const answer = "Answer: " + correct.text + (correct.why ? " — " + correct.why : "");
+        ta.value = ta.value.trim() ? ta.value.replace(/\s*$/, "\n") + answer : answer;
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        announce("Answer added to your note.");
+      };
+      acts.append(grab);
+    }
     const saveBtn = el("button", "btn", "Save note");
     saveBtn.onclick = () => {
       const t = ta.value.trim();

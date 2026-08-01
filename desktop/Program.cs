@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -70,6 +71,10 @@ internal sealed class MainForm : Form
     private const string OllamaSetupUrl = "https://ollama.com/download/OllamaSetup.exe";
     private const string SetupModel = "qwen2.5:3b";
     private const long MaxBankBytes = 2 * 1024 * 1024;
+    private const string UpdateManifestUrl =
+        "https://raw.githubusercontent.com/mikedopp/actdrill-bank/main/latest.json";
+    private const long MaxInstallerBytes = 250L * 1024 * 1024;
+    private const int MaxManifestChars = 8192;
 
     private readonly WebView2 _web = new();
     private readonly SemaphoreSlim _aiSetupGate = new(1, 1);
@@ -238,6 +243,12 @@ internal sealed class MainForm : Form
                     break;
                 case "speechSynthesize":
                     await SpeechSynthesizeAsync(request.Id, request.Params);
+                    break;
+                case "appUpdateCheck":
+                    await AppUpdateCheckAsync(request.Id);
+                    break;
+                case "appUpdateInstall":
+                    await AppUpdateInstallAsync(request.Id);
                     break;
                 default:
                     ReplyResponse(request.Id, false, error: "Unsupported desktop request.");
@@ -611,6 +622,145 @@ internal sealed class MainForm : Form
             }
             _aiSetupGate.Release();
         }
+    }
+
+    // ---------- app updates ----------
+    // The manifest lives beside the public question bank; it names the version, the download,
+    // and the checksum. Nothing about an update is taken from the page.
+    private sealed record UpdateManifest(string Version, string Url, string Sha256, string Notes);
+
+    private static string CurrentVersion() =>
+        Assembly.GetExecutingAssembly().GetName().Version is { } version
+            ? $"{version.Major}.{version.Minor}.{version.Build}"
+            : "0.0.0";
+
+    private static bool IsNewer(string latest, string current) =>
+        Version.TryParse(latest, out var newVersion) &&
+        Version.TryParse(current, out var currentVersion) &&
+        newVersion > currentVersion;
+
+    private static async Task<UpdateManifest> FetchUpdateManifestAsync()
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+        var json = await http.GetStringAsync(UpdateManifestUrl);
+        if (json.Length > MaxManifestChars)
+        {
+            throw new InvalidDataException("The update manifest is not a manifest.");
+        }
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        return new UpdateManifest(
+            root.TryGetProperty("version", out var v) ? v.GetString() ?? string.Empty : string.Empty,
+            root.TryGetProperty("url", out var u) ? u.GetString() ?? string.Empty : string.Empty,
+            root.TryGetProperty("sha256", out var s) ? s.GetString() ?? string.Empty : string.Empty,
+            root.TryGetProperty("notes", out var n) ? n.GetString() ?? string.Empty : string.Empty);
+    }
+
+    private async Task AppUpdateCheckAsync(string id)
+    {
+        var current = CurrentVersion();
+        try
+        {
+            var manifest = await FetchUpdateManifestAsync();
+            ReplyResponse(id, true, new
+            {
+                current,
+                latest = manifest.Version,
+                newer = IsNewer(manifest.Version, current),
+                notes = manifest.Notes,
+                installable = UpdateDownloadPolicy.TryAllow(manifest.Url, out _) &&
+                              manifest.Sha256.Length == 64
+            });
+        }
+        catch (Exception ex)
+        {
+            ReplyResponse(id, false, error: "Could not check for updates: " + ex.Message);
+        }
+    }
+
+    private async Task AppUpdateInstallAsync(string id)
+    {
+        var file = Path.Combine(
+            Path.GetTempPath(),
+            "ACTDrill-" + Guid.NewGuid().ToString("N") + "-Setup.exe");
+
+        void Progress(int percent, string label) =>
+            ReplyEvent("appUpdateProgress", new { percent, label });
+
+        try
+        {
+            Progress(2, "Reading the update details…");
+            var manifest = await FetchUpdateManifestAsync();
+            if (!IsNewer(manifest.Version, CurrentVersion()))
+            {
+                throw new InvalidOperationException("This copy is already up to date.");
+            }
+
+            if (!UpdateDownloadPolicy.TryAllow(manifest.Url, out var uri) || uri is null)
+            {
+                throw new InvalidDataException("The update is not hosted where updates are allowed to come from.");
+            }
+
+            if (manifest.Sha256.Length != 64)
+            {
+                throw new InvalidDataException("The update has no usable checksum, so it will not be run.");
+            }
+
+            await DownloadWithProgressAsync(uri.ToString(), file, (read, total) =>
+            {
+                if (read > MaxInstallerBytes)
+                {
+                    throw new InvalidDataException("The update exceeds the size limit.");
+                }
+
+                var percent = total > 0 ? 4 + (int)(read * 86 / total) : 40;
+                Progress(
+                    percent,
+                    $"Downloading {manifest.Version}… {read / 1_048_576}" +
+                    (total > 0 ? $" / {total / 1_048_576} MB" : " MB"));
+            });
+
+            Progress(92, "Checking the download…");
+            string actual;
+            await using (var stream = File.OpenRead(file))
+            {
+                actual = Convert.ToHexString(await SHA256.HashDataAsync(stream));
+            }
+
+            if (!actual.Equals(manifest.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                TryDelete(file);
+                throw new InvalidDataException("The download did not match the published checksum. It was deleted.");
+            }
+
+            Progress(97, "Starting the installer…");
+            using var installer = Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
+            if (installer is null)
+            {
+                throw new InvalidOperationException("The installer did not start.");
+            }
+
+            Progress(100, "Installer running — ACTDrill will close so it can be replaced.");
+            ReplyResponse(id, true, new { started = true, version = manifest.Version });
+            // the installer replaces this executable, so step out of its way
+            BeginInvoke(new Action(async () =>
+            {
+                await Task.Delay(1500);
+                Close();
+            }));
+        }
+        catch (Exception ex)
+        {
+            TryDelete(file);
+            ReplyResponse(id, false, error: ex.Message);
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch { /* a leftover temp file is not worth failing an update over */ }
     }
 
     private static async Task DownloadWithProgressAsync(

@@ -28,6 +28,35 @@ internal static class ExternalNavigationPolicy
     }
 }
 
+/// <summary>
+/// Where an app update may be fetched from. The manifest names the download, but only
+/// these hosts may serve it — a tampered manifest cannot point the installer elsewhere.
+/// </summary>
+internal static class UpdateDownloadPolicy
+{
+    private static readonly HashSet<string> AllowedHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "github.com",
+        "objects.githubusercontent.com",
+        "release-assets.githubusercontent.com",
+        "raw.githubusercontent.com"
+    };
+
+    internal static bool TryAllow(string? value, out Uri? uri)
+    {
+        uri = null;
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var parsed) ||
+            parsed.Scheme != Uri.UriSchemeHttps ||
+            !AllowedHosts.Contains(parsed.Host))
+        {
+            return false;
+        }
+
+        uri = parsed;
+        return true;
+    }
+}
+
 internal static class AuthenticodeVerifier
 {
     private static readonly Guid GenericVerifyV2 =
