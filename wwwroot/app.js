@@ -704,7 +704,7 @@
 
   // ---------- local AI bridge (the student's OWN Ollama, via the C# host — nothing leaves the machine) ----------
   const hasBridge = () => !!(window.chrome && window.chrome.webview);
-  let _ollama = { checked: false, ok: false, model: "", models: [] };
+  let _ollama = { checked: false, ok: false, model: "", models: [], warm: false };
   const _pending = {};
   let _aiProgressCb = null;
   if (hasBridge()) {
@@ -751,11 +751,14 @@
       ok: !!(r.ok && r.ready),
       running: !!r.running,
       model: r.model || "",
-      models: Array.isArray(r.models) ? r.models : []
+      models: Array.isArray(r.models) ? r.models : [],
+      warm: false
     };
     return _ollama;
   }
   const ollamaAsk = (system, prompt) => bridge("ollamaChat", { model: _ollama.model, system, prompt }, 120000);
+  // awaited warm-up: resolves { ready } once the model is actually loaded into memory
+  const ollamaWarm = () => bridge("ollamaWarm", {}, 200000);
 
   function buildChatContext(q, correct, pat) {
     let c = "PATTERN: " + pat.name + " — " + pat.rule + "\n";
@@ -830,9 +833,19 @@
     if (!hasBridge())
       status.textContent = "Live Q&A runs in the desktop app with Ollama. The reasoning guide above is always here.";
     else if (oll.ok) {
-      status.textContent = "🟢 Local AI ready (" + oll.model + ") — private & offline. Ask anything about this problem.";
       input.disabled = false; send.disabled = false; input.focus();
       if (!guide) addMsg("sys", "Ask me why this works — or why another method wouldn't.");
+      if (_ollama.warm) {
+        status.textContent = "🟢 Ready (" + oll.model + ") — warmed up, answers are quick.";
+      } else {
+        status.innerHTML = "🟡 <span class=\"warming\">Warming up the tutor…</span> first time only (~20–40s). Type your question now — it answers the moment it's ready.";
+        ollamaWarm().then(r => {
+          _ollama.warm = !!(r && r.ready);
+          status.innerHTML = _ollama.warm
+            ? "🟢 Ready (" + esc(oll.model) + ") — warmed up, answers are quick now."
+            : "🟢 Ready (" + esc(oll.model) + "). The first answer may still take a moment.";
+        });
+      }
     } else if (oll.running)
       status.textContent = "Ollama is running but has no model yet. In a terminal run:  ollama pull qwen3:8b  — then reopen this.";
     else
@@ -1072,7 +1085,7 @@
       progWrap.classList.remove("hidden");
       progBar.style.width = "2%";
       progLabel.textContent = "Starting…";
-      _ollama.checked = false; // re-detect after we're done
+      _ollama.checked = false; _ollama.warm = false; // re-detect after we're done
       _aiProgressCb = (d) => {
         if (typeof d.percent === "number") {
           const percent = Math.max(2, Math.min(100, d.percent));

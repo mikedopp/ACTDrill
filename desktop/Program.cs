@@ -227,6 +227,9 @@ internal sealed class MainForm : Form
                 case "ollamaChat":
                     await OllamaChatAsync(request.Id, request.Params);
                     break;
+                case "ollamaWarm":
+                    await OllamaWarmAsync(request.Id);
+                    break;
                 case "aiSetup":
                     await AiSetupAsync(request.Id);
                     break;
@@ -436,11 +439,11 @@ internal sealed class MainForm : Form
         }
     }
 
-    private static async Task WarmAsync(string model)
+    private static async Task<bool> WarmAsync(string model)
     {
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(180) };
             var body = new
             {
                 model,
@@ -449,14 +452,27 @@ internal sealed class MainForm : Form
                 keep_alive = "30m",
                 messages = new object[] { new { role = "user", content = "hi" } }
             };
-            await http.PostAsync(
+            var response = await http.PostAsync(
                 OllamaBase + "/api/chat",
                 new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"));
+            return response.IsSuccessStatusCode;
         }
         catch
         {
-            // Best-effort warmup only.
+            return false; // best-effort warmup
         }
+    }
+
+    // Awaited warm: loads the model into memory and reports when it is genuinely ready.
+    private async Task OllamaWarmAsync(string id)
+    {
+        if (_model.Length == 0)
+        {
+            ReplyResponse(id, true, new { ready = false, model = string.Empty });
+            return;
+        }
+        var ready = await WarmAsync(_model);
+        ReplyResponse(id, true, new { ready, model = _model });
     }
 
     private async Task OllamaChatAsync(string id, JsonElement parameters)
