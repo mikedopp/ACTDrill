@@ -238,6 +238,10 @@
   .memolist .memoq { color: var(--muted); font-size: 0.8125rem; margin-bottom: 3px; }
   .memolist .memot { color: var(--ink); font-size: 0.9375rem; }
 
+  /* AI warm-up indicator */
+  .chatstatus .warming { color: var(--gold); font-weight: 600; animation: warmpulse 1.1s ease-in-out infinite; }
+  @keyframes warmpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
   /* Arcade / games */
   .gamelock { font-size: 0.875rem; color: var(--muted); }
   .gamemount { margin-top: 12px; }
