@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.15.0";
+  const APP_VERSION = "1.16.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -2358,8 +2358,9 @@
     { id: "runner", name: "Blaster Run", tag: "run-and-gun", unlock: 1,
       blurb: "A side-scrolling run-and-gun. Move, jump, and blast the shapes rushing you down. Earned by studying, not handed over.",
       start: startRunner },
-    { id: "corridor", name: "Corridor", tag: "first-person maze", unlock: 3, comingSoon: true,
-      blurb: "A first-person maze crawl — Doom-style. Landing in the next update. Keep leveling up." }
+    { id: "corridor", name: "Corridor", tag: "first-person maze", unlock: 3,
+      blurb: "A first-person crawl through a maze you can only see one wall at a time. Find the five data cores and get to the exit before the drones do. Built here, not borrowed.",
+      start: startCorridor }
   ];
 
   function renderArcade() {
@@ -2469,6 +2470,191 @@
       if (paused) banner("Paused — press P");
       else if (over) banner("Game over · " + score + " · press Space");
     }
+    let raf = 0;
+    function loop() { if (!paused && !over) update(); draw(); raf = requestAnimationFrame(loop); }
+    canvas.addEventListener("keydown", onKey);
+    canvas.addEventListener("keyup", onKey);
+    canvas.focus();
+    loop();
+    return { stop() { cancelAnimationFrame(raf); canvas.removeEventListener("keydown", onKey); canvas.removeEventListener("keyup", onKey); mount.innerHTML = ""; } };
+  }
+
+  // Game 2 — Corridor: an original first-person maze crawl on a raycaster.
+  // One column of pixels per screen x: march a ray until it hits a wall, and how far it
+  // travelled decides how tall that slice of wall is. That's the whole trick.
+  function startCorridor(mount) {
+    mount.innerHTML = "";
+    const W = 640, H = 360, HALF = H / 2;
+    const canvas = el("canvas");
+    canvas.width = W; canvas.height = H;
+    canvas.className = "gamecanvas";
+    canvas.tabIndex = 0;
+    canvas.setAttribute("role", "application");
+    canvas.setAttribute("aria-label",
+      "Corridor game. Arrow keys or W A S D to move and turn, P pauses. Collect five cores and reach the exit.");
+    mount.append(canvas);
+    mount.append(el("p", "gamehelp", "↑ ↓ walk · ← → turn (A/D strafe) · P pause · R restart"));
+    const ctx = canvas.getContext("2d");
+    const C = vizColors();
+    const RED = "#e0555f";
+
+    // 1 = wall, 0 = floor. Hand-built so it reads as rooms and corridors, not noise.
+    const MAP = [
+      "1111111111111111",
+      "1000000010000021",
+      "1011111010111101",
+      "1010002010100101",
+      "1010111011100101",
+      "1010100000000101",
+      "1000101111110101",
+      "1111101000010001",
+      "1000201011010111",
+      "1011111010010001",
+      "1010000010111101",
+      "1010111110100001",
+      "1010100000102111",
+      "1000101111100001",
+      "1211100000011101",
+      "1111111111111111"
+    ].map(row => row.split("").map(Number));
+    const MH = MAP.length, MW = MAP[0].length;
+    const at = (x, y) => (MAP[y] && MAP[y][x] !== undefined ? MAP[y][x] : 1);
+    const solid = (x, y) => at(Math.floor(x), Math.floor(y)) === 1;
+
+    let px, py, dir, cores, taken, drones, over, won, paused, tick, message;
+    function reset() {
+      px = 1.5; py = 1.5; dir = 0;
+      taken = 0; over = false; won = false; paused = false; tick = 0; message = "";
+      cores = [];
+      for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) if (MAP[y][x] === 2) cores.push({ x: x + 0.5, y: y + 0.5, got: false });
+      drones = [{ x: 8.5, y: 8.5, t: 0 }, { x: 12.5, y: 3.5, t: 1.6 }, { x: 4.5, y: 12.5, t: 3.1 }];
+    }
+    reset();
+
+    const keys = {};
+    function onKey(e) {
+      const k = e.key.toLowerCase();
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "w", "a", "s", "d", "p", "r"].includes(k)) e.preventDefault();
+      keys[k] = e.type === "keydown";
+      if (e.type !== "keydown") return;
+      if (k === "p" && !over) paused = !paused;
+      if (k === "r") reset();
+    }
+
+    // keep a body's width away from the wall, or you end up with your nose in the texture
+    const blocked = (x, y) => solid(x + 0.18, y) || solid(x - 0.18, y) || solid(x, y + 0.18) || solid(x, y - 0.18);
+    function move(step, strafe) {
+      const nx = px + Math.cos(dir) * step - Math.sin(dir) * strafe;
+      const ny = py + Math.sin(dir) * step + Math.cos(dir) * strafe;
+      if (!blocked(nx, py)) px = nx;   // slide along walls instead of sticking to them
+      if (!blocked(px, ny)) py = ny;
+    }
+
+    function update() {
+      tick++;
+      const speed = 0.055, turn = 0.045;
+      if (keys.arrowleft) dir -= turn;
+      if (keys.arrowright) dir += turn;
+      if (keys.arrowup || keys.w) move(speed, 0);
+      if (keys.arrowdown || keys.s) move(-speed, 0);
+      if (keys.a) move(0, -speed);
+      if (keys.d) move(0, speed);
+
+      cores.forEach(c => {
+        if (!c.got && Math.hypot(c.x - px, c.y - py) < 0.5) {
+          c.got = true; taken++;
+          message = taken >= cores.length ? "All cores — get to the exit!" : "Core " + taken + " of " + cores.length;
+        }
+      });
+
+      drones.forEach(d => {
+        d.t += 0.012;
+        const stepX = Math.cos(d.t * 1.7) * 0.03, stepY = Math.sin(d.t * 1.1) * 0.03;
+        if (!solid(d.x + stepX, d.y)) d.x += stepX;
+        if (!solid(d.x, d.y + stepY)) d.y += stepY;
+        if (Math.hypot(d.x - px, d.y - py) < 0.45) { over = true; message = "A drone got you."; }
+      });
+
+      // the exit is the far corner, and it only opens once every core is in hand
+      if (taken >= cores.length && Math.hypot(px - (MW - 2.5), py - (MH - 2.5)) < 0.7) { won = true; over = true; }
+    }
+
+    function column(x) {
+      // one ray per screen column, fanned across a 66° field of view
+      const angle = dir + Math.atan(((2 * x) / W - 1) * 0.66);
+      const sin = Math.sin(angle), cos = Math.cos(angle);
+      let distance = 0, hitSide = 0;
+      while (distance < 20) {
+        distance += 0.02;
+        const rx = px + cos * distance, ry = py + sin * distance;
+        if (solid(rx, ry)) {
+          // which face did we hit? compare how far into the cell each axis is
+          const fx = Math.abs(rx - Math.round(rx)), fy = Math.abs(ry - Math.round(ry));
+          hitSide = fx < fy ? 0 : 1;
+          // where along that face — the seam between panels falls at the cell edges
+          const along = hitSide === 0 ? ry : rx;
+          return { distance, hitSide, seam: Math.abs(along - Math.round(along)) > 0.47 };
+        }
+      }
+      return { distance, hitSide, seam: false };
+    }
+
+    function draw() {
+      ctx.fillStyle = C.surf; ctx.fillRect(0, 0, W, HALF);
+      ctx.fillStyle = C.grid; ctx.fillRect(0, HALF, W, HALF);
+      const depth = new Array(W);
+      for (let x = 0; x < W; x++) {
+        const { distance, hitSide, seam } = column(x);
+        depth[x] = distance;
+        const height = H / (distance * Math.cos(Math.atan(((2 * x) / W - 1) * 0.66)) || 0.01);
+        const shade = Math.max(0.18, 1 - distance / 12) * (hitSide ? 0.72 : 1) * (seam ? 0.55 : 1);
+        ctx.fillStyle = hitSide ? C.blue : C.aqua;
+        // panel bands, so a wall an inch from your face still reads as a wall
+        const top = HALF - height / 2, band = height / 6;
+        for (let b = 0; b < 6; b++) {
+          const y = top + b * band;
+          if (y > H || y + band < 0) continue;
+          ctx.globalAlpha = shade * (b % 2 ? 0.82 : 1);
+          ctx.fillRect(x, y, 1, band + 1);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // sprites: cores and drones, painted back to front and hidden behind nearer walls
+      const sprites = cores.filter(c => !c.got).map(c => ({ x: c.x, y: c.y, col: C.gold, size: 0.42 }))
+        .concat(drones.map(d => ({ x: d.x, y: d.y, col: RED, size: 0.6 })));
+      if (taken >= cores.length) sprites.push({ x: MW - 2.5, y: MH - 2.5, col: C.good, size: 0.8 });
+      sprites
+        .map(s => ({ ...s, d: Math.hypot(s.x - px, s.y - py) }))
+        .sort((a, b) => b.d - a.d)
+        .forEach(s => {
+          let a = Math.atan2(s.y - py, s.x - px) - dir;
+          while (a > Math.PI) a -= Math.PI * 2;
+          while (a < -Math.PI) a += Math.PI * 2;
+          if (Math.abs(a) > 0.8 || s.d < 0.15) return;
+          const sx = Math.round(W / 2 + Math.tan(a) / 0.66 * (W / 2));
+          const size = Math.min(H, (H / s.d) * s.size);
+          if (sx < 0 || sx >= W || depth[Math.max(0, Math.min(W - 1, sx))] < s.d) return;
+          ctx.globalAlpha = Math.max(0.25, 1 - s.d / 12);
+          ctx.fillStyle = s.col;
+          ctx.fillRect(sx - size / 2, HALF - size / 2, size, size);
+          ctx.globalAlpha = 1;
+        });
+
+      ctx.fillStyle = C.ink; ctx.font = "14px monospace";
+      ctx.fillText("Cores " + taken + " / " + cores.length, 12, 22);
+      if (message) { ctx.fillStyle = C.gold; ctx.fillText(message, 12, H - 14); }
+      if (paused) banner("Paused — press P");
+      else if (won) banner("You made it out · press R");
+      else if (over) banner(message + " · press R");
+    }
+
+    function banner(text) {
+      ctx.fillStyle = "rgba(0,0,0,0.62)"; ctx.fillRect(0, HALF - 34, W, 68);
+      ctx.fillStyle = C.ink; ctx.font = "18px monospace"; ctx.textAlign = "center";
+      ctx.fillText(text, W / 2, HALF + 6); ctx.textAlign = "left";
+    }
+
     let raf = 0;
     function loop() { if (!paused && !over) update(); draw(); raf = requestAnimationFrame(loop); }
     canvas.addEventListener("keydown", onKey);

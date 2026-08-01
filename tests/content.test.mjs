@@ -207,14 +207,14 @@ test("release versions agree", () => {
     "wwwroot/index.html",
     "README.md"
   ];
-  files.forEach(file => assert.match(read(file), /1\.15\.0/, file));
+  files.forEach(file => assert.match(read(file), /1\.16\.0/, file));
 });
 
 test("installer helper is versioned and referenced consistently", () => {
   const helpers = fs.readdirSync(path.join(root, "installer"))
     .filter(file => /^actdrill_Setup-AiTutor_v.+\.ps1$/.test(file));
   assert.equal(helpers.length, 1, "exactly one versioned installer helper");
-  assert.match(helpers[0], /1\.15\.0/, "helper filename matches release version");
+  assert.match(helpers[0], /1\.16\.0/, "helper filename matches release version");
   assert.ok(read("installer/ACTDrill.iss").includes(helpers[0]),
     `ACTDrill.iss must reference ${helpers[0]}`);
 });
