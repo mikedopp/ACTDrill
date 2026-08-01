@@ -6,10 +6,22 @@ The default theme is Arctic Steel: `#5ba4d9` on `#0b0e14`, with IBM Plex Mono
 or an installed monospace fallback. Surfaces use full borders and restrained
 depth. Color never carries meaning alone.
 
-The student's own notes are the one decorated surface: the open note editor and
-the notes review card carry an animated gradient border in Google's four colors,
-and the reveal button for an existing note carries a static glow. Reduced motion
-holds the gradient still rather than removing it.
+The student's own notes are the one decorated surface: the open note editor, the
+notes review card, and the live tutor question box carry an animated gradient
+border in Google's four colors, and the reveal button for an existing note
+carries a static glow. Reduced motion holds the gradient still rather than
+removing it, and Settings can switch the whole effect to Plain.
+
+## Notes
+
+- A note belongs to one question, is written by the student, and is never
+  generated for them.
+- Returning to a noted question reveals the note only on request, so it cannot
+  spoil the retrieval.
+- The notes drawer is complementary, not modal: the drill stays usable behind
+  it, and the drill's keyboard shortcuts do not fire from inside it.
+- Notes export as plain Markdown, grouped by subject and pattern; erasing them
+  requires explicit confirmation and is offered next to the export.
 
 ## Layout
 

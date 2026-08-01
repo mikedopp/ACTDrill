@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.13.2";
+  const APP_VERSION = "1.14.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -25,7 +25,7 @@
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
              audio: { on: true, rate: 0.9, autoRead: true, volume: 1, voiceId: "" }, coach: "auto",
-             theme: "dark", fontScale: 1, dailyGoal: 10, memos: {} };
+             theme: "dark", fontScale: 1, dailyGoal: 10, memos: {}, glow: true };
   }
   const isRecord = value => value && typeof value === "object" && !Array.isArray(value);
   const finite = (value, fallback, min, max) =>
@@ -82,6 +82,7 @@
         ? value.audio.voiceId.slice(0, 300)
         : "";
     }
+    base.glow = value.glow !== false;
     if (isRecord(value.memos)) {
       Object.entries(value.memos).slice(0, 1000).forEach(([id, text]) => {
         if (/^[A-Za-z0-9_-]{1,80}$/.test(id) && typeof text === "string" && text.trim())
@@ -108,6 +109,8 @@
   function applyFontScale() {
     document.documentElement.style.fontSize = (16 * finite(S.fontScale, 1, 0.9, 1.45)) + "px";
   }
+  // the moving gradient on note surfaces — some people find motion distracting, so it's optional
+  function applyGlow() { document.documentElement.setAttribute("data-glow", S.glow ? "on" : "off"); }
   // diagram/plot colors that follow the current theme (SVGs are rebuilt each render)
   function vizColors() {
     return S.theme === "light"
@@ -190,6 +193,10 @@
   const isTyping = node =>
     node instanceof HTMLElement &&
     (node.isContentEditable || /^(input|textarea|select)$/i.test(node.tagName));
+  // surfaces the drill shortcuts must keep their hands off: text fields, and the notes
+  // drawer, whose buttons answer to Enter and space on their own
+  const ownsKeys = node =>
+    node instanceof HTMLElement && (isTyping(node) || !!node.closest("#notespanel"));
   function announce(message) {
     const region = document.getElementById("app-status");
     if (!region) return;
@@ -1057,6 +1064,54 @@
     gg.append(el("div", "setnote", "Rough day? Set it to 3. Doing even ONE question still counts as a win — starting is the whole battle."));
     body.append(gg);
 
+    // Your notes — the study sheet he writes himself
+    const ng = el("div", "setgroup");
+    ng.append(el("div", "setlabel", "Your notes"));
+    const nrow = el("div", "setopts");
+    const noteCount = Object.keys(S.memos || {}).filter(id => S.memos[id]).length;
+    const openPanel = el("button", "setbtn", "📓 Open notes panel");
+    openPanel.onclick = () => { close(); toggleNotesPanel(true); };
+    const mdBtn = el("button", "setbtn", "Save as Markdown (.md)");
+    mdBtn.disabled = noteCount === 0;
+    mdBtn.onclick = saveNotesMarkdown;
+    const wipeBtn = el("button", "setbtn", "Erase all notes");
+    wipeBtn.disabled = noteCount === 0;
+    wipeBtn.onclick = () => {
+      if (!confirm("Erase all " + noteCount + " of your notes? This can't be undone — save them as a Markdown file first if you want to keep them.")) return;
+      S.memos = {}; save();
+      wipeBtn.disabled = true; mdBtn.disabled = true;
+      refreshNotesPanel();
+      if (!document.getElementById("view-progress").classList.contains("hidden")) renderProgress();
+      announce("All notes erased.");
+    };
+    nrow.append(openPanel, mdBtn, wipeBtn);
+    ng.append(nrow);
+    ng.append(el("div", "setnote", noteCount
+      ? noteCount + (noteCount === 1 ? " note" : " notes") + " saved. The Markdown file is a plain study sheet — it opens anywhere, and printing it makes a decent review page."
+      : "No notes yet. On any answered question, hit 📝 Add a note and write the thing you keep forgetting."));
+    body.append(ng);
+
+    // Highlights — the moving gradient on note surfaces
+    const hg = el("div", "setgroup");
+    hg.append(el("div", "setlabel", "Note highlights"));
+    const hrow = el("div", "setopts");
+    [[true, "✨ On"], [false, "Plain"]].forEach(([val, label]) => {
+      const b = el("button", "setbtn" + (S.glow === val ? " on" : ""), label);
+      b.setAttribute("aria-pressed", String(S.glow === val));
+      b.onclick = () => {
+        S.glow = val; save(); applyGlow();
+        hrow.querySelectorAll(".setbtn").forEach(x => {
+          x.classList.remove("on"); x.setAttribute("aria-pressed", "false");
+        });
+        b.classList.add("on");
+        b.setAttribute("aria-pressed", "true");
+      };
+      hrow.append(b);
+    });
+    hg.append(hrow);
+    hg.append(el("div", "setnote", "The colored border that circles the note box and the question chat. Set it to Plain if the movement pulls your eye off the question."));
+    body.append(hg);
+
     // AI tutor (optional) — status + one-click install with progress
     const ag = el("div", "setgroup");
     ag.append(el("div", "setlabel", "AI tutor — the 'Why this?' chat (optional)"));
@@ -1329,6 +1384,123 @@
       box.innerHTML = "<b>Your note:</b> " + esc(S.memos[q.id]);
     } else if (box) { box.remove(); }
   }
+  // ---------- notes as Markdown: a study sheet in his own words ----------
+  function noteEntries() {
+    return Object.keys(S.memos || {})
+      .filter(id => S.memos[id])
+      .map(id => {
+        const q = ACT_QUESTIONS.find(x => x.id === id);
+        const pat = q ? ACT_PATTERNS[q.pattern] : null;
+        const raw = q ? (q.passage ? q.passage.replace(/\|/g, "") : (q.context || q.prompt || id)) : id;
+        return {
+          id,
+          note: S.memos[id],
+          subject: pat ? pat.subject : "Other",
+          pattern: pat ? pat.name : "",
+          question: raw
+        };
+      })
+      .sort((a, b) => (a.subject + a.pattern).localeCompare(b.subject + b.pattern));
+  }
+  function notesMarkdown() {
+    const entries = noteEntries();
+    const lines = ["# ACTDrill notes — " + todayKey(), "",
+      entries.length + (entries.length === 1 ? " note" : " notes") + " · ACTDrill " + APP_VERSION, ""];
+    let subject = null;
+    entries.forEach(entry => {
+      if (entry.subject !== subject) { subject = entry.subject; lines.push("## " + subject, ""); }
+      if (entry.pattern) lines.push("### " + entry.pattern, "");
+      lines.push("> " + entry.question.replace(/\s+/g, " ").trim(), "", entry.note, "", "---", "");
+    });
+    if (!entries.length) lines.push("_No notes yet — write one on any question you want to remember._", "");
+    return lines.join("\n");
+  }
+  function saveNotesMarkdown() {
+    const blob = new Blob([notesMarkdown()], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url;
+    a.download = "actdrill-notes-" + todayKey() + ".md";
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    announce("Notes saved as a Markdown file.");
+  }
+  async function copyNotesMarkdown(btn) {
+    try {
+      await navigator.clipboard.writeText(notesMarkdown());
+      btn.textContent = "Copied ✓";
+      announce("Markdown copied to the clipboard.");
+    } catch {
+      btn.textContent = "Couldn't copy";
+      announce("Copying is not available here — use Save as .md instead.");
+    }
+    setTimeout(() => { btn.textContent = "Copy markdown"; }, 2200);
+  }
+  function renderNotesPanel() {
+    const body = document.querySelector("#notespanel .npbody");
+    if (!body) return;
+    body.innerHTML = "";
+    const entries = noteEntries();
+    document.querySelector("#notespanel .npcount").textContent =
+      entries.length ? entries.length + (entries.length === 1 ? " note" : " notes") : "";
+    if (!entries.length) {
+      body.append(el("p", "npempty",
+        "Nothing here yet. On any question you've answered, hit <b>📝 Add a note</b> and tell yourself the thing you keep forgetting. It shows up here, and you can save the whole set as a Markdown study sheet."));
+      return;
+    }
+    let subject = null;
+    entries.forEach(entry => {
+      if (entry.subject !== subject) {
+        subject = entry.subject;
+        body.append(el("div", "npsub", esc(subject)));
+      }
+      const item = el("div", "npitem");
+      if (entry.pattern) item.append(el("div", "nppat", esc(entry.pattern)));
+      const snippet = entry.question.replace(/\s+/g, " ").trim();
+      item.append(
+        el("blockquote", "npq", esc(snippet.length > 120 ? snippet.slice(0, 120) + "…" : snippet)),
+        el("div", "npnote", esc(entry.note))
+      );
+      body.append(item);
+    });
+  }
+  function buildNotesPanel() {
+    const panel = el("aside", "notespanel");
+    panel.id = "notespanel";
+    panel.setAttribute("role", "complementary");
+    panel.setAttribute("aria-label", "Your notes");
+    const hd = el("div", "nphd");
+    hd.append(el("h3", null, "Your notes"), el("span", "npcount", ""));
+    const close = el("button", "btn ghost", "Close");
+    close.onclick = () => toggleNotesPanel(false);
+    hd.append(close);
+    panel.append(hd, el("div", "npbody"));
+    const ft = el("div", "npft");
+    const saveBtn = el("button", "btn", "Save as .md");
+    saveBtn.onclick = saveNotesMarkdown;
+    const copyBtn = el("button", "btn ghost", "Copy markdown");
+    copyBtn.onclick = () => copyNotesMarkdown(copyBtn);
+    ft.append(saveBtn, copyBtn);
+    panel.append(ft);
+    document.body.append(panel);
+    return panel;
+  }
+  function toggleNotesPanel(force) {
+    const panel = document.getElementById("notespanel") || buildNotesPanel();
+    const open = force === undefined ? !panel.classList.contains("open") : !!force;
+    panel.classList.toggle("open", open);
+    const btn = document.getElementById("notesbtn");
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) { renderNotesPanel(); panel.querySelector(".nphd button").focus(); }
+    else btn.focus();
+  }
+  const refreshNotesPanel = () => {
+    const panel = document.getElementById("notespanel");
+    if (panel && panel.classList.contains("open")) renderNotesPanel();
+  };
+
   function memoEditor(q, mountBtn, card) {
     const existing = card.querySelector(".memoedit");
     if (existing) { existing.remove(); mountBtn.focus(); return; }
@@ -1352,6 +1524,7 @@
       wrap.remove();
       mountBtn.textContent = S.memos[q.id] ? "📝 Edit note" : "📝 Add a note";
       refreshMemoBox(card, q);
+      refreshNotesPanel();
       announce(S.memos[q.id] ? "Note saved." : "Note removed.");
       mountBtn.focus();
     };
@@ -1360,7 +1533,7 @@
     acts.append(saveBtn, cancelBtn);
     if (S.memos[q.id]) {
       const del = el("button", "btn ghost", "Delete note");
-      del.onclick = () => { delete S.memos[q.id]; save(); wrap.remove(); mountBtn.textContent = "📝 Add a note"; refreshMemoBox(card, q); announce("Note removed."); mountBtn.focus(); };
+      del.onclick = () => { delete S.memos[q.id]; save(); wrap.remove(); mountBtn.textContent = "📝 Add a note"; refreshMemoBox(card, q); refreshNotesPanel(); announce("Note removed."); mountBtn.focus(); };
       acts.append(del);
     }
     wrap.append(acts);
@@ -1486,7 +1659,7 @@
     // Writing a note is not answering a question: a space stays a space, Enter stays
     // a new line, and "n" stays a letter. Without this, the first space typed into a
     // note swallowed the character and skipped to the next question.
-    if (isTyping(e.target)) return;
+    if (ownsKeys(e.target)) return;
     if (!document.getElementById("view-drill").classList.contains("hidden")) {
       if (current && !current.answered) {
         const k = e.key.toLowerCase();
@@ -2198,7 +2371,9 @@
   // ---------- boot ----------
   applyTheme();
   applyFontScale();
+  applyGlow();
   document.getElementById("gearbtn").onclick = openSettings;
+  document.getElementById("notesbtn").onclick = toggleNotesPanel;
   renderChips();
   if (S.introSeen) nextQuestion(); else showIntro();
 })();

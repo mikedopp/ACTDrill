@@ -207,14 +207,14 @@ test("release versions agree", () => {
     "wwwroot/index.html",
     "README.md"
   ];
-  files.forEach(file => assert.match(read(file), /1\.13\.2/, file));
+  files.forEach(file => assert.match(read(file), /1\.14\.0/, file));
 });
 
 test("installer helper is versioned and referenced consistently", () => {
   const helpers = fs.readdirSync(path.join(root, "installer"))
     .filter(file => /^actdrill_Setup-AiTutor_v.+\.ps1$/.test(file));
   assert.equal(helpers.length, 1, "exactly one versioned installer helper");
-  assert.match(helpers[0], /1\.13\.2/, "helper filename matches release version");
+  assert.match(helpers[0], /1\.14\.0/, "helper filename matches release version");
   assert.ok(read("installer/ACTDrill.iss").includes(helpers[0]),
     `ACTDrill.iss must reference ${helpers[0]}`);
 });
@@ -223,7 +223,8 @@ test("drill shortcuts yield to text fields, so a space typed in a note stays a s
   const app = read("wwwroot/app.js");
   // Without this bail-out the global 1-4/Enter/space/n shortcuts fire while the student
   // is writing a note: the space is swallowed and the question is skipped mid-sentence.
-  assert.match(app, /if \(isTyping\(e\.target\)\) return;/);
+  assert.match(app, /if \(ownsKeys\(e\.target\)\) return;/);
+  assert.match(app, /const ownsKeys = node =>[\s\S]*?isTyping\(node\)/);
 
   const helper = app.match(/const isTyping = node =>[\s\S]*?\);\r?\n/);
   assert.ok(helper, "isTyping helper must exist");
