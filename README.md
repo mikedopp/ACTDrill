@@ -62,7 +62,7 @@ publish the portable ZIP, and attach `SHA256SUMS.txt` automatically.
 
 Compile `installer\ACTDrill.iss` with Inno Setup after publishing `dist\ACTDrill.exe`.
 The optional manual AI helper is
-`installer\actdrill_Setup-AiTutor_v1.17.0.ps1`.
+`installer\actdrill_Setup-AiTutor_v1.18.0.ps1`.
 
 ## Repository map
 

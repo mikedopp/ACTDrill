@@ -199,6 +199,43 @@ test("every Math question has a usable start-here coaching path", () => {
   }
 });
 
+test("every Beyond question is answerable and cites a real source", () => {
+  const context = { window: {} };
+  vm.createContext(context);
+  new vm.Script(read("beyond-questions.js"), { filename: "beyond-questions.js" }).runInContext(context);
+  const bank = context.window.ACTDrillBeyond;
+
+  assert.equal(bank.elements.length, 118, "the periodic table needs all 118 elements");
+  assert.ok(bank.questions.length >= 25);
+
+  const ids = new Set();
+  for (const q of bank.questions) {
+    assert.match(q.id, /^[A-Za-z0-9_-]{1,80}$/);
+    assert.equal(ids.has(q.id), false, `duplicate id ${q.id}`);
+    ids.add(q.id);
+    assert.equal(q.choices.length, 4, `${q.id} must have four choices`);
+    assert.equal(q.choices.filter(c => c.correct === true).length, 1,
+      `${q.id} must have exactly one correct choice`);
+    for (const choice of q.choices) {
+      assert.equal(typeof choice.text, "string");
+      assert.ok(choice.why.trim(), `${q.id} has a choice with no explanation`);
+    }
+    // the whole point of this bank: a citation the student can go and read
+    const source = bank.sources[q.src];
+    assert.ok(source, `${q.id} cites unknown source "${q.src}"`);
+    assert.match(source.url, /^https:\/\//, `${q.id}'s source needs an https URL`);
+  }
+
+  // the bench must be able to weigh everything it can make
+  for (const [key, compound] of Object.entries(bank.compounds)) {
+    for (const symbol of Object.keys(compound.ratio)) {
+      assert.ok(bank.elements.some(e => e[1] === symbol),
+        `compound ${key} uses unknown element ${symbol}`);
+    }
+    assert.ok(compound.note.trim(), `compound ${key} needs an explanation`);
+  }
+});
+
 test("release versions agree", () => {
   const files = [
     "desktop/ACTDrill.Desktop.csproj",
@@ -207,14 +244,14 @@ test("release versions agree", () => {
     "wwwroot/index.html",
     "README.md"
   ];
-  files.forEach(file => assert.match(read(file), /1\.17\.0/, file));
+  files.forEach(file => assert.match(read(file), /1\.18\.0/, file));
 });
 
 test("installer helper is versioned and referenced consistently", () => {
   const helpers = fs.readdirSync(path.join(root, "installer"))
     .filter(file => /^actdrill_Setup-AiTutor_v.+\.ps1$/.test(file));
   assert.equal(helpers.length, 1, "exactly one versioned installer helper");
-  assert.match(helpers[0], /1\.17\.0/, "helper filename matches release version");
+  assert.match(helpers[0], /1\.18\.0/, "helper filename matches release version");
   assert.ok(read("installer/ACTDrill.iss").includes(helpers[0]),
     `ACTDrill.iss must reference ${helpers[0]}`);
 });

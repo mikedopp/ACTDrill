@@ -4,9 +4,9 @@
     Installs and verifies the optional local ACTDrill AI tutor.
 
 .DESCRIPTION
-    Script:  actdrill_Setup-AiTutor_v1.17.0.ps1
+    Script:  actdrill_Setup-AiTutor_v1.18.0.ps1
     Project: ACTDrill
-    Version: 1.17.0
+    Version: 1.18.0
     Stage:   Release
     Updated: 2026-07-29
     Author:  Mike Dopp
@@ -24,7 +24,7 @@
 param()
 
 #region Configuration
-$ScriptVersion = '1.17.0'
+$ScriptVersion = '1.18.0'
 $ErrorActionPreference = 'Stop'
 $ModelName = 'qwen2.5:3b'
 $OllamaUri = 'https://ollama.com/download/OllamaSetup.exe'

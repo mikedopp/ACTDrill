@@ -314,6 +314,58 @@
   }
   .startollama { margin-left: 8px; font-size: 0.8125rem; padding: 5px 10px; min-height: 32px; }
 
+  /* Periodic table + the compound bench */
+  .ptwrap { max-width: 100%; overflow-x: auto; padding-bottom: 6px; }
+  .ptable { display: grid; grid-template-columns: repeat(18, minmax(38px, 1fr)); gap: 2px; min-width: 700px; }
+  .pcell {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 4px; background: var(--raised);
+    color: var(--ink); font: inherit; cursor: pointer; padding: 3px 1px;
+    min-height: 42px; line-height: 1.1;
+  }
+  .pcell:hover { border-color: var(--accent); }
+  .pcell.picked { outline: 2px solid var(--gold); }
+  .pcell .pz { font-size: 0.5rem; color: var(--muted); }
+  .pcell .psym { font-size: 0.8125rem; font-weight: 700; }
+  .pcell .pmass { font-size: 0.4375rem; color: var(--muted); }
+  .cat-alkali { background: color-mix(in srgb, #e0555f 22%, var(--raised)); }
+  .cat-alkaline { background: color-mix(in srgb, #ffc857 20%, var(--raised)); }
+  .cat-transition { background: color-mix(in srgb, #5ba4d9 18%, var(--raised)); }
+  .cat-metal { background: color-mix(in srgb, #9daab8 20%, var(--raised)); }
+  .cat-metalloid { background: color-mix(in srgb, #66d9b3 18%, var(--raised)); }
+  .cat-nonmetal { background: color-mix(in srgb, #57d879 18%, var(--raised)); }
+  .cat-halogen { background: color-mix(in srgb, #b78bff 22%, var(--raised)); }
+  .cat-noble { background: color-mix(in srgb, #4dd0e1 20%, var(--raised)); }
+  .cat-lanthanide { background: color-mix(in srgb, #ff9e6d 18%, var(--raised)); }
+  .cat-actinide { background: color-mix(in srgb, #ff7fb0 18%, var(--raised)); }
+
+  .bench {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 62px;
+    border: 2px dashed var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px;
+  }
+  .bench.over { border-color: var(--gold); background: var(--raised); }
+  .benchempty { color: var(--muted); font-size: 0.875rem; }
+  .benchchip {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px;
+    font: inherit; font-weight: 700; font-size: 1rem; padding: 8px 12px; cursor: pointer; min-height: 40px;
+  }
+  .benchchip .bx { opacity: 0.7; margin-left: 4px; }
+  .benchplus { color: var(--muted); font-size: 1.1rem; }
+  .benchnone { color: var(--ink2); font-size: 0.9375rem; line-height: 1.55; }
+  .benchhit { border-left: 3px solid var(--gold); padding-left: 12px; }
+  .benchhit .bformula { font-size: 1.5rem; font-weight: 700; color: var(--ink); font-family: Consolas, "Cascadia Mono", monospace; }
+  .benchhit .bname { color: var(--accent); font-size: 0.875rem; margin: 2px 0 8px; }
+  .benchhit .bnote { color: var(--ink2); font-size: 0.9375rem; line-height: 1.55; margin: 0 0 8px; }
+  .benchhit .bmass { color: var(--ink2); font-size: 0.875rem; font-family: Consolas, "Cascadia Mono", monospace; }
+
+  /* Beyond drill + citations */
+  .bdtopic { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .bdhost .choice .mark, .bdhost .choice .why { visibility: hidden; }
+  .bdhost.answered .choice.shown .mark, .bdhost.answered .choice.shown .why { visibility: visible; }
+  .bdsource { margin-top: 10px; font-size: 0.8125rem; color: var(--muted); }
+  .bdsource a, .srclist a { color: var(--accent); }
+  .srclist { margin: 0 0 10px; padding-left: 18px; color: var(--ink2); font-size: 0.9375rem; line-height: 1.7; }
+
   /* Worked steps — the equation moving, one state at a time */
   .workviz { animation: vizin 0.5s ease both; }
   @keyframes vizin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

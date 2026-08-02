@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.17.0";
+  const APP_VERSION = "1.18.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -2580,6 +2580,136 @@
   };
   const BEYOND_SUBJECTS = Object.keys(BEYOND);
 
+  // the sourced bank, when it's present (it ships beside questions.js)
+  const BX = (typeof window !== "undefined" && window.ACTDrillBeyond) || null;
+
+  // ---------- chemistry bench: elements, and what they make together ----------
+  const elementBySymbol = sym => (BX ? BX.elements.find(e => e[1] === sym) : null);
+  function molarMass(ratio) {
+    let total = 0;
+    for (const [sym, count] of Object.entries(ratio)) {
+      const e = elementBySymbol(sym);
+      if (!e) return null;
+      total += e[3] * count;
+    }
+    return Math.round(total * 1000) / 1000;
+  }
+
+  function renderPeriodicTable(mount, onPick, selected) {
+    const grid = el("div", "ptable");
+    BX.elements.forEach(e => {
+      const [z, sym, name, mass, group, period, category, estimated] = e;
+      const cell = el("button", "pcell cat-" + category + (selected.includes(sym) ? " picked" : ""));
+      cell.style.gridColumn = String(group);
+      cell.style.gridRow = String(category === "lanthanide" ? 9 : category === "actinide" ? 10 : period);
+      if (category === "lanthanide") cell.style.gridColumn = String(3 + (z - 57));
+      if (category === "actinide") cell.style.gridColumn = String(3 + (z - 89));
+      cell.innerHTML = "<span class='pz'>" + z + "</span><span class='psym'>" + esc(sym) + "</span>" +
+        "<span class='pmass'>" + (estimated ? "[" + mass + "]" : mass) + "</span>";
+      cell.title = name + " · " + (estimated ? "mass number of the most stable isotope" : "standard atomic weight") + " " + mass;
+      cell.setAttribute("aria-label", name + ", element " + z + ", atomic weight " + mass);
+      cell.onclick = () => onPick(sym);
+      grid.append(cell);
+    });
+    mount.append(grid);
+  }
+
+  function renderBench(v) {
+    const card = el("div", "card");
+    card.append(el("h3", "sect", "The bench — put two elements together"));
+    card.append(el("p", "note", "Click an element to add it (or drag it into the tray). Two or three at a time. The bench tells you what they make, why they bond that way, and works out the molar mass from the IUPAC weights."));
+
+    const tray = el("div", "bench");
+    tray.setAttribute("role", "group");
+    tray.setAttribute("aria-label", "Bench tray");
+    const result = el("div", "benchresult");
+    result.setAttribute("aria-live", "polite");
+    let picked = [];
+
+    function react() {
+      tray.innerHTML = "";
+      if (!picked.length) {
+        tray.append(el("span", "benchempty", "Empty — click an element below."));
+      } else {
+        picked.forEach((sym, i) => {
+          const e = elementBySymbol(sym);
+          const chip = el("button", "benchchip", esc(sym) + " <span class='bx'>×</span>");
+          chip.title = "Remove " + (e ? e[2] : sym);
+          chip.setAttribute("aria-label", "Remove " + (e ? e[2] : sym));
+          chip.onclick = () => { picked.splice(i, 1); react(); };
+          tray.append(chip);
+          if (i < picked.length - 1) tray.append(el("span", "benchplus", "+"));
+        });
+      }
+      result.innerHTML = "";
+      if (picked.length < 1) return;
+      const key = [...new Set(picked)].sort().join(",");
+      const compound = BX.compounds[key];
+      if (!compound) {
+        if (picked.length === 1) {
+          const e = elementBySymbol(picked[0]);
+          result.append(el("div", "benchnone",
+            "<b>" + esc(e ? e[2] : picked[0]) + "</b> on its own. Add another element to see what they make."));
+          return;
+        }
+        result.append(el("div", "benchnone",
+          "<b>No common compound</b> for that combination. That's a real answer, not a gap — most random pairs of elements don't form a stable everyday compound. Try Na + Cl, H + O, or C + O."));
+        return;
+      }
+      const mass = molarMass(compound.ratio);
+      const box = el("div", "benchhit");
+      box.append(el("div", "bformula", esc(compound.formula)));
+      box.append(el("div", "bname", esc(compound.name) + " · " + esc(compound.kind === "noble" ? "no bonding" : compound.kind + " bonding")));
+      box.append(el("p", "bnote", esc(compound.note)));
+      if (mass !== null && compound.kind !== "noble") {
+        const parts = Object.entries(compound.ratio)
+          .map(([sym, n]) => { const e = elementBySymbol(sym); return (n > 1 ? n + " × " : "") + sym + " " + (e ? e[3] : "?"); })
+          .join("  +  ");
+        box.append(el("div", "bmass", "<b>Molar mass:</b> " + parts + "  =  <b>" + mass + " g/mol</b>"));
+      }
+      result.append(box);
+      announce(compound.name + ", " + compound.formula);
+    }
+
+    // drag-and-drop as an enhancement; clicking is the primary path and always works
+    tray.addEventListener("dragover", e => { e.preventDefault(); tray.classList.add("over"); });
+    tray.addEventListener("dragleave", () => tray.classList.remove("over"));
+    tray.addEventListener("drop", e => {
+      e.preventDefault();
+      tray.classList.remove("over");
+      const sym = e.dataTransfer.getData("text/plain");
+      if (sym && elementBySymbol(sym) && picked.length < 3) { picked.push(sym); react(); }
+    });
+
+    const acts = el("div", "actions");
+    const clear = el("button", "btn ghost", "Clear the bench");
+    clear.onclick = () => { picked = []; react(); };
+    acts.append(clear, el("span", "hint", "Three elements maximum"));
+
+    card.append(tray, result, acts);
+    v.append(card);
+
+    const tableCard = el("div", "card");
+    tableCard.append(el("h3", "sect", "Periodic table"));
+    tableCard.append(el("p", "note", "Every atomic weight here was read from IUPAC's published table, not typed from memory. Bracketed values are elements with no stable isotope, where the mass number of the most stable one is shown instead."));
+    const mount = el("div", "ptwrap");
+    renderPeriodicTable(mount, sym => {
+      if (picked.length >= 3) { announce("The bench holds three elements at a time."); return; }
+      picked.push(sym); react();
+      tray.scrollIntoView({ block: "nearest" });
+    }, []);
+    mount.querySelectorAll(".pcell").forEach(cell => {
+      cell.draggable = true;
+      cell.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text/plain", cell.querySelector(".psym").textContent);
+        e.dataTransfer.effectAllowed = "copy";
+      });
+    });
+    tableCard.append(mount);
+    v.append(tableCard);
+    react();
+  }
+
   function renderBeyond() {
     const v = document.getElementById("view-beyond");
     v.innerHTML = "";
@@ -2603,6 +2733,113 @@
       c.append(el("div", "beyondbody", html));
       v.append(c);
     });
+
+    if (!BX) return;
+
+    // Chemistry gets the bench and the table
+    if (S.beyondSubject === "Chemistry") renderBench(v);
+
+    // Anything with sourced questions gets a drill
+    const drillable = BX.questions.filter(q => q.subject === beyondDrillSubject(S.beyondSubject));
+    if (drillable.length) renderBeyondDrill(v, drillable);
+
+    // and the references behind all of it
+    const cited = new Set(drillable.map(q => q.src));
+    if (cited.size || S.beyondSubject === "Chemistry") {
+      const sc = el("div", "card");
+      sc.append(el("h3", "sect", "Where this comes from"));
+      const ul = el("ul", "srclist");
+      const keys = [...cited];
+      if (S.beyondSubject === "Chemistry") keys.push("ciaaw");
+      [...new Set(keys)].forEach(k => {
+        const s = BX.sources[k];
+        if (!s) return;
+        const li = el("li");
+        const a = el("a");
+        a.href = s.url; a.target = "_blank"; a.rel = "noreferrer";
+        a.textContent = s.book + " — " + s.section;
+        li.append(a);
+        ul.append(li);
+      });
+      sc.append(ul);
+      BX.sourceNotes.forEach(n => sc.append(el("p", "note", esc(n))));
+      sc.append(el("p", "note", "The questions themselves were written for this app. The references are where the same ideas are taught properly — follow them when a question doesn't land."));
+      v.append(sc);
+    }
+  }
+
+  // map a Beyond reading subject to the question bank's subject name
+  function beyondDrillSubject(name) {
+    if (name === "College math") return "Calculus";
+    if (name === "Chemistry") return "Chemistry";
+    if (name === "Biology") return "Biology";
+    return name;
+  }
+
+  // ---------- drilling the sourced subjects ----------
+  function renderBeyondDrill(v, pool) {
+    const card = el("div", "card beyonddrill");
+    card.append(el("h3", "sect", "Drill it — " + pool.length + " questions"));
+    const host = el("div", "bdhost");
+    card.append(host);
+
+    const trig = BX.questions.filter(q => q.subject === "Trigonometry");
+    if (S.beyondSubject === "College math" && trig.length) {
+      const row = el("div", "actions");
+      const t = el("button", "btn ghost", "Switch to trigonometry (" + trig.length + ")");
+      let onTrig = false;
+      t.onclick = () => {
+        onTrig = !onTrig;
+        t.textContent = onTrig ? "Switch to calculus (" + pool.length + ")" : "Switch to trigonometry (" + trig.length + ")";
+        ask(onTrig ? trig : pool);
+      };
+      row.append(t);
+      card.append(row);
+    }
+
+    function ask(from) {
+      host.innerHTML = "";
+      const q = from[Math.floor(Math.random() * from.length)];
+      host.append(el("div", "bdtopic", esc(q.topic)));
+      host.append(el("p", "prompt", esc(q.prompt)));
+      const list = el("div", "choices");
+      const order = q.choices.map((c, i) => i).sort(() => Math.random() - 0.5);
+      order.forEach((idx, shown) => {
+        const c = q.choices[idx];
+        const b = el("button", "choice");
+        b.append(
+          el("span", "letter", "ABCD"[shown]),
+          el("span", "body", "<span>" + esc(c.text) + "</span><span class='why'>" + esc(c.why) + "</span>"),
+          el("span", "mark", c.correct ? "✓ right" : "✗")
+        );
+        b.onclick = () => {
+          if (host.classList.contains("answered")) return;
+          host.classList.add("answered");
+          list.querySelectorAll(".choice").forEach(x => x.classList.add("shown"));
+          b.classList.add(c.correct ? "correct" : "wrong");
+          announce(c.correct ? "Right." : "Not that one.");
+          const s = BX.sources[q.src];
+          const foot = el("div", "bdsource");
+          if (s) {
+            foot.innerHTML = "Read it properly: ";
+            const a = el("a");
+            a.href = s.url; a.target = "_blank"; a.rel = "noreferrer";
+            a.textContent = s.book + " — " + s.section;
+            foot.append(a);
+          }
+          const acts = el("div", "actions");
+          const next = el("button", "btn", "Next question");
+          next.onclick = () => ask(from);
+          acts.append(next);
+          host.append(foot, acts);
+          next.focus();
+        };
+        list.append(b);
+      });
+      host.append(list);
+    }
+    ask(pool);
+    v.append(card);
   }
 
   // ---------- Arcade: games you earn by studying ----------

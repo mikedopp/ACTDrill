@@ -29,7 +29,7 @@ static class Program
         try
         {
             var names = Assembly.GetExecutingAssembly().GetManifestResourceNames();
-            foreach (var required in new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" })
+            foreach (var required in new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "beyond-questions.js", "notes.js" })
             {
                 if (!names.Any(name => name.EndsWith(required, StringComparison.OrdinalIgnoreCase)))
                 {
@@ -37,8 +37,10 @@ static class Program
                 }
             }
 
+            // ".web.questions.js" — not just "questions.js", which now also matches
+            // beyond-questions.js and would make Single() throw
             var bankResource = names.Single(name =>
-                name.EndsWith("questions.js", StringComparison.OrdinalIgnoreCase));
+                name.EndsWith(".web.questions.js", StringComparison.OrdinalIgnoreCase));
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(bankResource)
                 ?? throw new InvalidDataException("Question bank resource could not be opened.");
             using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -993,9 +995,11 @@ internal sealed class MainForm : Form
         var assembly = Assembly.GetExecutingAssembly();
         foreach (var resource in assembly.GetManifestResourceNames())
         {
-            var file = new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" }
+            // match the full ".web.<file>" suffix: a bare EndsWith("questions.js") also
+            // matches beyond-questions.js, which would extract it over the real bank
+            var file = new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "beyond-questions.js", "notes.js" }
                 .FirstOrDefault(name =>
-                    resource.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+                    resource.EndsWith(".web." + name, StringComparison.OrdinalIgnoreCase));
             if (file is null)
             {
                 continue;
@@ -1021,7 +1025,7 @@ internal sealed class MainForm : Form
     }
 
     private static bool HasRequiredAssets(string directory) =>
-        new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "notes.js" }
+        new[] { "index.html", "styles.css", "coaching.js", "speech.js", "app.js", "questions.js", "beyond-questions.js", "notes.js" }
             .All(file => File.Exists(Path.Combine(directory, file)));
 
     private static DateOnly? BankDate(string version)

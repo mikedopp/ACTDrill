@@ -11,7 +11,7 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyTitle>ACTDrill</AssemblyTitle>
     <Product>ACTDrill</Product>
-    <Version>1.17.0</Version>
+    <Version>1.18.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,10 +24,13 @@
   <ItemGroup>
     <EmbeddedResource Include="..\wwwroot\**\*" Link="web\%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\questions.js" Link="web\questions.js" />
+    <EmbeddedResource Include="..\beyond-questions.js" Link="web\beyond-questions.js" />
     <EmbeddedResource Include="..\notes.js" Link="web\notes.js" />
     <Content Include="..\wwwroot\**\*" Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\questions.js" Link="wwwroot\questions.js"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\beyond-questions.js" Link="wwwroot\beyond-questions.js"
              CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\notes.js" Link="wwwroot\notes.js"
              CopyToPublishDirectory="PreserveNewest" />
