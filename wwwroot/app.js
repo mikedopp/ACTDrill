@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.16.0";
+  const APP_VERSION = "1.17.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -25,7 +25,8 @@
     return { v: 1, patt: {}, q: {}, daily: {}, recent: [], introSeen: false,
              xp: 0, combo: 0, bestCombo: 0, sinceNote: 99, lastNote: -1, subj: "All",
              audio: { on: true, rate: 0.9, autoRead: true, volume: 1, voiceId: "" }, coach: "auto",
-             theme: "dark", fontScale: 1, dailyGoal: 10, memos: {}, glow: true };
+             theme: "dark", fontScale: 1, dailyGoal: 10, memos: {}, glow: true,
+             beyond: false, beyondSubject: "College math" };
   }
   const isRecord = value => value && typeof value === "object" && !Array.isArray(value);
   const finite = (value, fallback, min, max) =>
@@ -83,6 +84,8 @@
         : "";
     }
     base.glow = value.glow !== false;
+    base.beyond = value.beyond === true;
+    base.beyondSubject = BEYOND_SUBJECTS.includes(value.beyondSubject) ? value.beyondSubject : BEYOND_SUBJECTS[0];
     if (isRecord(value.memos)) {
       Object.entries(value.memos).slice(0, 1000).forEach(([id, text]) => {
         if (/^[A-Za-z0-9_-]{1,80}$/.test(id) && typeof text === "string" && text.trim())
@@ -111,6 +114,13 @@
   }
   // the moving gradient on note surfaces — some people find motion distracting, so it's optional
   function applyGlow() { document.documentElement.setAttribute("data-glow", S.glow ? "on" : "off"); }
+  // the Beyond tab only exists for students who asked for it — the ACT stays the main thing
+  function applyBeyond() {
+    const tab = document.getElementById("tab-beyond");
+    if (!tab) return;
+    tab.hidden = !S.beyond;
+    if (!S.beyond && tab.classList.contains("active")) document.getElementById("tab-drill").click();
+  }
   // diagram/plot colors that follow the current theme (SVGs are rebuilt each render)
   function vizColors() {
     return S.theme === "light"
@@ -767,11 +777,18 @@
       checked: true,
       ok: !!(r.ok && r.ready),
       running: !!r.running,
+      installed: !!r.installed,
       model: r.model || "",
       models: Array.isArray(r.models) ? r.models : [],
       warm: false
     };
     return _ollama;
+  }
+  // installed but not listening — the most common reason the tutor looks gone
+  async function ollamaStart() {
+    const r = await bridge("ollamaStart", {}, 40000);
+    if (r.ok) { _ollama.checked = false; _ollama.warm = false; }
+    return r;
   }
   const ollamaAsk = (system, prompt) => bridge("ollamaChat", { model: _ollama.model, system, prompt }, 120000);
   // awaited warm-up: resolves { ready } once the model is actually loaded into memory
@@ -865,8 +882,26 @@
       }
     } else if (oll.running)
       status.textContent = "Ollama is running but has no model yet. In a terminal run:  ollama pull qwen3:8b  — then reopen this.";
-    else
-      status.textContent = "Live Q&A is off. Start the Ollama app to chat — meanwhile the reasoning guide above still helps.";
+    else if (oll.installed) {
+      // it's on the PC, just not listening — offer the one click that fixes it
+      status.innerHTML = "⚪ The tutor is <b>installed but not running</b>. ";
+      const startBtn = el("button", "btn ghost startollama", "Start it");
+      startBtn.onclick = async () => {
+        startBtn.disabled = true;
+        status.innerHTML = "🟡 <span class=\"warming\">Starting the tutor…</span>";
+        const r = await ollamaStart();
+        if (!r.ok) { status.textContent = r.error || "Could not start the tutor."; return; }
+        const again = await ollamaCheck();
+        if (!again.ok) { status.textContent = "Started, but no model is installed yet — use Settings → Set up the AI tutor."; return; }
+        input.disabled = false; send.disabled = false;
+        status.innerHTML = "🟡 <span class=\"warming\">Warming up the tutor…</span> (~20–40s)";
+        const w = await ollamaWarm();
+        _ollama.warm = !!(w && w.ready);
+        status.textContent = "🟢 Ready (" + again.model + ") — ask away.";
+      };
+      status.append(startBtn);
+    } else
+      status.textContent = "Live Q&A isn't set up on this PC. Settings → Set up the AI tutor turns it on — meanwhile the reasoning guide above still helps.";
   }
 
   // ---------- step-by-step: reveal ONE small move at a time (beats panic) ----------
@@ -1153,6 +1188,29 @@
       : "No notes yet. On any answered question, hit 📝 Add a note and write the thing you keep forgetting."));
     body.append(ng);
 
+    // Beyond the ACT — college, advanced theory, the sciences, and code
+    const bg = el("div", "setgroup");
+    bg.append(el("div", "setlabel", "Beyond the ACT"));
+    const brow = el("div", "setopts");
+    [[false, "ACT only"], [true, "＋ College & advanced"]].forEach(([val, label]) => {
+      const b = el("button", "setbtn" + (S.beyond === val ? " on" : ""), label);
+      b.setAttribute("aria-pressed", String(S.beyond === val));
+      b.onclick = () => {
+        S.beyond = val; save(); applyBeyond();
+        brow.querySelectorAll(".setbtn").forEach(x => {
+          x.classList.remove("on"); x.setAttribute("aria-pressed", "false");
+        });
+        b.classList.add("on");
+        b.setAttribute("aria-pressed", "true");
+        announce(val ? "Beyond tab added." : "Beyond tab hidden.");
+      };
+      brow.append(b);
+    });
+    bg.append(brow);
+    bg.append(el("div", "setnote",
+      "Adds a <b>Beyond</b> tab: college math (functions, logs, derivatives, limits, series, matrices), advanced theory (proof, logic, sets, probability, big-O), college English and reading, biology, chemistry, and an intro to Python and C#. None of it is on the ACT — it's there for after."));
+    body.append(bg);
+
     // App updates — check GitHub, verify the download, hand it to the installer
     const ug = el("div", "setgroup");
     ug.append(el("div", "setlabel", "App updates"));
@@ -1271,6 +1329,22 @@
       const oll = await ollamaCheck();
       if (oll.ok) { stat.innerHTML = "<span class='aiok'>✓ Ready</span> — model <b>" + esc(oll.model) + "</b>. Open <b>🤔 Why this?</b> on any question."; setupBtn.textContent = "Add the smaller/faster model"; }
       else if (oll.running) stat.innerHTML = "Ollama is installed and running, but <b>no model</b> yet. Click below to download one.";
+      else if (oll.installed) {
+        // installed, just not listening: say so plainly and offer the fix
+        stat.innerHTML = "<b>Installed, but not running.</b> Nothing is lost — the models are still on this PC. ";
+        const go = el("button", "btn ghost startollama", "Start the tutor");
+        go.onclick = async () => {
+          go.disabled = true;
+          stat.textContent = "Starting the tutor…";
+          const r = await ollamaStart();
+          const again = r.ok ? await ollamaCheck() : null;
+          stat.innerHTML = again && again.ok
+            ? "<span class='aiok'>✓ Ready</span> — model <b>" + esc(again.model) + "</b>. Open <b>🤔 Why this?</b> on any question."
+            : esc((r && r.error) || "Could not start it. Open the Ollama app from the Start menu, then check again.");
+        };
+        stat.append(go);
+        setupBtn.textContent = "Reinstall or add a model";
+      }
       else stat.innerHTML = "Not set up yet. The app works fully without it — this just turns on the live chat.";
     })();
 
@@ -2350,6 +2424,187 @@
       </div>`;
   }
 
+  // ---------- Beyond the ACT: what the next level actually asks of you ----------
+  // Optional, off by default. The ACT is the gate; this is the room on the other side of it.
+  const BEYOND = {
+    "College math": [
+      ["Functions are machines with rules",
+        "<p>A function takes an input, applies one rule, and returns one output. <b>f(x) = 3x − 1</b> means \"triple it, then subtract one.\" f(4) = 11. The letter is just a name — g, h, and f all work the same way.</p>" +
+        "<p>The one law: <b>one input, one output</b>. That's why a vertical line can only ever cross a graph once. If it crosses twice, it isn't a function.</p>" +
+        "<p class='note'>Composition is machines in a row: <b>f(g(x))</b> means run g first, feed the result into f. Inside out, always.</p>"],
+      ["Logs are just exponents wearing a costume",
+        "<p><b>log₂(8) = 3</b> asks one question: \"2 to what power gives 8?\" Three. That's all a log is — the exponent you were missing.</p>" +
+        "<p>Which makes the rules obvious instead of memorized: multiplying inside becomes adding outside (log(ab) = log a + log b), dividing becomes subtracting, and a power comes out front (log(aⁿ) = n·log a).</p>" +
+        "<p class='note'>They matter because exponential growth — interest, populations, medication half-life — is unreadable until you take the log of it.</p>"],
+      ["Slope grows up into the derivative",
+        "<p>You already know slope: rise over run, the steepness of a line. A curve doesn't have one slope, it has a different one at every point.</p>" +
+        "<p>The <b>derivative</b> is the slope at a single point — the answer to \"how fast is this changing right now?\" For position it's velocity; for cost it's the price of one more; for a population it's the growth rate today.</p>" +
+        "<p class='note'>The rule you'll meet first: the derivative of <b>xⁿ</b> is <b>n·x^(n−1)</b>. So x³ becomes 3x². Bring the power down, drop it by one.</p>"],
+      ["Limits: what it heads toward, not what it hits",
+        "<p>Some expressions break at a point but behave perfectly around it. (x² − 1)/(x − 1) is undefined at x = 1 — you'd divide by zero — but everywhere nearby it equals x + 1, which heads straight for 2.</p>" +
+        "<p>That's the limit: the value the function <b>approaches</b>. Calculus is built on this one move, because \"the slope at an exact point\" is a limit of slopes between two points sliding together.</p>"],
+      ["Sequences, series, and why they end",
+        "<p><b>Arithmetic</b> adds the same amount each time (2, 5, 8, 11 — add 3). <b>Geometric</b> multiplies by the same amount (2, 6, 18, 54 — times 3).</p>" +
+        "<p>Geometric sums are the surprising ones: if you keep multiplying by a fraction, an infinite list can add to a finite number. 1 + ½ + ¼ + ⅛ + … = <b>2</b>. Forever, and it still stops.</p>" +
+        "<p class='note'>Formula worth keeping: an infinite geometric series with ratio r (where |r| &lt; 1) sums to <b>a / (1 − r)</b>.</p>"],
+      ["Matrices — bookkeeping that scales",
+        "<p>A matrix is a grid of numbers with rules for combining. It exists because solving three equations with three unknowns by hand is miserable, and a computer can do the same job on ten thousand.</p>" +
+        "<p>Multiplying isn't element-by-element: <b>row times column</b>, summed. It looks arbitrary until you see it's just \"apply this transformation to that thing\" — which is exactly what graphics, statistics, and machine learning run on.</p>"]
+    ],
+    "Advanced theory": [
+      ["Proof: why, not just what",
+        "<p>High school math asks for the answer. College math asks you to show that it <b>must</b> be true for every case, not just the ones you tried.</p>" +
+        "<p><b>Direct proof:</b> assume the setup, reason forward. <b>Contradiction:</b> assume the opposite, follow it until something impossible falls out. <b>Induction:</b> prove it for 1, then prove that whenever it holds for n it holds for n+1 — dominoes.</p>" +
+        "<p class='note'>Testing three examples is not proof. It's evidence. The difference is the whole subject.</p>"],
+      ["Logic you can actually use",
+        "<p><b>If P then Q</b> does not mean if Q then P. \"If it's raining, the ground is wet\" is true; \"if the ground is wet, it's raining\" isn't — someone may have run a hose.</p>" +
+        "<p>The one that IS equivalent is the <b>contrapositive</b>: if not Q, then not P. Dry ground proves no rain. That swap is legal and it's the backbone of half of all proofs.</p>" +
+        "<p class='note'>This is also how ACT Reading traps you: the passage says one direction, the wrong answer reverses it.</p>"],
+      ["Sets, and the sizes of infinity",
+        "<p>A set is a collection with no duplicates. Union (everything in either), intersection (only what's in both), complement (everything else). Three ideas that run databases, probability, and search.</p>" +
+        "<p>The strange part: infinities come in sizes. The counting numbers and the even numbers are the <b>same</b> size — you can pair them off forever. But the decimals between 0 and 1 are strictly bigger; no pairing can ever cover them all.</p>"],
+      ["Probability beyond counting",
+        "<p>Independent events multiply. Dependent ones don't — after you draw a card, the deck changed.</p>" +
+        "<p><b>Conditional probability</b> is where intuition fails hardest. A test that's 99% accurate for a disease that affects 1 in 10,000 will still return mostly false positives, because there are so many more healthy people to be wrong about.</p>" +
+        "<p class='note'>Bayes' rule is the fix: it updates a belief with new evidence instead of replacing it.</p>"],
+      ["Big-O: how badly does it scale?",
+        "<p>Not \"how fast is this on my laptop\" but \"what happens when the input gets 1,000 times bigger?\"</p>" +
+        "<p><b>O(n)</b> — check every item once. <b>O(n²)</b> — compare every item to every other item; at 10,000 items that's 100 million steps. <b>O(log n)</b> — halve the problem each time; a million items in about twenty steps.</p>" +
+        "<p class='note'>Why binary search feels like magic: it's O(log n). Why nested loops die: they're O(n²).</p>"]
+    ],
+    "College English": [
+      ["Rhetoric: the three levers",
+        "<p><b>Ethos</b> — why should I trust you. <b>Logos</b> — does the reasoning hold. <b>Pathos</b> — why should I care. Every ad, every essay, every closing argument pulls some mix of the three.</p>" +
+        "<p>College writing asks you to notice which lever is being pulled and whether it's earned. An emotional appeal isn't cheating; an emotional appeal covering a hole in the logic is.</p>"],
+      ["A thesis is a claim someone could argue with",
+        "<p>\"Social media affects teenagers\" is a topic, not a thesis — nobody disagrees. \"Schools should ban phones during class hours because the attention cost outweighs the safety benefit\" is a thesis: specific, contestable, and it tells the reader what's coming.</p>" +
+        "<p class='note'>Test it: can a reasonable person say \"no, actually\"? If not, you've written a description.</p>"],
+      ["Paragraphs are arguments in miniature",
+        "<p>Claim, evidence, and then the part most people skip — the <b>explanation of why the evidence supports the claim</b>. A quote dropped in and left alone proves nothing; you have to do the connecting out loud.</p>" +
+        "<p>One idea per paragraph. When the idea changes, so does the paragraph.</p>"],
+      ["Citation, and the honest use of sources",
+        "<p>MLA for literature, APA for social sciences, Chicago for history. The format matters less than the habit: every borrowed idea gets a name attached, whether you quoted it or reworded it.</p>" +
+        "<p class='note'>Paraphrasing without a citation is still plagiarism. Changing the words doesn't change whose idea it was.</p>"],
+      ["Style: the sentence-level upgrade",
+        "<p>Prefer the active voice — \"the committee rejected the proposal\" beats \"the proposal was rejected.\" Cut hedging (\"it could perhaps be argued\"). Vary sentence length; a short one after three long ones lands like a punch.</p>" +
+        "<p>Then read it out loud. Your ear catches what your eye forgives.</p>"]
+    ],
+    "College reading": [
+      ["Read for structure before detail",
+        "<p>On a dense text, first pass: what is each paragraph <b>doing</b>? Setting up a problem, giving evidence, conceding a point, turning against the previous idea? Note the job, not the content.</p>" +
+        "<p>Once you have the shape, the details have somewhere to live. This is the same skill ACT Reading tests, just at triple the length.</p>"],
+      ["Claim, evidence, warrant",
+        "<p>Every argument has a claim, the evidence offered, and the unstated assumption connecting them — the <b>warrant</b>. That hidden assumption is usually where an argument is weakest, and it's what a professor wants you to find.</p>" +
+        "<p class='note'>\"Crime dropped after we added streetlights, so streetlights cut crime\" assumes nothing else changed that year. Say that out loud and the argument wobbles.</p>"],
+      ["Judge the source, not just the sentence",
+        "<p>Who wrote it, who paid for it, when, and who checked it. A 2003 statistic in a 2026 paper needs a reason. A study funded by the industry it evaluates isn't disqualified, but it does get read harder.</p>" +
+        "<p>Peer-reviewed means other experts tried to poke holes before publication. It's a floor, not a guarantee.</p>"],
+      ["Correlation, cause, and the third thing",
+        "<p>Ice cream sales and drownings rise together. Neither causes the other — summer causes both. The missing third factor is the most common flaw in confident writing.</p>" +
+        "<p class='note'>When a text claims X caused Y, ask: could Y have caused X? Could something else cause both? Could it be chance?</p>"],
+      ["Reading a scientific paper without drowning",
+        "<p>Order to read in: abstract, then the figures, then the discussion, and only then the methods. The abstract tells you if it matters; the figures are the actual result; the discussion is where the authors admit the limits.</p>"]
+    ],
+    "Biology": [
+      ["The cell is the unit that does everything",
+        "<p>Membrane keeps in and out separate. Nucleus holds the instructions. Mitochondria turn food into usable energy (ATP). Ribosomes build proteins. Everything else is variations on that theme.</p>" +
+        "<p class='note'>Plant cells add a rigid wall and chloroplasts — the machinery that turns light into sugar. That single difference explains most of what plants do differently.</p>"],
+      ["DNA → RNA → protein",
+        "<p>DNA is the archive, kept safe in the nucleus. <b>Transcription</b> copies one gene into RNA. <b>Translation</b> reads that RNA three letters at a time, and each triplet calls for one amino acid. Chain the amino acids and you have a protein.</p>" +
+        "<p>Proteins do the actual work — structure, signals, enzymes. A gene is a recipe; a protein is dinner.</p>" +
+        "<p class='note'>A mutation is a typo in the recipe. Sometimes harmless, sometimes the whole dish changes.</p>"],
+      ["Inheritance without the fog",
+        "<p>You get one copy of each gene from each parent. A <b>dominant</b> version shows even with one copy; a <b>recessive</b> one needs both. That's why traits skip generations — a carrier shows nothing.</p>" +
+        "<p>A Punnett square is just multiplying possibilities: two carriers (Aa × Aa) give 25% AA, 50% Aa, 25% aa.</p>"],
+      ["Evolution is a filter, not a plan",
+        "<p>Variation appears at random. The environment does the selecting. Whatever survives to reproduce passes its variation on, and after enough generations the population has shifted.</p>" +
+        "<p class='note'>Nothing \"tries\" to adapt. Individuals don't evolve — populations do, across time.</p>"],
+      ["Energy: photosynthesis and respiration",
+        "<p>Photosynthesis: light + CO₂ + water → sugar + oxygen. Respiration runs it backwards: sugar + oxygen → CO₂ + water + energy.</p>" +
+        "<p>They're the same equation pointed in opposite directions, which is why plants and animals fit together so neatly.</p>"]
+    ],
+    "Chemistry": [
+      ["The periodic table is a map, not a list",
+        "<p>Position tells you behavior. Columns share the same outer electrons, so they react alike — that's why the far-left metals are violent in water and the far-right noble gases do nothing at all.</p>" +
+        "<p>Left to right, atoms hold their electrons tighter. Top to bottom, they get bigger and looser.</p>"],
+      ["Bonds are about electrons, always",
+        "<p><b>Ionic</b>: one atom takes electrons from another; the opposite charges stick (table salt). <b>Covalent</b>: atoms share electrons (water, everything alive). <b>Metallic</b>: electrons roam freely, which is why metals conduct and bend.</p>" +
+        "<p class='note'>Water is bent, so one end is slightly negative — that small asymmetry is why it dissolves so much and why ice floats.</p>"],
+      ["The mole, and why chemists count in dozens of a sort",
+        "<p>Atoms are too small to count, so chemists weigh instead. One <b>mole</b> is 6.022 × 10²³ particles, and one mole of any element weighs its atomic mass in grams.</p>" +
+        "<p>Carbon's mass is 12, so 12 g of carbon is one mole. That bridge — grams to particles — is most of intro chemistry.</p>"],
+      ["Balancing equations is just conservation",
+        "<p>Atoms are never created or destroyed in a reaction, so both sides must have the same count of each. You may change how many molecules, never what's inside them.</p>" +
+        "<p class='note'>CH₄ + 2O₂ → CO₂ + 2H₂O. One carbon each side, four hydrogens each side, four oxygens each side. Change the coefficients, never the subscripts.</p>"],
+      ["Acids, bases, and pH",
+        "<p>Acids give up hydrogen ions; bases accept them. pH runs 0–14, with 7 neutral — and it's <b>logarithmic</b>, so pH 3 is ten times more acidic than pH 4, and a hundred times more than pH 5.</p>" +
+        "<p>Stomach acid is around 2. Blood is held near 7.4, and it staying there is not optional.</p>"]
+    ],
+    "Python": [
+      ["Variables, types, and the shape of a program",
+        "<p>Python doesn't make you declare types — <code>count = 5</code> is enough. The type still matters: <code>5</code> and <code>\"5\"</code> behave completely differently, and mixing them is the most common first error.</p>" +
+        "<pre class='code'>name = \"Sam\"\nage = 19\nprint(f\"{name} is {age}\")   # Sam is 19</pre>" +
+        "<p class='note'>Indentation isn't style here — it's the syntax. The indented block is what's inside the if, the loop, the function.</p>"],
+      ["Lists, dictionaries, and picking the right one",
+        "<p>A <b>list</b> is ordered and accessed by position. A <b>dictionary</b> is accessed by name. Choosing right makes the code obvious.</p>" +
+        "<pre class='code'>scores = [22, 17, 19]          # by position\nscores[0]                      # 22\n\nact = {\"english\": 22, \"math\": 17}   # by name\nact[\"math\"]                    # 17</pre>" +
+        "<p class='note'>If you're writing <code>if item[0] == \"math\"</code>, you wanted a dictionary.</p>"],
+      ["Loops and conditionals",
+        "<pre class='code'>for score in scores:\n    if score >= 20:\n        print(score, \"is on track\")\n    else:\n        print(score, \"needs work\")</pre>" +
+        "<p>Loop over the thing itself, not over a range of indexes — Python reads better that way, and it's harder to go off the end.</p>"],
+      ["Functions: name a piece of work once",
+        "<pre class='code'>def composite(english, math, reading):\n    \"\"\"Average the three scored sections, rounded.\"\"\"\n    return round((english + math + reading) / 3)\n\ncomposite(22, 17, 19)   # 19</pre>" +
+        "<p>If you've copied three lines twice, that's a function trying to exist. A good name for it is half the value.</p>"],
+      ["Reading errors instead of fearing them",
+        "<p>Read a traceback <b>bottom up</b>: the last line names the error, the line above shows where. <code>NameError</code> — misspelled or not defined yet. <code>TypeError</code> — mixed a string and a number. <code>IndexError</code> — asked for item 5 in a list of 3.</p>" +
+        "<p class='note'>The error message is the most useful text on screen. It isn't the computer complaining; it's telling you the answer.</p>"]
+    ],
+    "C#": [
+      ["Types up front, and why that helps",
+        "<p>C# wants the type declared, and checks it before the program ever runs. More typing, far fewer surprises at 2am.</p>" +
+        "<pre class='code'>string name = \"Sam\";\nint age = 19;\nvar total = 22 + 17 + 19;   // var still means int, inferred\nConsole.WriteLine($\"{name} is {age}\");</pre>" +
+        "<p class='note'>Statements end in a semicolon and blocks use braces — the indentation is for humans, not the compiler.</p>"],
+      ["Collections",
+        "<pre class='code'>var scores = new List&lt;int&gt; { 22, 17, 19 };\nscores.Add(21);\n\nvar act = new Dictionary&lt;string, int&gt;\n{\n    [\"english\"] = 22,\n    [\"math\"] = 17\n};</pre>" +
+        "<p>The <code>&lt;int&gt;</code> part is the promise: this list holds integers and nothing else. Try to add a string and it won't compile.</p>"],
+      ["Classes: data and behavior together",
+        "<pre class='code'>public class Attempt\n{\n    public string Section { get; set; } = \"\";\n    public int Score { get; set; }\n\n    public bool OnTrack() =&gt; Score &gt;= 20;\n}\n\nvar a = new Attempt { Section = \"Math\", Score = 17 };\na.OnTrack();   // false</pre>" +
+        "<p>A class is a noun that knows how to do its own verbs. Keep the data and the rules about that data in the same place.</p>"],
+      ["LINQ: describe the result, not the loop",
+        "<pre class='code'>var strong = scores.Where(s =&gt; s &gt;= 20)\n                   .OrderByDescending(s =&gt; s)\n                   .ToList();\n\nvar average = scores.Average();</pre>" +
+        "<p>Once you're used to it, this reads closer to the sentence you'd say out loud than a for-loop ever does.</p>"],
+      ["Where C# actually shows up",
+        "<p>Windows desktop apps, game logic in Unity, and web backends with ASP.NET. This app's own shell — the window, the update check, the speech — is C#, and the part you're reading is JavaScript inside it.</p>" +
+        "<p class='note'>Python and C# teach the same ideas in different dialects. Learn loops, functions, and types once and the second language costs a week, not a year.</p>"]
+    ]
+  };
+  const BEYOND_SUBJECTS = Object.keys(BEYOND);
+
+  function renderBeyond() {
+    const v = document.getElementById("view-beyond");
+    v.innerHTML = "";
+    v.append(el("div", "card intro",
+      "<div class='pill'>Beyond the ACT</div><p>The test is the gate. This is the room on the other side of it — what college actually asks, plus the sciences and code you might want anyway. Nothing here is on the ACT, and none of it is graded. Read it when you're curious.</p>"));
+
+    const bar = el("div", "subjbar");
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Beyond subject");
+    BEYOND_SUBJECTS.forEach(name => {
+      const b = el("button", "subjbtn" + (S.beyondSubject === name ? " on" : ""), esc(name));
+      b.setAttribute("aria-pressed", String(S.beyondSubject === name));
+      b.onclick = () => { S.beyondSubject = name; save(); renderBeyond(); };
+      bar.append(b);
+    });
+    v.append(bar);
+
+    (BEYOND[S.beyondSubject] || []).forEach(([title, html]) => {
+      const c = el("div", "card");
+      c.append(el("h3", "sect", esc(title)));
+      c.append(el("div", "beyondbody", html));
+      v.append(c);
+    });
+  }
+
   // ---------- Arcade: games you earn by studying ----------
   let activeGame = null;
   function stopActiveGame() { if (activeGame && activeGame.stop) { try { activeGame.stop(); } catch (e) { /* ignore */ } } activeGame = null; }
@@ -2685,7 +2940,7 @@
       b.setAttribute("aria-selected", String(selected));
       b.tabIndex = selected ? 0 : -1;
     });
-    ["drill", "rulebook", "formulas", "basics", "progress", "links", "arcade"].forEach(name => {
+    ["drill", "rulebook", "formulas", "basics", "progress", "links", "beyond", "arcade"].forEach(name => {
       const panel = document.getElementById("view-" + name);
       const hidden = name !== btn.dataset.view;
       panel.classList.toggle("hidden", hidden);
@@ -2696,6 +2951,7 @@
     if (btn.dataset.view === "basics") renderBasics();
     if (btn.dataset.view === "progress") renderProgress();
     if (btn.dataset.view === "links") renderLinks();
+    if (btn.dataset.view === "beyond") renderBeyond();
     if (btn.dataset.view === "arcade") renderArcade();
   });
   document.getElementById("tabs").addEventListener("keydown", event => {
@@ -2734,6 +2990,7 @@
   applyTheme();
   applyFontScale();
   applyGlow();
+  applyBeyond();
   document.getElementById("gearbtn").onclick = openSettings;
   document.getElementById("notesbtn").onclick = toggleNotesPanel;
   renderChips();

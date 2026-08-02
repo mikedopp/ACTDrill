@@ -244,6 +244,9 @@ internal sealed class MainForm : Form
                 case "speechSynthesize":
                     await SpeechSynthesizeAsync(request.Id, request.Params);
                     break;
+                case "ollamaStart":
+                    await OllamaStartAsync(request.Id);
+                    break;
                 case "appUpdateCheck":
                     await AppUpdateCheckAsync(request.Id);
                     break;
@@ -430,6 +433,7 @@ internal sealed class MainForm : Form
             {
                 running = true,
                 ready = _model.Length > 0,
+                installed = true,
                 model = _model,
                 models = names
             });
@@ -440,10 +444,13 @@ internal sealed class MainForm : Form
         }
         catch
         {
+            // nothing answered on the port. "Installed but not running" is a completely
+            // different problem from "never installed", and the student needs to be told which.
             ReplyResponse(id, true, new
             {
                 running = false,
                 ready = false,
+                installed = FindOllamaExe() is not null,
                 model = string.Empty,
                 models = Array.Empty<string>()
             });
@@ -622,6 +629,54 @@ internal sealed class MainForm : Form
             }
             _aiSetupGate.Release();
         }
+    }
+
+    /// <summary>
+    /// Ollama is installed but nothing is listening — the usual reason the tutor looks
+    /// "lost". Start the installed server and wait for the port to actually answer.
+    /// </summary>
+    private async Task OllamaStartAsync(string id)
+    {
+        var executable = FindOllamaExe();
+        if (executable is null)
+        {
+            ReplyResponse(id, false, error: "Ollama isn't installed on this PC yet — use Set up the AI tutor.");
+            return;
+        }
+
+        try
+        {
+            // the tray app starts the server and keeps it running between sessions;
+            // fall back to `ollama serve` if only the CLI is present
+            var trayApp = Path.Combine(Path.GetDirectoryName(executable) ?? string.Empty, "ollama app.exe");
+            var start = File.Exists(trayApp)
+                ? new ProcessStartInfo(trayApp) { UseShellExecute = true }
+                : new ProcessStartInfo(executable, "serve") { UseShellExecute = false, CreateNoWindow = true };
+            Process.Start(start);
+        }
+        catch (Exception ex)
+        {
+            ReplyResponse(id, false, error: "Could not start Ollama: " + ex.Message);
+            return;
+        }
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(1000);
+            try
+            {
+                await http.GetStringAsync(OllamaBase + "/api/tags");
+                ReplyResponse(id, true, new { started = true });
+                return;
+            }
+            catch
+            {
+                // still coming up
+            }
+        }
+
+        ReplyResponse(id, false, error: "Ollama was started but didn't answer within 20 seconds.");
     }
 
     // ---------- app updates ----------

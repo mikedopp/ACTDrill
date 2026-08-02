@@ -292,6 +292,28 @@
     animation: noteglow 8s linear infinite;
   }
 
+  /* Beyond the ACT — subject picker and long-form cards */
+  .subjbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .subjbtn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    color: var(--ink2); font: inherit; font-size: 0.8125rem; padding: 6px 14px; cursor: pointer;
+    min-height: 38px;
+  }
+  .subjbtn:hover { color: var(--ink); }
+  .subjbtn.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .beyondbody { color: var(--ink2); font-size: 0.9375rem; line-height: 1.6; }
+  .beyondbody p { margin: 0 0 10px; }
+  .beyondbody b { color: var(--ink); }
+  .beyondbody .note { color: var(--muted); font-size: 0.875rem; border-left: 2px solid var(--grid); padding-left: 10px; }
+  .beyondbody code { font-family: Consolas, "Cascadia Mono", monospace; color: var(--gold); font-size: 0.9em; }
+  .beyondbody .code {
+    display: block; background: var(--raised); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; margin: 0 0 10px; color: var(--ink);
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.875rem; line-height: 1.5;
+    max-width: 100%; overflow-x: auto; white-space: pre;
+  }
+  .startollama { margin-left: 8px; font-size: 0.8125rem; padding: 5px 10px; min-height: 32px; }
+
   /* Worked steps — the equation moving, one state at a time */
   .workviz { animation: vizin 0.5s ease both; }
   @keyframes vizin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
