@@ -10,7 +10,7 @@
 ; ===========================================================================
 
 #define AppName "ACTDrill"
-#define AppVersion "1.18.0"
+#define AppVersion "1.19.0"
 #define AppPublisher "Mike Dopp"
 #define AppExe "ACTDrill.exe"
 #define AppUrl "https://github.com/mikedopp/ACTDrill"
@@ -47,18 +47,18 @@ Name: "aitutor"; Description: "Set up the optional AI tutor now (needs Ollama; d
 ; the whole app is a single self-contained exe (built into ..\dist)
 Source: "..\dist\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
 ; helper to enable the optional local AI later
-Source: "actdrill_Setup-AiTutor_v1.18.0.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "actdrill_Setup-AiTutor_v1.19.0.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{group}\Enable AI tutor"; Filename: "pwsh.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\actdrill_Setup-AiTutor_v1.18.0.ps1"""; Comment: "Set up the optional private AI tutor (Ollama)"
+Name: "{group}\Enable AI tutor"; Filename: "pwsh.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\actdrill_Setup-AiTutor_v1.19.0.ps1"""; Comment: "Set up the optional private AI tutor (Ollama)"
 Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
 ; if the user opted in, run the AI setup helper (visible window) after install
-Filename: "pwsh.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\actdrill_Setup-AiTutor_v1.18.0.ps1"""; Description: "Set up the AI tutor"; Flags: postinstall skipifsilent; Tasks: aitutor
+Filename: "pwsh.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\actdrill_Setup-AiTutor_v1.19.0.ps1"""; Description: "Set up the AI tutor"; Flags: postinstall skipifsilent; Tasks: aitutor
 ; offer to launch the app
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName} now"; Flags: postinstall nowait skipifsilent
 

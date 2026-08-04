@@ -11,7 +11,7 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyTitle>ACTDrill</AssemblyTitle>
     <Product>ACTDrill</Product>
-    <Version>1.18.0</Version>
+    <Version>1.19.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

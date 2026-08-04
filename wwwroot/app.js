@@ -3,7 +3,7 @@
 
   // ---------- state ----------
   const KEY = "actdrill-v1";
-  const APP_VERSION = "1.18.0";
+  const APP_VERSION = "1.19.0";
   const DEFAULT_GOAL = 10;
   const goal = () => S.dailyGoal || DEFAULT_GOAL;   // the daily target is the student's to set — small is fine
 
@@ -206,7 +206,7 @@
   // surfaces the drill shortcuts must keep their hands off: text fields, and the notes
   // drawer, whose buttons answer to Enter and space on their own
   const ownsKeys = node =>
-    node instanceof HTMLElement && (isTyping(node) || !!node.closest("#notespanel"));
+    node instanceof HTMLElement && (isTyping(node) || !!node.closest("#notespanel") || !!node.closest("#calcpanel"));
   function announce(message) {
     const region = document.getElementById("app-status");
     if (!region) return;
@@ -3223,6 +3223,204 @@
     }
   };
 
+  // ---------- floating calculator ----------
+  let _calcOpen = false;
+  function toggleCalc() {
+    const existing = document.getElementById("calcpanel");
+    if (existing) { existing.remove(); _calcOpen = false; return; }
+    _calcOpen = true;
+
+    const panel = el("div", "calcpanel");
+    panel.id = "calcpanel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", "Calculator");
+
+    // drag handle
+    const hd = el("div", "calchd");
+    const title = el("span", "calctitle", "Calculator");
+    const modeBtn = el("button", "calcmodebtn", "Scientific");
+    const closeBtn = el("button", "btn ghost calcclose", "✕");
+    closeBtn.onclick = () => { panel.remove(); _calcOpen = false; };
+    hd.append(title, modeBtn, closeBtn);
+    panel.append(hd);
+
+    // display
+    const expr = el("div", "calcexpr", "");
+    const disp = el("div", "calcdisp", "0");
+    panel.append(expr, disp);
+
+    let buffer = "0";
+    let expression = "";
+    let lastResult = null;
+    let sciMode = false;
+    let angleMode = "deg";
+
+    const refresh = () => {
+      disp.textContent = buffer;
+      expr.textContent = expression;
+    };
+
+    const input = (ch) => {
+      if (buffer === "0" && ch !== ".") buffer = ch;
+      else buffer += ch;
+      refresh();
+    };
+
+    const toRad = (v) => angleMode === "deg" ? v * Math.PI / 180 : v;
+    const fromRad = (v) => angleMode === "deg" ? v * 180 / Math.PI : v;
+
+    const factorial = (n) => {
+      if (n < 0 || !Number.isInteger(n) || n > 170) return NaN;
+      let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+    };
+
+    const applyOp = (op) => {
+      const v = parseFloat(buffer) || 0;
+      expression += buffer + " " + op + " ";
+      buffer = "0";
+      lastResult = null;
+      refresh();
+    };
+
+    const compute = () => {
+      try {
+        const full = expression + buffer;
+        const safe = full.replace(/[^0-9+\-*/.() ]/g, "");
+        const result = Function('"use strict"; return (' + safe + ')')();
+        expression = full + " =";
+        buffer = String(Number.isFinite(result) ? +result.toPrecision(12) : "Error");
+        lastResult = result;
+      } catch { buffer = "Error"; }
+      refresh();
+    };
+
+    const sciOp = (fn) => {
+      const v = parseFloat(buffer) || 0;
+      let result;
+      switch (fn) {
+        case "sin": result = Math.sin(toRad(v)); break;
+        case "cos": result = Math.cos(toRad(v)); break;
+        case "tan": result = Math.tan(toRad(v)); break;
+        case "asin": result = fromRad(Math.asin(v)); break;
+        case "acos": result = fromRad(Math.acos(v)); break;
+        case "atan": result = fromRad(Math.atan(v)); break;
+        case "log": result = Math.log10(v); break;
+        case "ln": result = Math.log(v); break;
+        case "sqrt": result = Math.sqrt(v); break;
+        case "x2": result = v * v; break;
+        case "1/x": result = 1 / v; break;
+        case "n!": result = factorial(Math.round(v)); break;
+        case "pi": buffer = String(Math.PI); refresh(); return;
+        case "e": buffer = String(Math.E); refresh(); return;
+        default: return;
+      }
+      expression = fn.replace("x2", "²").replace("1/x", "1/") + "(" + buffer + ") =";
+      buffer = String(Number.isFinite(result) ? +result.toPrecision(12) : "Error");
+      refresh();
+    };
+
+    // standard buttons
+    const stdRows = [
+      ["C", "±", "%", "÷"],
+      ["7", "8", "9", "×"],
+      ["4", "5", "6", "−"],
+      ["1", "2", "3", "+"],
+      ["0", ".", "()", "="]
+    ];
+    const opMap = { "÷": "/", "×": "*", "−": "-", "+": "+" };
+
+    const sciRows = [
+      ["sin", "cos", "tan", "π"],
+      ["asin", "acos", "atan", "e"],
+      ["log", "ln", "√", "x²"],
+      ["1/x", "n!", "^", "Rad"]
+    ];
+
+    const buildButtons = () => {
+      panel.querySelectorAll(".calcgrid, .calcscigrid").forEach(g => g.remove());
+
+      if (sciMode) {
+        const sciGrid = el("div", "calcscigrid");
+        sciRows.forEach(row => row.forEach(label => {
+          const b = el("button", "calcbtn sci", label);
+          if (label === "Rad") {
+            b.textContent = angleMode === "deg" ? "Deg" : "Rad";
+            b.onclick = () => { angleMode = angleMode === "deg" ? "rad" : "deg"; b.textContent = angleMode === "deg" ? "Deg" : "Rad"; };
+          } else if (label === "π") b.onclick = () => sciOp("pi");
+          else if (label === "e") b.onclick = () => sciOp("e");
+          else if (label === "√") b.onclick = () => sciOp("sqrt");
+          else if (label === "x²") b.onclick = () => sciOp("x2");
+          else if (label === "^") b.onclick = () => applyOp("**");
+          else b.onclick = () => sciOp(label);
+          sciGrid.append(b);
+        }));
+        panel.append(sciGrid);
+      }
+
+      const grid = el("div", "calcgrid");
+      stdRows.forEach(row => row.forEach(label => {
+        const cls = "calcbtn" + (opMap[label] ? " op" : "") + (label === "=" ? " eq" : "") + (label === "C" ? " clr" : "");
+        const b = el("button", cls, label);
+        if (label === "C") b.onclick = () => { buffer = "0"; expression = ""; lastResult = null; refresh(); };
+        else if (label === "±") b.onclick = () => { buffer = String(-parseFloat(buffer) || 0); refresh(); };
+        else if (label === "%") b.onclick = () => { buffer = String((parseFloat(buffer) || 0) / 100); refresh(); };
+        else if (label === "=") b.onclick = compute;
+        else if (label === "()") {
+          b.onclick = () => {
+            const opens = (expression + buffer).split("(").length - 1;
+            const closes = (expression + buffer).split(")").length - 1;
+            if (opens > closes) input(")"); else applyOp(""), expression = expression.slice(0, -3), expression += "(", refresh();
+          };
+        }
+        else if (opMap[label]) b.onclick = () => applyOp(opMap[label]);
+        else b.onclick = () => input(label);
+        grid.append(b);
+      }));
+      panel.append(grid);
+    };
+
+    modeBtn.onclick = () => {
+      sciMode = !sciMode;
+      modeBtn.textContent = sciMode ? "Standard" : "Scientific";
+      buildButtons();
+    };
+
+    buildButtons();
+
+    // drag
+    let dx = 0, dy = 0, dragging = false;
+    hd.onpointerdown = (e) => {
+      if (e.target.tagName === "BUTTON") return;
+      dragging = true; dx = e.clientX - panel.offsetLeft; dy = e.clientY - panel.offsetTop;
+      hd.setPointerCapture(e.pointerId);
+    };
+    hd.onpointermove = (e) => {
+      if (!dragging) return;
+      panel.style.left = Math.max(0, e.clientX - dx) + "px";
+      panel.style.top = Math.max(0, e.clientY - dy) + "px";
+      panel.style.right = "auto";
+      panel.style.bottom = "auto";
+    };
+    hd.onpointerup = () => { dragging = false; };
+
+    // keyboard
+    panel.addEventListener("keydown", (e) => {
+      if (e.key >= "0" && e.key <= "9") { input(e.key); e.preventDefault(); }
+      else if (e.key === ".") { input("."); e.preventDefault(); }
+      else if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/") { applyOp(e.key); e.preventDefault(); }
+      else if (e.key === "Enter" || e.key === "=") { compute(); e.preventDefault(); }
+      else if (e.key === "Escape") { panel.remove(); _calcOpen = false; e.preventDefault(); }
+      else if (e.key === "Backspace") {
+        buffer = buffer.length > 1 ? buffer.slice(0, -1) : "0"; refresh(); e.preventDefault();
+      }
+      else if (e.key === "c" || e.key === "C") { buffer = "0"; expression = ""; lastResult = null; refresh(); e.preventDefault(); }
+    });
+
+    panel.tabIndex = -1;
+    document.body.append(panel);
+    panel.focus();
+  }
+
   // ---------- boot ----------
   applyTheme();
   applyFontScale();
@@ -3230,6 +3428,7 @@
   applyBeyond();
   document.getElementById("gearbtn").onclick = openSettings;
   document.getElementById("notesbtn").onclick = toggleNotesPanel;
+  document.getElementById("calcbtn").onclick = toggleCalc;
   renderChips();
   if (S.introSeen) nextQuestion(); else showIntro();
 })();

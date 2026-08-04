@@ -35,6 +35,14 @@ release notes.
 - Tracks local XP, mastery, streaks, and daily goals
 - Links to approved official or educational practice resources
 - Optionally uses a local Ollama model for follow-up explanations
+- Checks GitHub for app updates with SHA-256 verified installer downloads
+- Animated gradient borders (Google colors) on notes and chat, toggleable
+- Notes drawer with Markdown export, per-question tagging, and note-to-question linking
+- Floating draggable calculator with standard and scientific modes
+- Beyond the ACT tab with college-level content: calculus, trigonometry, chemistry
+  (interactive periodic table and compound bench), biology, college reading/writing,
+  Python, and C#
+- Sourced drill questions citing OpenStax, Paul's Online Math Notes, and IUPAC data
 
 The Ollama feature is optional. Prompts go only to `localhost:11434`, and the
 app does not use credentials. Before the app runs a downloaded Ollama
@@ -62,7 +70,7 @@ publish the portable ZIP, and attach `SHA256SUMS.txt` automatically.
 
 Compile `installer\ACTDrill.iss` with Inno Setup after publishing `dist\ACTDrill.exe`.
 The optional manual AI helper is
-`installer\actdrill_Setup-AiTutor_v1.18.0.ps1`.
+`installer\actdrill_Setup-AiTutor_v1.19.0.ps1`.
 
 ## Repository map
 
@@ -75,17 +83,28 @@ The optional manual AI helper is
 | `wwwroot\speech.js` | Native WAV playback, spoken Math normalization, and voice selection |
 | `desktop\NativeSpeechService.cs` | Windows speech-to-WAV renderer used by the desktop host |
 | `questions.js` | Canonical question bank; 280 questions / 35 patterns |
+| `beyond-questions.js` | College-level drill bank, IUPAC periodic table, and compound data |
 | `notes.js` | Optional personal encouragement notes |
 | `desktop\` | .NET 8 WinForms/WebView2 host and security boundary |
 | `desktop\ACTDrill.Verification\` | Executable security/content checks |
 | `tests\` | Node content and release-consistency tests |
 | `installer\` | Inno Setup definition and signed-download AI helper |
 
-The desktop build embeds `wwwroot`, `questions.js`, and `notes.js`. For local
-editing, a complete `web` folder beside `ACTDrill.exe` can override the embedded
-assets; it must contain `index.html`, `styles.css`, `coaching.js`, `speech.js`,
-`app.js`, `questions.js`, and `notes.js`. The extracted `notes.js` is preserved
-across app upgrades.
+The desktop build embeds `wwwroot`, `questions.js`, `beyond-questions.js`, and
+`notes.js`. For local editing, a complete `web` folder beside `ACTDrill.exe` can
+override the embedded assets; it must contain `index.html`, `styles.css`,
+`coaching.js`, `speech.js`, `app.js`, `questions.js`, `beyond-questions.js`, and
+`notes.js`. The extracted `notes.js` is preserved across app upgrades.
+
+## App updates
+
+Settings → "Check for updates" fetches
+[`latest.json`](https://github.com/mikedopp/actdrill-bank/blob/main/latest.json)
+from the public [actdrill-bank](https://github.com/mikedopp/actdrill-bank) repo.
+If a newer version is available, the student can download and install in one
+click. The installer is verified against its published SHA-256 checksum before
+anything runs. The CI workflow can publish the manifest automatically when a
+`BANK_TOKEN` secret is configured.
 
 ## Question-bank updates
 
